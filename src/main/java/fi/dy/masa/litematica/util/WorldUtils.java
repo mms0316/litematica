@@ -399,6 +399,24 @@ public class WorldUtils
         RayTraceWrapper traceWrapper;
         double traceMaxRange = mc.interactionManager.getReachDistance();
 
+        if (Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue())
+        {
+            if (Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem()) instanceof ShulkerBoxBlock)
+            {
+                return ActionResult.PASS;
+            }
+
+            if (mc.player.isSneaking() == false && mc.crosshairTarget instanceof BlockHitResult blockHitResult)
+            {
+                Block blockClient = mc.world.getBlockState(blockHitResult.getBlockPos()).getBlock();
+                if (blockClient instanceof ShulkerBoxBlock)
+                {
+                    return ActionResult.PASS;
+                }
+            }
+        }
+
+
         if (Configs.Generic.EASY_PLACE_FIRST.getBooleanValue())
         {
             // Temporary hack, using this same config here

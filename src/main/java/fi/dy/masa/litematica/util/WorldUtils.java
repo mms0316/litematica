@@ -15,6 +15,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ComparatorBlock;
 import net.minecraft.block.RepeaterBlock;
+import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
@@ -24,9 +25,11 @@ import net.minecraft.client.world.ClientChunkManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.state.property.DirectionProperty;
@@ -439,6 +442,12 @@ public class WorldUtils
 
                 if (stateSchematic == stateClient)
                 {
+                    //Allow to place down shulker boxes on top of the schematic
+                    if (Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem()) instanceof ShulkerBoxBlock)
+                    {
+                        return ActionResult.PASS;
+                    }
+
                     return ActionResult.FAIL;
                 }
 

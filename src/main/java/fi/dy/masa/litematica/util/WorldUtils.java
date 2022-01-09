@@ -472,12 +472,6 @@ public class WorldUtils
 
                 if (stateSchematic == stateClient)
                 {
-                    //Allow to place down shulker boxes on top of the schematic
-                    if (Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem()) instanceof ShulkerBoxBlock)
-                    {
-                        return ActionResult.PASS;
-                    }
-
                     return ActionResult.FAIL;
                 }
 

@@ -297,6 +297,11 @@ public class SchematicPlacementManager
             this.selectedPlacement = null;
         }
 
+        if (placement.hasVerifier())
+        {
+            placement.getSchematicVerifier().reset();
+        }
+
         boolean ret = this.schematicPlacements.remove(placement);
         this.removeTouchedChunksFor(placement);
 
@@ -766,6 +771,14 @@ public class SchematicPlacementManager
 
     public void clear()
     {
+        for (SchematicPlacement placement : schematicPlacements)
+        {
+            if (placement.hasVerifier())
+            {
+                placement.getSchematicVerifier().reset();
+            }
+        }
+
         this.schematicPlacements.clear();
         this.selectedPlacement = null;
         this.schematicsTouchingChunk.clear();

@@ -325,6 +325,25 @@ public class PositionUtils
         return builder.build();
     }
 
+    public static boolean hasBoxWithinChunk(int chunkX, int chunkZ, ImmutableMap<String, Box> subRegions)
+    {
+        boolean has = false;
+
+        for (Map.Entry<String, Box> entry : subRegions.entrySet())
+        {
+            Box box = entry.getValue();
+            IntBoundingBox bb = box != null ? getBoundsWithinChunkForBox(box, chunkX, chunkZ) : null;
+
+            if (bb != null)
+            {
+                has = true;
+                break;
+            }
+        }
+
+        return has;
+    }
+
     public static Set<ChunkPos> getTouchedChunks(ImmutableMap<String, Box> boxes)
     {
         return getTouchedChunksForBoxes(boxes.values());

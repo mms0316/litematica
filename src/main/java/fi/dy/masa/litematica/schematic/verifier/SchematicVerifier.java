@@ -56,8 +56,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     private final ArrayListMultimap<Pair<BlockState, BlockState>, BlockPos> extraBlocksPositions = ArrayListMultimap.create();
     private final ArrayListMultimap<Pair<BlockState, BlockState>, BlockPos> wrongBlocksPositions = ArrayListMultimap.create();
     private final ArrayListMultimap<Pair<BlockState, BlockState>, BlockPos> wrongStatesPositions = ArrayListMultimap.create();
-    private final Object2IntOpenHashMap<BlockState> correctStateCounts = new Object2IntOpenHashMap<>();
-    private final Object2ObjectOpenHashMap<BlockPos, BlockMismatch> blockMismatches = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<BlockPos, BlockMismatch> verifiedPositions = new Object2ObjectOpenHashMap<>();
     private final HashSet<Pair<BlockState, BlockState>> ignoredMismatches = new HashSet<>();
     private final List<BlockPos> missingBlocksPositionsClosest = new ArrayList<>();
     private final List<BlockPos> extraBlocksPositionsClosest = new ArrayList<>();
@@ -80,8 +79,6 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     private boolean shouldRenderInfoHud = true;
     private int totalRequiredChunks;
     private int schematicBlocks;
-    private int clientBlocks;
-    private int correctStatesCount;
 
     public SchematicVerifier()
     {
@@ -143,11 +140,6 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         return this.schematicBlocks;
     }
 
-    public int getRealWorldTotalBlocks()
-    {
-        return this.clientBlocks;
-    }
-
     public int getMissingBlocks()
     {
         return this.missingBlocksPositions.size();
@@ -170,7 +162,17 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     public int getCorrectStatesCount()
     {
-        return this.correctStatesCount;
+        int count = 0;
+
+        for (BlockMismatch mismatchType : this.verifiedPositions.values())
+        {
+            if (mismatchType.mismatchType == MismatchType.CORRECT_STATE)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     public int getTotalErrors()
@@ -358,9 +360,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         this.verificationStarted = false;
         this.finished = false;
         this.totalRequiredChunks = 0;
-        this.correctStatesCount = 0;
         this.schematicBlocks = 0;
-        this.clientBlocks = 0;
         this.requiredChunks.clear();
         this.recheckQueue.clear();
 
@@ -368,8 +368,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         this.extraBlocksPositions.clear();
         this.wrongBlocksPositions.clear();
         this.wrongStatesPositions.clear();
-        this.blockMismatches.clear();
-        this.correctStateCounts.clear();
+        this.verifiedPositions.clear();
         this.selectedCategories.clear();
         this.selectedEntries.clear();
         this.mismatchBlockPositionsForRender.clear();
@@ -384,9 +383,9 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     public void markBlockChanged(BlockPos pos)
     {
-        if (this.finished)
+        if (this.finished || this.verificationActive)
         {
-            BlockMismatch mismatch = this.blockMismatches.get(pos);
+            BlockMismatch mismatch = this.verifiedPositions.get(pos);
 
             if (mismatch != null)
             {
@@ -397,9 +396,10 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     private void checkChangedPositions()
     {
-        if (this.finished && this.recheckQueue.isEmpty() == false)
+        if ((this.finished || this.verificationActive) && this.recheckQueue.isEmpty() == false)
         {
             Iterator<BlockPos> iter = this.recheckQueue.iterator();
+            boolean handledQueue = false;
 
             while (iter.hasNext())
             {
@@ -411,23 +411,22 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
                 if (isLoadedClient && isLoadedSchematic)
                 {
-                    BlockMismatch mismatch = this.blockMismatches.get(pos);
+                    BlockMismatch mismatch = this.verifiedPositions.get(pos);
 
                     if (mismatch != null)
                     {
-                        this.blockMismatches.remove(pos);
+                        this.verifiedPositions.remove(pos);
 
                         BlockState stateFound = this.worldClient.getBlockState(pos);
                         MUTABLE_PAIR.setLeft(mismatch.stateExpected);
                         MUTABLE_PAIR.setRight(mismatch.stateFound);
 
-                        this.getMapForMismatchType(mismatch.mismatchType).remove(MUTABLE_PAIR, pos);
-                        this.checkBlockStates(pos.getX(), pos.getY(), pos.getZ(), mismatch.stateExpected, stateFound);
-
-                        if (stateFound.isAir() == false && mismatch.stateFound.isAir())
+                        var map = this.getMapForMismatchType(mismatch.mismatchType);
+                        if (map != null)
                         {
-                            this.clientBlocks++;
+                            map.remove(MUTABLE_PAIR, pos);
                         }
+                        this.checkBlockStates(pos.getX(), pos.getY(), pos.getZ(), mismatch.stateExpected, stateFound);
                     }
                     else
                     {
@@ -437,10 +436,11 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                     }
 
                     iter.remove();
+                    handledQueue = true;
                 }
             }
 
-            if (this.recheckQueue.isEmpty())
+            if (handledQueue)
             {
                 this.updateMismatchOverlays();
             }
@@ -541,7 +541,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
             this.ignoredMismatches.add(ignore);
             this.getMapForMismatchType(mismatch.mismatchType).removeAll(ignore);
 
-            Iterator<Map.Entry<BlockPos, BlockMismatch>> iter = this.blockMismatches.entrySet().iterator();
+            Iterator<Map.Entry<BlockPos, BlockMismatch>> iter = this.verifiedPositions.entrySet().iterator();
 
             while (iter.hasNext())
             {
@@ -582,13 +582,23 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     public Object2IntOpenHashMap<BlockState> getCorrectStates()
     {
-        return this.correctStateCounts;
+        Object2IntOpenHashMap<BlockState> map = new Object2IntOpenHashMap<>();
+
+        for (var entry : verifiedPositions.entrySet())
+        {
+            if (entry.getValue().mismatchType == MismatchType.CORRECT_STATE)
+            {
+                map.addTo(this.worldSchematic.getBlockState(entry.getKey()), 1);
+            }
+        }
+
+        return map;
     }
 
     @Nullable
     public BlockMismatch getMismatchForPosition(BlockPos pos)
     {
-        return this.blockMismatches.get(pos);
+        return this.verifiedPositions.get(pos);
     }
 
     public List<BlockMismatch> getMismatchOverviewFor(MismatchType type)
@@ -699,11 +709,6 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                     {
                         this.schematicBlocks++;
                     }
-
-                    if (stateClient.isAir() == false)
-                    {
-                        this.clientBlocks++;
-                    }
                 }
             }
         }
@@ -753,7 +758,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
                 if (mismatch != null)
                 {
-                    this.blockMismatches.put(pos, mismatch);
+                    this.verifiedPositions.put(pos, mismatch);
 
                     ItemUtils.setItemForBlock(this.worldClient, pos, stateClient);
                     ItemUtils.setItemForBlock(this.worldSchematic, pos, stateSchematic);
@@ -763,11 +768,10 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         else
         {
             ItemUtils.setItemForBlock(this.worldClient, pos, stateClient);
-            this.correctStateCounts.addTo(stateClient, 1);
 
             if (stateSchematic.isAir() == false)
             {
-                ++this.correctStatesCount;
+                this.verifiedPositions.put(pos, new BlockMismatch(MismatchType.CORRECT_STATE, stateSchematic, stateClient, 1));
             }
         }
     }

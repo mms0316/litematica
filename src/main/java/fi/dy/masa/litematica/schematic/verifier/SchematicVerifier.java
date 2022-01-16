@@ -454,14 +454,26 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         if (this.finished || this.verificationActive)
         {
             //Check if block has been handled in the first pass (chunk load)
-            //Note: verifiedPositions does not keep correct Air entries, which means
-            //it is not possible (Without memory overheads) to automatically detect
-            //extra blocks when there should be Air instead
+            //Note: verifiedPositions does not keep correct Air entries
             BlockMismatch mismatch = this.verifiedPositions.get(pos);
 
             if (mismatch != null)
             {
                 this.recheckQueue.add(pos.toImmutable());
+            }
+            //Detect extra blocks when going from Air to something else (edge case)
+            else if (this.worldSchematic.getBlockState(pos).isAir() &&
+                     this.worldClient.getBlockState(pos).isAir() == false)
+            {
+                ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+                //Ignore this if the chunk has not yet been processed from the first pass
+                if (this.requiredChunks.contains(chunkPos) == false &&
+                    //Ignore blocks outside the schematic (fast attempt)
+                    //(recheckQueue will do the actual check)
+                    this.worldSchematic.getChunkProvider().isChunkLoaded(chunkPos.x, chunkPos.z))
+                {
+                    this.recheckQueue.add(pos.toImmutable());
+                }
             }
         }
     }
@@ -510,6 +522,40 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                             map.remove(MUTABLE_PAIR, pos);
                         }
                         this.checkBlockStates(pos.getX(), pos.getY(), pos.getZ(), mismatch.stateExpected, stateFound);
+                    }
+                    else
+                    {
+                        //Detect extra blocks when going from Air to something else
+                        //Check if this block is actually from the schematic (edge case)
+                        Map<String, IntBoundingBox> boxes = PositionUtils.getBoxesWithinChunk(pos.getX() / 16, pos.getZ() / 16, this.subRegions);
+
+                        for (IntBoundingBox box : boxes.values())
+                        {
+                            LayerRange range = DataManager.getRenderLayerRange();
+                            Direction.Axis axis = range.getAxis();
+                            boolean ranged = this.schematicPlacement.getSchematicVerifierType() == BlockInfoListType.RENDER_LAYERS;
+
+                            final int x = pos.getX();
+                            final int y = pos.getY();
+                            final int z = pos.getZ();
+                            final int startX = ranged && axis == Direction.Axis.X ? Math.max(box.minX, range.getLayerMin()) : box.minX;
+                            final int startY = ranged && axis == Direction.Axis.Y ? Math.max(box.minY, range.getLayerMin()) : box.minY;
+                            final int startZ = ranged && axis == Direction.Axis.Z ? Math.max(box.minZ, range.getLayerMin()) : box.minZ;
+                            final int endX = ranged && axis == Direction.Axis.X ? Math.min(box.maxX, range.getLayerMax()) : box.maxX;
+                            final int endY = ranged && axis == Direction.Axis.Y ? Math.min(box.maxY, range.getLayerMax()) : box.maxY;
+                            final int endZ = ranged && axis == Direction.Axis.Z ? Math.min(box.maxZ, range.getLayerMax()) : box.maxZ;
+
+                            if (x >= startX && x <= endX &&
+                                y >= startY && y <= endY &&
+                                z >= startZ && z <= endZ)
+                            {
+                                BlockState stateExpected = this.worldSchematic.getBlockState(pos);
+                                BlockState stateFound = this.worldClient.getBlockState(pos);
+
+                                this.checkBlockStates(x, y, z, stateExpected, stateFound);
+                                break;
+                            }
+                        }
                     }
 
                     iter.remove();

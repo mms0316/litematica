@@ -793,7 +793,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
             for (IntBoundingBox box : boxes.values())
             {
-                this.verifyChunk(chunkClient, chunkSchematic, box, true);
+                this.verifyChunk(chunkClient, chunkSchematic, box, firstPass);
             }
 
             checkedSome = true;

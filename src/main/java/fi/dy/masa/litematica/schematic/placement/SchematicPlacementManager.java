@@ -737,7 +737,7 @@ public class SchematicPlacementManager
                     GuiConfirmAction screen = new GuiConfirmAction(320, "Confirm paste to command files", cl, null, "Are you sure you want to paste the current placement as setblock commands into command/mcfunction files?");
                     GuiBase.openGui(screen);
                 }
-                else if (mc.isIntegratedServerRunning())
+                else if (mc.isIntegratedServerRunning() && range.getLayerMode() == LayerMode.ALL) //TaskPasteSchematicPerChunkDirect ignores range atm
                 {
                     TaskPasteSchematicPerChunkBase task = new TaskPasteSchematicPerChunkDirect(Collections.singletonList(schematicPlacement), range, changedBlocksOnly);
                     TaskScheduler.getInstanceServer().scheduleTask(task, 20);

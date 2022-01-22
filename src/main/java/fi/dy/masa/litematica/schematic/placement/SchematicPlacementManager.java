@@ -297,6 +297,11 @@ public class SchematicPlacementManager
             this.selectedPlacement = null;
         }
 
+        if (placement.hasVerifier())
+        {
+            placement.getSchematicVerifier().reset();
+        }
+
         boolean ret = this.schematicPlacements.remove(placement);
         this.removeTouchedChunksFor(placement);
 
@@ -732,7 +737,7 @@ public class SchematicPlacementManager
                     GuiConfirmAction screen = new GuiConfirmAction(320, "Confirm paste to command files", cl, null, "Are you sure you want to paste the current placement as setblock commands into command/mcfunction files?");
                     GuiBase.openGui(screen);
                 }
-                else if (mc.isIntegratedServerRunning())
+                else if (mc.isIntegratedServerRunning() && range.getLayerMode() == LayerMode.ALL) //TaskPasteSchematicPerChunkDirect ignores range atm
                 {
                     TaskPasteSchematicPerChunkBase task = new TaskPasteSchematicPerChunkDirect(Collections.singletonList(schematicPlacement), range, changedBlocksOnly);
                     TaskScheduler.getInstanceServer().scheduleTask(task, Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue());
@@ -766,6 +771,14 @@ public class SchematicPlacementManager
 
     public void clear()
     {
+        for (SchematicPlacement placement : schematicPlacements)
+        {
+            if (placement.hasVerifier())
+            {
+                placement.getSchematicVerifier().reset();
+            }
+        }
+
         this.schematicPlacements.clear();
         this.selectedPlacement = null;
         this.schematicsTouchingChunk.clear();

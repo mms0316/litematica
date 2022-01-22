@@ -25,6 +25,11 @@ public abstract class MixinClientPlayNetworkHandler
             Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
         {
             SchematicWorldRefresher.INSTANCE.markSchematicChunksForRenderUpdate(packetIn.getX(), packetIn.getZ());
+
+            if (Configs.Generic.SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD.getBooleanValue())
+            {
+                SchematicVerifier.markVerifierChunkChanges(packetIn.getX(), packetIn.getZ());
+            }
         }
     }
 

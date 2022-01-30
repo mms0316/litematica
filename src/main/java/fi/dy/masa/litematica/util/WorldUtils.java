@@ -17,6 +17,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ComparatorBlock;
+import net.minecraft.block.EnderChestBlock;
 import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.SlabBlock;
@@ -411,12 +412,15 @@ public class WorldUtils
         RayTraceWrapper traceWrapper;
         double traceMaxRange = mc.interactionManager.getReachDistance();
 
-        if (Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue())
+        final boolean ignoreEnderChest = Configs.Generic.EASY_PLACE_IGNORE_ENDER_CHEST.getBooleanValue();
+        final boolean ignoreShulkerBox = Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue();
+        if (ignoreEnderChest || ignoreShulkerBox)
         {
             if (mc.player.isSneaking() == false && mc.crosshairTarget instanceof BlockHitResult blockHitResult)
             {
                 Block blockClient = mc.world.getBlockState(blockHitResult.getBlockPos()).getBlock();
-                if (blockClient instanceof ShulkerBoxBlock)
+                if ((ignoreEnderChest && (blockClient instanceof EnderChestBlock)) ||
+                        (ignoreShulkerBox && (blockClient instanceof ShulkerBoxBlock)))
                 {
                     return ActionResult.PASS;
                 }
@@ -463,13 +467,15 @@ public class WorldUtils
 
             if (stack.isEmpty() == false)
             {
-                boolean mayPlaceShulkerBox = false;
+                boolean mayPlace = false;
                 
-                if (Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue())
+                if (ignoreEnderChest || ignoreShulkerBox)
                 {
-                    if (Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem()) instanceof ShulkerBoxBlock)
+                    final Block blockInHand = Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem());
+                    if ((ignoreEnderChest && (blockInHand instanceof EnderChestBlock)) ||
+                            (ignoreShulkerBox && (blockInHand instanceof ShulkerBoxBlock)))
                     {
-                        mayPlaceShulkerBox = true;
+                        mayPlace = true;
                     }
                 }
 
@@ -477,13 +483,13 @@ public class WorldUtils
 
                 if (stateSchematic == stateClient)
                 {
-                    return mayPlaceShulkerBox ? ActionResult.PASS : ActionResult.FAIL;
+                    return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
                 // Abort if there is already a block in the target position
                 if (easyPlaceBlockChecksCancel(stateSchematic, stateClient, mc.player, traceVanilla, stack))
                 {
-                    return mayPlaceShulkerBox ? ActionResult.PASS : ActionResult.FAIL;
+                    return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
                 InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
@@ -492,7 +498,7 @@ public class WorldUtils
                 // Abort if a wrong item is in the player's hand
                 if (hand == null)
                 {
-                    return mayPlaceShulkerBox ? ActionResult.PASS : ActionResult.FAIL;
+                    return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
                 Vec3d hitPos = trace.getPos();

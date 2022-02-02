@@ -7,8 +7,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.network.packet.s2c.play.ChunkDeltaUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.UnloadChunkS2CPacket;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkSectionPos;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
@@ -42,6 +44,19 @@ public abstract class MixinClientPlayNetworkHandler
             ChunkSectionPos pos = ((IMixinChunkDeltaUpdateS2CPacket) packet).litematica_getSection();
             SchematicWorldRefresher.INSTANCE.markSchematicChunksForRenderUpdate(pos.getX(), pos.getY(), pos.getZ());
             packet.visitUpdates((p, s) -> SchematicVerifier.markVerifierBlockChanges(p));
+        }
+    }
+
+    @Inject(method = "onExplosion", at = @At("RETURN"))
+    private void onExplosion(ExplosionS2CPacket packet, CallbackInfo ci)
+    {
+        if (Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
+                Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
+        {
+            for (BlockPos block : packet.getAffectedBlocks())
+            {
+                SchematicVerifier.markVerifierBlockChanges(block);
+            }
         }
     }
 

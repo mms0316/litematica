@@ -33,6 +33,8 @@ public abstract class MixinClientPlayNetworkHandler
                 SchematicVerifier.markVerifierChunkChanges(packetIn.getX(), packetIn.getZ());
             }
         }
+
+        DataManager.getSchematicPlacementManager().onClientChunkLoad(packetIn.getX(), packetIn.getZ());
     }
 
     @Inject(method = "onChunkDeltaUpdate", at = @At("RETURN"))

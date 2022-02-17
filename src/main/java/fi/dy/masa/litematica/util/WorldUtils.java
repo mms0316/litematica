@@ -511,7 +511,8 @@ public class WorldUtils
 
                 // If there is a block in the world right behind the targeted schematic block, then use
                 // that block as the click position
-                if (traceVanilla != null && traceVanilla.getType() == HitResult.Type.BLOCK)
+                HitResult.Type type = traceVanilla.getType();
+                if (type == HitResult.Type.BLOCK || type == HitResult.Type.MISS)
                 {
                     BlockHitResult hitResult = (BlockHitResult) traceVanilla;
                     BlockPos posVanilla = hitResult.getBlockPos();
@@ -628,7 +629,8 @@ public class WorldUtils
             }
         }
 
-        if (trace.getType() != HitResult.Type.BLOCK)
+        HitResult.Type type = trace.getType();
+        if (type != HitResult.Type.BLOCK && type != HitResult.Type.MISS)
         {
             return false;
         }

@@ -24,6 +24,7 @@ public abstract class MixinMinecraftClient extends ReentrantThreadExecutor<Runna
         if (WorldUtils.shouldDoEasyPlaceActions())
         {
             WorldUtils.onRightClickTail((MinecraftClient)(Object) this);
+            WorldUtils.easyPlaceAllowedInTick = false;
         }
     }
 
@@ -31,5 +32,6 @@ public abstract class MixinMinecraftClient extends ReentrantThreadExecutor<Runna
     private void onRunTickStart(CallbackInfo ci)
     {
         DataManager.onClientTickStart();
+        WorldUtils.easyPlaceAllowedInTick = true;
     }
 }

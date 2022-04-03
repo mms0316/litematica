@@ -93,7 +93,7 @@ public class WorldUtils
     private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
     private static boolean isHandlingEasyPlace;
     private static boolean isFirstClickEasyPlace;
-    private static boolean isFirstClickPlacementRestriction;
+    public static boolean easyPlaceAllowedInTick;
 
     public static boolean shouldPreventBlockUpdates(World world)
     {
@@ -398,15 +398,16 @@ public class WorldUtils
         if (mc.player != null && isHandlingEasyPlace == false &&
             shouldDoEasyPlaceActions() &&
             Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() &&
-            Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
+            Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld() &&
+            WorldUtils.easyPlaceAllowedInTick)
         {
             isHandlingEasyPlace = true;
-            WorldUtils.doEasyPlaceAction(mc);
+            WorldUtils.doEasyPlaceAction(mc, false);
             isHandlingEasyPlace = false;
         }
     }
 
-    private static ActionResult doEasyPlaceAction(MinecraftClient mc)
+    private static ActionResult doEasyPlaceAction(MinecraftClient mc, boolean isInteracting)
     {
         RayTraceWrapper traceWrapper;
         double traceMaxRange = mc.interactionManager.getReachDistance();
@@ -454,12 +455,6 @@ public class WorldUtils
 
             // Already placed to that position, possible server sync delay
             if (easyPlaceIsPositionCached(pos))
-            {
-                return ActionResult.FAIL;
-            }
-
-            // Ignore action if too fast
-            if (easyPlaceIsTooFast())
             {
                 return ActionResult.FAIL;
             }
@@ -1326,6 +1321,25 @@ public class WorldUtils
         return true;
     }
 
+    public static void easyPlaceRemovePosition(BlockPos pos)
+    {
+        for (int i = 0; i < EASY_PLACE_POSITIONS.size(); ++i)
+        {
+            PositionCache val = EASY_PLACE_POSITIONS.get(i);
+            if (val.getPos().equals(pos))
+            {
+                EASY_PLACE_POSITIONS.remove(i);
+                --i;
+
+                // Keep checking and removing old entries if there are a fair amount
+                if (EASY_PLACE_POSITIONS.size() < 16)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
     public static boolean easyPlaceIsPositionCached(BlockPos pos)
     {
         long currentTime = System.nanoTime();
@@ -1385,11 +1399,6 @@ public class WorldUtils
         }
     }
 
-    private static boolean easyPlaceIsTooFast()
-    {
-        return System.nanoTime() - easyPlaceLastPickBlockTime < 1000000L * Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue();
-    }
-
     public static boolean isHandlingEasyPlace()
     {
         return isHandlingEasyPlace;
@@ -1406,11 +1415,6 @@ public class WorldUtils
         {
             isFirstClickEasyPlace = true;
         }
-
-        if (Configs.Generic.PLACEMENT_RESTRICTION.getBooleanValue())
-        {
-            isFirstClickPlacementRestriction = true;
-        }
     }
 
     public static boolean shouldDoEasyPlaceActions()
@@ -1419,7 +1423,7 @@ public class WorldUtils
                 Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld();
     }
 
-    public static boolean handleEasyPlaceWithMessage(MinecraftClient mc)
+    public static boolean handleEasyPlaceWithMessage(MinecraftClient mc, boolean isInteracting)
     {
         if (isHandlingEasyPlace)
         {
@@ -1427,7 +1431,7 @@ public class WorldUtils
         }
 
         isHandlingEasyPlace = true;
-        ActionResult result = doEasyPlaceAction(mc);
+        ActionResult result = doEasyPlaceAction(mc, isInteracting);
         isHandlingEasyPlace = false;
 
         // Only print the warning message once per right click
@@ -1455,9 +1459,12 @@ public class WorldUtils
         // If the click wasn't handled yet, handle it now.
         // This is only called when right clicking on air with an empty hand,
         // as in that case neither the processRightClickBlock nor the processRightClick method get called.
-        if (isFirstClickEasyPlace)
+        if (WorldUtils.shouldDoEasyPlaceActions())
         {
-            handleEasyPlaceWithMessage(mc);
+            if (isFirstClickEasyPlace)
+            {
+                handleEasyPlaceWithMessage(mc, false);
+            }
         }
     }
 }

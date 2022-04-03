@@ -26,24 +26,22 @@ public abstract class MixinClientPlayerInteractionManager
     private void onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult,
             CallbackInfoReturnable<ActionResult> cir)
     {
-        // Prevent recursion, since the Easy Place mode can call this code again
-        if (WorldUtils.isHandlingEasyPlace() == false)
+        WorldUtils.easyPlaceAllowedInTick = false;
+
+        if (WorldUtils.shouldDoEasyPlaceActions())
         {
-            if (WorldUtils.shouldDoEasyPlaceActions())
+            if (WorldUtils.handleEasyPlaceWithMessage(this.client, true))
             {
-                if (WorldUtils.handleEasyPlaceWithMessage(this.client))
+                cir.setReturnValue(net.minecraft.util.ActionResult.FAIL);
+            }
+        }
+        else
+        {
+            if (Configs.Generic.PLACEMENT_RESTRICTION.getBooleanValue())
+            {
+                if (WorldUtils.handlePlacementRestriction(this.client))
                 {
                     cir.setReturnValue(net.minecraft.util.ActionResult.FAIL);
-                }
-            }
-            else
-            {
-                if (Configs.Generic.PLACEMENT_RESTRICTION.getBooleanValue())
-                {
-                    if (WorldUtils.handlePlacementRestriction(this.client))
-                    {
-                        cir.setReturnValue(net.minecraft.util.ActionResult.FAIL);
-                    }
                 }
             }
         }
@@ -54,14 +52,12 @@ public abstract class MixinClientPlayerInteractionManager
             target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;syncSelectedSlot()V"))
     private void onInteractItem(PlayerEntity player, World world, Hand hand, CallbackInfoReturnable<ActionResult> cir)
     {
-        // Prevent recursion, since the Easy Place mode can call this code again
-        if (WorldUtils.isHandlingEasyPlace() == false)
+        WorldUtils.easyPlaceAllowedInTick = false;
+
+        if (WorldUtils.shouldDoEasyPlaceActions())
         {
-            if (WorldUtils.shouldDoEasyPlaceActions() &&
-                    WorldUtils.handleEasyPlaceWithMessage(this.client))
-            {
+            if (WorldUtils.handleEasyPlaceWithMessage(this.client, true))
                 cir.setReturnValue(ActionResult.FAIL);
-            }
         }
     }
 }

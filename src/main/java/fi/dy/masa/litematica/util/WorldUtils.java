@@ -91,7 +91,6 @@ import org.apache.commons.lang3.tuple.Triple;
 public class WorldUtils
 {
     private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
-    private static long easyPlaceLastPickBlockTime = System.nanoTime();
     private static boolean isHandlingEasyPlace;
     private static boolean isFirstClickEasyPlace;
     private static boolean isFirstClickPlacementRestriction;
@@ -1396,11 +1395,6 @@ public class WorldUtils
     private static boolean easyPlaceIsTooFast()
     {
         return System.nanoTime() - easyPlaceLastPickBlockTime < 1000000L * Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue();
-    }
-
-    public static void setEasyPlaceLastPickBlockTime()
-    {
-        easyPlaceLastPickBlockTime = System.nanoTime();
     }
 
     public static boolean isHandlingEasyPlace()

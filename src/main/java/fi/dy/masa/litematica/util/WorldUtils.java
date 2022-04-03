@@ -17,11 +17,16 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ComparatorBlock;
+import net.minecraft.block.DoorBlock;
 import net.minecraft.block.EnderChestBlock;
+import net.minecraft.block.LeverBlock;
+import net.minecraft.block.Material;
+import net.minecraft.block.NoteBlock;
 import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.TorchBlock;
+import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.block.WallBannerBlock;
 import net.minecraft.block.WallRedstoneTorchBlock;
 import net.minecraft.block.WallSignBlock;
@@ -481,9 +486,24 @@ public class WorldUtils
                 }
 
                 // Abort if there is already a block in the target position
-                if (easyPlaceBlockChecksCancel(stateSchematic, stateClient, mc.player, traceVanilla, stack))
+                // unless there is an action on the block (note block, repeater, so on)
+                ActionResult actionResult = easyPlaceBlockChecksCancel(stateSchematic, stateClient, mc.player, traceVanilla, stack);
+                if (actionResult == ActionResult.FAIL)
                 {
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
+                }
+                else if (actionResult == ActionResult.SUCCESS)
+                {
+                    cacheEasyPlacePosition(pos);
+                    if (isInteracting)
+                    {
+                        return ActionResult.PASS;
+                    }
+                    else
+                    {
+                        mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, trace);
+                        return ActionResult.SUCCESS;
+                    }
                 }
 
                 InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
@@ -608,7 +628,7 @@ public class WorldUtils
         return ActionResult.PASS;
     }
 
-    private static boolean easyPlaceBlockChecksCancel(BlockState stateSchematic, BlockState stateClient,
+    private static ActionResult easyPlaceBlockChecksCancel(BlockState stateSchematic, BlockState stateClient,
             PlayerEntity player, HitResult trace, ItemStack stack)
     {
         Block blockSchematic = stateSchematic.getBlock();
@@ -619,14 +639,79 @@ public class WorldUtils
 
             if (blockClient instanceof SlabBlock && stateClient.get(SlabBlock.TYPE) != SlabType.DOUBLE)
             {
-                return blockSchematic != blockClient;
+                return blockSchematic == blockClient ? ActionResult.SUCCESS : ActionResult.FAIL;
+            }
+        }
+        else if (player.isSneaking() == false)
+        {
+            if (blockSchematic instanceof NoteBlock)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof NoteBlock)
+                {
+                    return stateSchematic.get(Properties.NOTE).intValue() != stateClient.get(Properties.NOTE).intValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
+            }
+            else if (blockSchematic instanceof RepeaterBlock)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof RepeaterBlock)
+                {
+                    return stateSchematic.get(Properties.DELAY).intValue() != stateClient.get(Properties.DELAY).intValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
+            }
+            else if (blockSchematic instanceof TrapdoorBlock && stateSchematic.getMaterial() != Material.METAL)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof TrapdoorBlock && stateClient.getMaterial() == stateSchematic.getMaterial())
+                {
+                    return stateSchematic.get(Properties.OPEN).booleanValue() != stateClient.get(Properties.OPEN).booleanValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
+            }
+            else if (blockSchematic instanceof DoorBlock && stateSchematic.getMaterial() != Material.METAL)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof DoorBlock && stateClient.getMaterial() == stateSchematic.getMaterial())
+                {
+                    if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                    {
+                        Litematica.logger.info(stateSchematic.get(Properties.OPEN));
+                        Litematica.logger.info(stateClient.get(Properties.OPEN));
+                    }
+
+                    return stateSchematic.get(Properties.OPEN).booleanValue() != stateClient.get(Properties.OPEN).booleanValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
+            }
+            else if (blockSchematic instanceof LeverBlock && stateSchematic.getMaterial() != Material.METAL)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof LeverBlock && stateClient.getMaterial() == stateSchematic.getMaterial())
+                {
+                    if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                    {
+                        Litematica.logger.info(stateSchematic.get(Properties.POWERED));
+                        Litematica.logger.info(stateClient.get(Properties.POWERED));
+                    }
+
+                    return stateSchematic.get(Properties.POWERED).booleanValue() != stateClient.get(Properties.POWERED).booleanValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
             }
         }
 
         HitResult.Type type = trace.getType();
         if (type != HitResult.Type.BLOCK && type != HitResult.Type.MISS)
         {
-            return false;
+            return ActionResult.PASS;
         }
 
         BlockHitResult hitResult = (BlockHitResult) trace;
@@ -634,10 +719,10 @@ public class WorldUtils
 
         if (stateClient.canReplace(ctx) == false)
         {
-            return true;
+            return ActionResult.FAIL;
         }
 
-        return false;
+        return ActionResult.PASS;
     }
 
     /**

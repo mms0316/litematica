@@ -1,9 +1,11 @@
 package fi.dy.masa.litematica.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import fi.dy.masa.litematica.Litematica;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EquipmentSlot;
@@ -23,8 +25,7 @@ import fi.dy.masa.malilib.gui.GuiBase;
 
 public class InventoryUtils
 {
-    private static final List<Integer> PICK_BLOCKABLE_SLOTS = new ArrayList<>();
-    private static int nextPickSlotIndex;
+    private static final Map<Integer, Long> PICK_BLOCKABLE_SLOTS = new HashMap<>();
 
     public static void setPickBlockableSlots(String configStr)
     {
@@ -49,10 +50,7 @@ public class InventoryUtils
                     {
                         for (int slotNum = slotStart; slotNum <= slotEnd; ++slotNum)
                         {
-                            if (PICK_BLOCKABLE_SLOTS.contains(slotNum) == false)
-                            {
-                                PICK_BLOCKABLE_SLOTS.add(slotNum);
-                            }
+                            PICK_BLOCKABLE_SLOTS.put(slotNum, 0L);
                         }
                     }
                 }
@@ -60,10 +58,9 @@ public class InventoryUtils
                 {
                     int slotNum = Integer.parseInt(str);
 
-                    if (PlayerInventory.isValidHotbarIndex(slotNum - 1) &&
-                        PICK_BLOCKABLE_SLOTS.contains(slotNum) == false)
+                    if (PlayerInventory.isValidHotbarIndex(slotNum - 1))
                     {
-                        PICK_BLOCKABLE_SLOTS.add(slotNum);
+                        PICK_BLOCKABLE_SLOTS.put(slotNum, 0L);
                     }
                 }
             }
@@ -83,9 +80,15 @@ public class InventoryUtils
     {
         PlayerEntity player = mc.player;
         PlayerInventory inventory = player.getInventory();
+        final long now = System.nanoTime();
+        final long nextTimeout = now + (20 + Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue()) * 1_000_000L;
 
         if (PlayerInventory.isValidHotbarIndex(sourceSlot))
         {
+            if (PICK_BLOCKABLE_SLOTS.containsKey(sourceSlot + 1))
+            {
+                PICK_BLOCKABLE_SLOTS.put(sourceSlot + 1, nextTimeout);
+            }
             inventory.selectedSlot = sourceSlot;
         }
         else
@@ -109,6 +112,7 @@ public class InventoryUtils
 
             if (hotbarSlot != -1)
             {
+                PICK_BLOCKABLE_SLOTS.put(hotbarSlot + 1, nextTimeout);
                 inventory.selectedSlot = hotbarSlot;
 
                 if (EntityUtils.isCreativeMode(player))
@@ -119,8 +123,6 @@ public class InventoryUtils
                 {
                     fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack.copy(), mc);
                 }
-
-                WorldUtils.setEasyPlaceLastPickBlockTime();
             }
         }
     }
@@ -182,35 +184,32 @@ public class InventoryUtils
 
     private static int getPickBlockTargetSlot(PlayerEntity player)
     {
-        int slotNum;
+        int slotNum = -1;
+        long now = System.nanoTime();
 
-        if (PICK_BLOCKABLE_SLOTS.contains(player.getInventory().selectedSlot + 1))
+        // Find slot with lowest expired timeout
+        long lowestTimeout = Long.MAX_VALUE;
+        for (var entry : PICK_BLOCKABLE_SLOTS.entrySet())
         {
-            slotNum = player.getInventory().selectedSlot;
-        }
-        else
-        {
-            if (nextPickSlotIndex >= PICK_BLOCKABLE_SLOTS.size())
+            long thisTimeout = entry.getValue();
+            if (thisTimeout <= now && thisTimeout < lowestTimeout)
             {
-                nextPickSlotIndex = 0;
-            }
-
-            slotNum = PICK_BLOCKABLE_SLOTS.get(nextPickSlotIndex) - 1;
-
-            if (++nextPickSlotIndex >= PICK_BLOCKABLE_SLOTS.size())
-            {
-                nextPickSlotIndex = 0;
+                lowestTimeout = thisTimeout;
+                slotNum = entry.getKey() - 1;
             }
         }
+
+        if (slotNum < 0)
+            return -1;
 
         return slotNum;
     }
 
     private static int getEmptyPickBlockableHotbarSlot(PlayerInventory inventory)
     {
-        for (int i = 0; i < PICK_BLOCKABLE_SLOTS.size(); ++i)
+        for (int slot : PICK_BLOCKABLE_SLOTS.keySet())
         {
-            int slotNum = PICK_BLOCKABLE_SLOTS.get(i) - 1;
+            int slotNum = slot - 1;
 
             if (slotNum >= 0 && slotNum < inventory.main.size())
             {

@@ -163,8 +163,10 @@ public class InventoryUtils
                     {
                         setPickedItemToHand(stack, mc);
                     }
-
-                    preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
+                    else
+                    {
+                        preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
+                    }
                 }
                 else if (Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())
                 {

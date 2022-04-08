@@ -1,12 +1,13 @@
 package fi.dy.masa.litematica.mixin;
 
+import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.config.Configs;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.thread.ReentrantThreadExecutor;
-import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.util.WorldUtils;
 
@@ -18,13 +19,23 @@ public abstract class MixinMinecraftClient extends ReentrantThreadExecutor<Runna
         super(string_1);
     }
 
-    @Inject(method = "doItemUse()V", at = @At("TAIL"))
-    private void onRightClickMouseTail(CallbackInfo ci)
+    @Inject(method = "handleInputEvents()V", at = @At("HEAD"))
+    private void onHandleInputEventsHead(CallbackInfo ci)
+    {
+        //Reset easyPlace variables
+        WorldUtils.easyPlaceAllowedInTick = true;
+        WorldUtils.allowNestedInteractBlock = false;
+    }
+
+    @Inject(method = "handleInputEvents()V", at = @At("RETURN"))
+    private void onHandleInputEventsReturn(CallbackInfo ci)
     {
         if (WorldUtils.shouldDoEasyPlaceActions())
         {
-            WorldUtils.onRightClickTail((MinecraftClient)(Object) this);
+            if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                Litematica.logger.info("handleInputEvents last");
             WorldUtils.easyPlaceAllowedInTick = false;
+            WorldUtils.handleEasyPlaceWithMessage(MinecraftClient.getInstance());
         }
     }
 
@@ -32,6 +43,5 @@ public abstract class MixinMinecraftClient extends ReentrantThreadExecutor<Runna
     private void onRunTickStart(CallbackInfo ci)
     {
         DataManager.onClientTickStart();
-        WorldUtils.easyPlaceAllowedInTick = true;
     }
 }

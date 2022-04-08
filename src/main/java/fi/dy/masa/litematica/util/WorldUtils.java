@@ -7,7 +7,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.block.AbstractBannerBlock;
@@ -51,8 +53,11 @@ import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.Structure;
 import net.minecraft.structure.StructurePlacementData;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Util;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -95,10 +100,13 @@ import org.apache.commons.lang3.tuple.Triple;
 
 public class WorldUtils
 {
-    private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
+    private static final Map<BlockPos, Long> EASY_PLACE_POSITIONS = new HashMap<>();
     private static boolean isHandlingEasyPlace;
-    private static boolean isFirstClickEasyPlace;
     public static boolean easyPlaceAllowedInTick;
+    private static long easyPlaceTimeout = 0;
+    public static BlockPos easyPlaceLastBlockPos = null;
+    public static boolean allowNestedInteractBlock = false;
+    public static boolean easyPlaceInformFailure = false;
 
     public static boolean shouldPreventBlockUpdates(World world)
     {
@@ -398,21 +406,58 @@ public class WorldUtils
         return false;
     }
 
-    public static void easyPlaceOnUseTick(MinecraftClient mc)
+    private static void dumpPosDebug(String reason, Vec3i pos)
     {
-        if (mc.player != null && isHandlingEasyPlace == false &&
-            shouldDoEasyPlaceActions() &&
-            Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() &&
-            Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld() &&
-            WorldUtils.easyPlaceAllowedInTick)
+        if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
         {
-            isHandlingEasyPlace = true;
-            WorldUtils.doEasyPlaceAction(mc, false);
-            isHandlingEasyPlace = false;
+            MinecraftClient mc = MinecraftClient.getInstance();
+            StringBuilder sb = new StringBuilder();
+
+            if (pos != null)
+            {
+                sb.append('[');
+                sb.append(pos.getX());
+                sb.append(',');
+                sb.append(pos.getY());
+                sb.append(',');
+                sb.append(pos.getZ());
+                sb.append(']');
+                sb.append(' ');
+            }
+
+            sb.append(reason);
+            String str = sb.toString();
+
+            mc.inGameHud.addChatMessage(net.minecraft.network.MessageType.GAME_INFO, Text.of(str), Util.NIL_UUID);
+            Litematica.logger.info(str);
         }
     }
 
-    private static ActionResult doEasyPlaceAction(MinecraftClient mc, boolean isInteracting)
+    private static void dumpPosDebug(String reason, Vec3d pos)
+    {
+        if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+        {
+            dumpPosDebug(reason, new Vec3i(pos.getX(), pos.getY(), pos.getZ()));
+        }
+    }
+
+    private static void dumpPosDebug(String reason)
+    {
+        if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+        {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.crosshairTarget == null)
+            {
+                dumpPosDebug(reason, (Vec3i)null);
+            }
+            else
+            {
+                dumpPosDebug(reason, mc.crosshairTarget.getPos());
+            }
+        }
+    }
+
+    private static ActionResult doEasyPlaceAction(MinecraftClient mc)
     {
         RayTraceWrapper traceWrapper;
         double traceMaxRange = mc.interactionManager.getReachDistance();
@@ -446,6 +491,7 @@ public class WorldUtils
 
         if (traceWrapper == null)
         {
+            dumpPosDebug("PASS - traceWrapper == null");
             return ActionResult.PASS;
         }
 
@@ -461,6 +507,14 @@ public class WorldUtils
             // Already placed to that position, possible server sync delay
             if (easyPlaceIsPositionCached(pos))
             {
+                //dumpPosDebug("FAIL - position restricted", pos);
+                return ActionResult.FAIL;
+            }
+
+            // Action too fast
+            if (System.nanoTime() < easyPlaceTimeout)
+            {
+                //dumpPosDebug("FAIL - too fast", pos);
                 return ActionResult.FAIL;
             }
 
@@ -482,6 +536,7 @@ public class WorldUtils
 
                 if (stateSchematic == stateClient)
                 {
+                    //dumpPosDebug("PASS/FAIL - state already correct", pos);
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
@@ -490,19 +545,26 @@ public class WorldUtils
                 ActionResult actionResult = easyPlaceBlockChecksCancel(stateSchematic, stateClient, mc.player, traceVanilla, stack);
                 if (actionResult == ActionResult.FAIL)
                 {
+                    //dumpPosDebug("PASS/FAIL - a block is already in position", pos);
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
                 else if (actionResult == ActionResult.SUCCESS)
                 {
-                    cacheEasyPlacePosition(pos);
-                    if (isInteracting)
+                    if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                        Litematica.logger.info("interact block");
+
+                    if (mc.crosshairTarget instanceof BlockHitResult blockHitResult)
                     {
-                        return ActionResult.PASS;
+                        allowNestedInteractBlock = true;
+                        mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, blockHitResult);
+                        allowNestedInteractBlock = false;
+                        cacheEasyPlacePosition(pos);
+                        return ActionResult.SUCCESS;
                     }
                     else
                     {
-                        mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, trace);
-                        return ActionResult.SUCCESS;
+                        //dumpPosDebug("FAIL - target not a block", pos);
+                        return ActionResult.FAIL;
                     }
                 }
 
@@ -512,16 +574,14 @@ public class WorldUtils
                 // Abort if a wrong item is in the player's hand
                 if (hand == null)
                 {
+                    //dumpPosDebug("PASS/FAIL - wrong item in hand", pos);
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
                 Vec3d hitPos = trace.getPos();
                 Direction sideOrig = trace.getSide();
 
-                if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
-                {
-                    Litematica.logger.info("sideTrace: " + sideOrig + " hitPosTrace: " + hitPos);
-                }
+                //dumpPosDebug("sideTrace: " + sideOrig + " hitPosTrace: " + hitPos, pos);
 
                 // If there is a block in the world right behind the targeted schematic block, then use
                 // that block as the click position
@@ -543,13 +603,9 @@ public class WorldUtils
                         {
                             hitPos = hit;
                             sideOrig = sideVanilla;
+                            //dumpPosDebug("changed side: " + sideOrig + " hitPos: " + hitPos, pos);
                         }
                     }
-                }
-
-                if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
-                {
-                    Litematica.logger.info("sideIn: " + sideOrig + " hitPosIn: " + hitPos);
                 }
 
                 EasyPlaceProtocol protocol = PlacementHandler.getEffectiveProtocolVersion();
@@ -582,10 +638,7 @@ public class WorldUtils
                     var changedHitResult = applyRestrictedProtocol(pos, stateSchematic, sideOrig, hitPos, mc, hand);
                     if (changedHitResult == null)
                     {
-                        if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
-                        {
-                            Litematica.logger.info("Can't orientate");
-                        }
+                        //dumpPosDebug("FAIL - can't orientate", hitPos);
                         return ActionResult.FAIL;
                     }
 
@@ -596,13 +649,13 @@ public class WorldUtils
 
                 // Mark that this position has been handled (use the non-offset position that is checked above)
                 cacheEasyPlacePosition(pos);
+                easyPlaceTimeout = System.nanoTime() + (20 * Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue() * 1_000_000L);
+                easyPlaceLastBlockPos = pos;
 
                 BlockHitResult hitResult = new BlockHitResult(hitPos, sideOut, posOut, false);
 
-                if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
-                {
-                    Litematica.logger.info("sideOut: " + sideOut + " hitPosOut: " + hitPos + " posOut: " + posOut);
-                }
+                //dumpPosDebug("sideOut: " + sideOut + " hitPosOut: " + hitPos + " posOut: " + posOut, hitPos);
+                allowNestedInteractBlock = true;
                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 
                 if (stateSchematic.getBlock() instanceof SlabBlock && stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE)
@@ -613,9 +666,17 @@ public class WorldUtils
                     {
                         sideOut = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                         hitResult = new BlockHitResult(hitPos, sideOut, pos, false);
+                        allowNestedInteractBlock = true;
                         mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                     }
                 }
+
+                allowNestedInteractBlock = false;
+                dumpPosDebug("-- easyPlaced @ " + posOut.getX() + ',' + posOut.getY() + ',' + posOut.getZ());
+            }
+            else
+            {
+                dumpPosDebug("SUCCESS");
             }
 
             return ActionResult.SUCCESS;
@@ -625,6 +686,7 @@ public class WorldUtils
             return placementRestrictionInEffect(mc) ? ActionResult.FAIL : ActionResult.PASS;
         }
 
+        dumpPosDebug("PASS");
         return ActionResult.PASS;
     }
 
@@ -1408,119 +1470,54 @@ public class WorldUtils
 
     public static void easyPlaceRemovePosition(BlockPos pos)
     {
-        for (int i = 0; i < EASY_PLACE_POSITIONS.size(); ++i)
-        {
-            PositionCache val = EASY_PLACE_POSITIONS.get(i);
-            if (val.getPos().equals(pos))
-            {
-                EASY_PLACE_POSITIONS.remove(i);
-                --i;
+        EASY_PLACE_POSITIONS.remove(pos);
 
-                // Keep checking and removing old entries if there are a fair amount
-                if (EASY_PLACE_POSITIONS.size() < 16)
-                {
-                    break;
-                }
-            }
-        }
+        if (easyPlaceLastBlockPos != null && pos.compareTo(easyPlaceLastBlockPos) == 0)
+            easyPlaceTimeout = 0;
     }
 
     public static boolean easyPlaceIsPositionCached(BlockPos pos)
     {
-        long currentTime = System.nanoTime();
-        boolean cached = false;
-
-        for (int i = 0; i < EASY_PLACE_POSITIONS.size(); ++i)
-        {
-            PositionCache val = EASY_PLACE_POSITIONS.get(i);
-            boolean expired = val.hasExpired(currentTime);
-
-            if (expired)
-            {
-                EASY_PLACE_POSITIONS.remove(i);
-                --i;
-            }
-            else if (val.getPos().equals(pos))
-            {
-                cached = true;
-
-                // Keep checking and removing old entries if there are a fair amount
-                if (EASY_PLACE_POSITIONS.size() < 16)
-                {
-                    break;
-                }
-            }
-        }
-
-        return cached;
-    }
-
-    private static void cacheEasyPlacePosition(BlockPos pos)
-    {
-        EASY_PLACE_POSITIONS.add(new PositionCache(pos, System.nanoTime(), 2000000000));
-    }
-
-    public static class PositionCache
-    {
-        private final BlockPos pos;
-        private final long time;
-        private final long timeout;
-
-        private PositionCache(BlockPos pos, long time, long timeout)
-        {
-            this.pos = pos;
-            this.time = time;
-            this.timeout = timeout;
-        }
-
-        public BlockPos getPos()
-        {
-            return this.pos;
-        }
-
-        public boolean hasExpired(long currentTime)
-        {
-            return currentTime - this.time > this.timeout;
-        }
-    }
-
-    public static boolean isHandlingEasyPlace()
-    {
-        return isHandlingEasyPlace;
-    }
-
-    public static void setHandlingEasyPlace(boolean handling)
-    {
-        isHandlingEasyPlace = handling;
-    }
-
-    public static void setIsFirstClickEasyPlace()
-    {
-        if (shouldDoEasyPlaceActions())
-        {
-            isFirstClickEasyPlace = true;
-        }
-    }
-
-    public static boolean shouldDoEasyPlaceActions()
-    {
-        return Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && DataManager.getToolMode() != ToolMode.REBUILD &&
-                Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld();
-    }
-
-    public static boolean handleEasyPlaceWithMessage(MinecraftClient mc, boolean isInteracting)
-    {
-        if (isHandlingEasyPlace)
+        var timeout = EASY_PLACE_POSITIONS.get(pos);
+        if (timeout == null)
         {
             return false;
         }
 
+        final long now = System.nanoTime();
+        if (now < timeout)
+        {
+            return true;
+        }
+        else
+        {
+            // Expired
+            EASY_PLACE_POSITIONS.remove(pos);
+            return false;
+        }
+    }
+
+    private static void cacheEasyPlacePosition(BlockPos pos)
+    {
+        EASY_PLACE_POSITIONS.put(pos, System.nanoTime() + 2_000_000_000L);
+    }
+
+    public static boolean shouldDoEasyPlaceActions()
+    {
+        return Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
+                DataManager.getToolMode() != ToolMode.REBUILD &&
+                Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld() &&
+                easyPlaceAllowedInTick &&
+                isHandlingEasyPlace == false;
+    }
+
+    public static boolean handleEasyPlaceWithMessage(MinecraftClient mc)
+    {
         isHandlingEasyPlace = true;
-        ActionResult result = doEasyPlaceAction(mc, isInteracting);
+        ActionResult result = doEasyPlaceAction(mc);
         isHandlingEasyPlace = false;
 
-        // Only print the warning message once per right click
-        if (isFirstClickEasyPlace && result == ActionResult.FAIL)
+        if (result == ActionResult.FAIL)
         {
             MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
 
@@ -1534,22 +1531,6 @@ public class WorldUtils
             }
         }
 
-        isFirstClickEasyPlace = false;
-
         return result != ActionResult.PASS;
-    }
-
-    public static void onRightClickTail(MinecraftClient mc)
-    {
-        // If the click wasn't handled yet, handle it now.
-        // This is only called when right clicking on air with an empty hand,
-        // as in that case neither the processRightClickBlock nor the processRightClick method get called.
-        if (WorldUtils.shouldDoEasyPlaceActions())
-        {
-            if (isFirstClickEasyPlace)
-            {
-                handleEasyPlaceWithMessage(mc, false);
-            }
-        }
     }
 }

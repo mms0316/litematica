@@ -297,10 +297,6 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
                     return SchematicUtils.placeSchematicBlock(mc);
                 }
             }
-            else
-            {
-                WorldUtils.setIsFirstClickEasyPlace();
-            }
         }
 
         return false;

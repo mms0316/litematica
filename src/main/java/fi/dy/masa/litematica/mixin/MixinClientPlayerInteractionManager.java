@@ -1,5 +1,6 @@
 package fi.dy.masa.litematica.mixin;
 
+import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.util.WorldUtils;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
@@ -26,14 +27,35 @@ public abstract class MixinClientPlayerInteractionManager
     private void onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult,
             CallbackInfoReturnable<ActionResult> cir)
     {
-        WorldUtils.easyPlaceAllowedInTick = false;
+        if (WorldUtils.allowNestedInteractBlock)
+        {
+            // Recursion - mc.interactionManager.interactBlock was called from easyPlace
+            // Let vanilla code run
+            if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                Litematica.logger.info("interactBlock recursion allowed");
+            WorldUtils.allowNestedInteractBlock = false;
+            return;
+        }
 
         if (WorldUtils.shouldDoEasyPlaceActions())
         {
-            if (WorldUtils.handleEasyPlaceWithMessage(this.client, true))
+            if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                Litematica.logger.info("interactBlock 1st");
+            WorldUtils.easyPlaceAllowedInTick = false;
+
+            if (WorldUtils.handleEasyPlaceWithMessage(this.client))
             {
-                cir.setReturnValue(net.minecraft.util.ActionResult.FAIL);
+                cir.setReturnValue(ActionResult.FAIL);
+                if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                    Litematica.logger.info("interactBlock aborted");
             }
+        }
+        else if (WorldUtils.easyPlaceAllowedInTick == false)
+        {
+            if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                Litematica.logger.info("interactBlock 2nd");
+            // Second or more call in a same render() / tick() call. Must cancel.
+            cir.setReturnValue(ActionResult.FAIL);
         }
         else
         {
@@ -41,7 +63,9 @@ public abstract class MixinClientPlayerInteractionManager
             {
                 if (WorldUtils.handlePlacementRestriction(this.client))
                 {
-                    cir.setReturnValue(net.minecraft.util.ActionResult.FAIL);
+                    if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                        Litematica.logger.info("interactBlock restricted");
+                    cir.setReturnValue(ActionResult.FAIL);
                 }
             }
         }
@@ -52,12 +76,26 @@ public abstract class MixinClientPlayerInteractionManager
             target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;syncSelectedSlot()V"))
     private void onInteractItem(PlayerEntity player, World world, Hand hand, CallbackInfoReturnable<ActionResult> cir)
     {
-        WorldUtils.easyPlaceAllowedInTick = false;
-
         if (WorldUtils.shouldDoEasyPlaceActions())
         {
-            if (WorldUtils.handleEasyPlaceWithMessage(this.client, true))
+            if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                Litematica.logger.info("interactItem 1st");
+            WorldUtils.easyPlaceAllowedInTick = false;
+
+            if (WorldUtils.handleEasyPlaceWithMessage(this.client))
+            {
                 cir.setReturnValue(ActionResult.FAIL);
+
+                if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                    Litematica.logger.info("interactBlock aborted");
+            }
+        }
+        else if (WorldUtils.easyPlaceAllowedInTick == false)
+        {
+            if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                Litematica.logger.info("interactItem 2nd");
+            // Second or more call in a same render() / tick() call. Must cancel.
+            cir.setReturnValue(ActionResult.FAIL);
         }
     }
 }

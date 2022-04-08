@@ -568,7 +568,13 @@ public class WorldUtils
                     }
                 }
 
-                InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+                boolean didAction = InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+                if (didAction && !EntityUtils.isCreativeMode(mc.player))
+                {
+                    // Avoid desyncing with the server, causing wrong block placements
+                    //dumpPosDebug("FAIL schematicWorldPickBlock wait next iteration");
+                    return ActionResult.FAIL;
+                }
                 Hand hand = EntityUtils.getUsedHandForItem(mc.player, stack);
 
                 // Abort if a wrong item is in the player's hand

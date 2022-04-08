@@ -127,9 +127,11 @@ public class InventoryUtils
         }
     }
 
-    public static void schematicWorldPickBlock(ItemStack stack, BlockPos pos,
+    public static boolean schematicWorldPickBlock(ItemStack stack, BlockPos pos,
                                                World schematicWorld, MinecraftClient mc)
     {
+        boolean didAction = false;
+
         if (stack.isEmpty() == false)
         {
             PlayerInventory inv = mc.player.getInventory();
@@ -149,6 +151,7 @@ public class InventoryUtils
 
                 setPickedItemToHand(stack, mc);
                 mc.interactionManager.clickCreativeStack(mc.player.getStackInHand(Hand.MAIN_HAND), 36 + inv.selectedSlot);
+                didAction = true;
 
                 //return true;
             }
@@ -162,10 +165,11 @@ public class InventoryUtils
                     if (shouldPick)
                     {
                         setPickedItemToHand(stack, mc);
+                        didAction = true;
                     }
                     else
                     {
-                        preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
+                        didAction = preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
                     }
                 }
                 else if (Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())
@@ -176,12 +180,14 @@ public class InventoryUtils
                     {
                         ItemStack boxStack = mc.player.playerScreenHandler.slots.get(slot).getStack();
                         setPickedItemToHand(boxStack, mc);
+                        didAction = true;
                     }
                 }
 
                 //return shouldPick == false || canPick;
             }
         }
+        return didAction;
     }
 
     private static int getPickBlockTargetSlot(PlayerEntity player)
@@ -272,8 +278,9 @@ public class InventoryUtils
      * @param threshold the number of items at or below which the re-stocking will happen
      * @param allowHotbar whether or not to allow taking items from other hotbar slots
      */
-    public static void preRestockHand(PlayerEntity player, Hand hand, int threshold, boolean allowHotbar)
+    public static boolean preRestockHand(PlayerEntity player, Hand hand, int threshold, boolean allowHotbar)
     {
+        boolean didAction = false;
         final ItemStack stackHand = player.getEquippedStack(hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
         final int count = stackHand.getCount();
         final int max = stackHand.getMaxCount();
@@ -314,10 +321,12 @@ public class InventoryUtils
                     mc.interactionManager.clickSlot(container.syncId, slotNum, button, SlotActionType.PICKUP, player);
                     mc.interactionManager.clickSlot(container.syncId, currentSlot, 0, SlotActionType.PICKUP, player);
 
+                    didAction = true;
+
                     break;
                 }
             }
         }
-
+        return didAction;
     }
 }

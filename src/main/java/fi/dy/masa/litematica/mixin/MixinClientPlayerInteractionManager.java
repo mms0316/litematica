@@ -43,6 +43,7 @@ public abstract class MixinClientPlayerInteractionManager
                 Litematica.logger.info("interactBlock 1st");
             WorldUtils.easyPlaceAllowedInTick = false;
 
+            WorldUtils.easyPlaceInformFailure = true;
             if (WorldUtils.handleEasyPlaceWithMessage(this.client))
             {
                 cir.setReturnValue(ActionResult.FAIL);
@@ -82,6 +83,7 @@ public abstract class MixinClientPlayerInteractionManager
                 Litematica.logger.info("interactItem 1st");
             WorldUtils.easyPlaceAllowedInTick = false;
 
+            WorldUtils.easyPlaceInformFailure = true;
             if (WorldUtils.handleEasyPlaceWithMessage(this.client))
             {
                 cir.setReturnValue(ActionResult.FAIL);

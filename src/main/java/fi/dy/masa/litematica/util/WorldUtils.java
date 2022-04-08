@@ -556,6 +556,7 @@ public class WorldUtils
                     if (mc.crosshairTarget instanceof BlockHitResult blockHitResult)
                     {
                         allowNestedInteractBlock = true;
+                        easyPlaceInformFailure = false;
                         mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, blockHitResult);
                         allowNestedInteractBlock = false;
                         cacheEasyPlacePosition(pos);
@@ -572,6 +573,7 @@ public class WorldUtils
                 if (didAction && !EntityUtils.isCreativeMode(mc.player))
                 {
                     // Avoid desyncing with the server, causing wrong block placements
+                    easyPlaceInformFailure = false;
                     //dumpPosDebug("FAIL schematicWorldPickBlock wait next iteration");
                     return ActionResult.FAIL;
                 }
@@ -662,6 +664,7 @@ public class WorldUtils
 
                 //dumpPosDebug("sideOut: " + sideOut + " hitPosOut: " + hitPos + " posOut: " + posOut, hitPos);
                 allowNestedInteractBlock = true;
+                easyPlaceInformFailure = false;
                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 
                 if (stateSchematic.getBlock() instanceof SlabBlock && stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE)
@@ -1523,7 +1526,7 @@ public class WorldUtils
         ActionResult result = doEasyPlaceAction(mc);
         isHandlingEasyPlace = false;
 
-        if (result == ActionResult.FAIL)
+        if (easyPlaceInformFailure)
         {
             MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
 

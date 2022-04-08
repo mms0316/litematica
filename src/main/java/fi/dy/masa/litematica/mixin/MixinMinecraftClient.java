@@ -25,6 +25,7 @@ public abstract class MixinMinecraftClient extends ReentrantThreadExecutor<Runna
         //Reset easyPlace variables
         WorldUtils.easyPlaceAllowedInTick = true;
         WorldUtils.allowNestedInteractBlock = false;
+        WorldUtils.easyPlaceInformFailure = false;
     }
 
     @Inject(method = "handleInputEvents()V", at = @At("RETURN"))
@@ -35,6 +36,7 @@ public abstract class MixinMinecraftClient extends ReentrantThreadExecutor<Runna
             if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
                 Litematica.logger.info("handleInputEvents last");
             WorldUtils.easyPlaceAllowedInTick = false;
+            WorldUtils.easyPlaceInformFailure = false;
             WorldUtils.handleEasyPlaceWithMessage(MinecraftClient.getInstance());
         }
     }

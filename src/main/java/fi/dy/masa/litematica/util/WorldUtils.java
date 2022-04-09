@@ -7,15 +7,34 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import com.mojang.datafixers.DataFixer;
+import net.minecraft.block.AbstractBannerBlock;
+import net.minecraft.block.AbstractSignBlock;
+import net.minecraft.block.AbstractSkullBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ComparatorBlock;
+import net.minecraft.block.DoorBlock;
+import net.minecraft.block.EnderChestBlock;
+import net.minecraft.block.LeverBlock;
+import net.minecraft.block.Material;
+import net.minecraft.block.NoteBlock;
 import net.minecraft.block.RepeaterBlock;
+import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.SlabBlock;
+import net.minecraft.block.TorchBlock;
+import net.minecraft.block.TrapdoorBlock;
+import net.minecraft.block.WallBannerBlock;
+import net.minecraft.block.WallRedstoneTorchBlock;
+import net.minecraft.block.WallSignBlock;
+import net.minecraft.block.WallSkullBlock;
+import net.minecraft.block.WallTorchBlock;
+import net.minecraft.block.enums.Attachment;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
 import net.minecraft.block.enums.SlabType;
@@ -34,8 +53,11 @@ import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.Structure;
 import net.minecraft.structure.StructurePlacementData;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Util;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -73,11 +95,18 @@ import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.MessageOutputType;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.SubChunkPos;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 public class WorldUtils
 {
-    private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
-    private static long easyPlaceLastPickBlockTime = System.nanoTime();
+    private static final Map<BlockPos, Long> EASY_PLACE_POSITIONS = new HashMap<>();
+    private static boolean isHandlingEasyPlace;
+    public static boolean easyPlaceAllowedInTick;
+    private static long easyPlaceTimeout = 0;
+    public static BlockPos easyPlaceLastBlockPos = null;
+    public static boolean allowNestedInteractBlock = false;
+    public static boolean easyPlaceInformFailure = false;
 
     public static boolean shouldPreventBlockUpdates(World world)
     {
@@ -377,50 +406,77 @@ public class WorldUtils
         return false;
     }
 
-    public static void easyPlaceOnUseTick(MinecraftClient mc)
+    private static void dumpPosDebug(String reason, Vec3i pos)
     {
-        if (mc.player != null && DataManager.getToolMode() != ToolMode.REBUILD &&
-            Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
-            Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() &&
-            Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
+        if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
         {
-            WorldUtils.doEasyPlaceAction(mc);
+            MinecraftClient mc = MinecraftClient.getInstance();
+            StringBuilder sb = new StringBuilder();
+
+            if (pos != null)
+            {
+                sb.append('[');
+                sb.append(pos.getX());
+                sb.append(',');
+                sb.append(pos.getY());
+                sb.append(',');
+                sb.append(pos.getZ());
+                sb.append(']');
+                sb.append(' ');
+            }
+
+            sb.append(reason);
+            String str = sb.toString();
+
+            mc.inGameHud.addChatMessage(net.minecraft.network.MessageType.GAME_INFO, Text.of(str), Util.NIL_UUID);
+            Litematica.logger.info(str);
         }
     }
 
-    public static boolean handleEasyPlace(MinecraftClient mc)
+    private static void dumpPosDebug(String reason, Vec3d pos)
     {
-        if (Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
-            DataManager.getToolMode() != ToolMode.REBUILD)
+        if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
         {
-            ActionResult result = doEasyPlaceAction(mc);
-
-            if (result == ActionResult.FAIL)
-            {
-                MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
-
-                if (type == MessageOutputType.MESSAGE)
-                {
-                    InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, "litematica.message.easy_place_fail");
-                }
-                else if (type == MessageOutputType.ACTIONBAR)
-                {
-                    InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
-                }
-
-                return true;
-            }
-
-            return result != ActionResult.PASS;
+            dumpPosDebug(reason, new Vec3i(pos.getX(), pos.getY(), pos.getZ()));
         }
+    }
 
-        return false;
+    private static void dumpPosDebug(String reason)
+    {
+        if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+        {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.crosshairTarget == null)
+            {
+                dumpPosDebug(reason, (Vec3i)null);
+            }
+            else
+            {
+                dumpPosDebug(reason, mc.crosshairTarget.getPos());
+            }
+        }
     }
 
     private static ActionResult doEasyPlaceAction(MinecraftClient mc)
     {
         RayTraceWrapper traceWrapper;
-        double traceMaxRange = Configs.Generic.EASY_PLACE_VANILLA_REACH.getBooleanValue() ? 4.5 : 6;
+        double traceMaxRange = mc.interactionManager.getReachDistance();
+
+        final boolean ignoreEnderChest = Configs.Generic.EASY_PLACE_IGNORE_ENDER_CHEST.getBooleanValue();
+        final boolean ignoreShulkerBox = Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue();
+        if (ignoreEnderChest || ignoreShulkerBox)
+        {
+            if (mc.player.isSneaking() == false && mc.crosshairTarget instanceof BlockHitResult blockHitResult)
+            {
+                Block blockClient = mc.world.getBlockState(blockHitResult.getBlockPos()).getBlock();
+                if ((ignoreEnderChest && (blockClient instanceof EnderChestBlock)) ||
+                        (ignoreShulkerBox && (blockClient instanceof ShulkerBoxBlock)))
+                {
+                    return ActionResult.PASS;
+                }
+            }
+        }
+
 
         if (Configs.Generic.EASY_PLACE_FIRST.getBooleanValue())
         {
@@ -435,6 +491,7 @@ public class WorldUtils
 
         if (traceWrapper == null)
         {
+            dumpPosDebug("PASS - traceWrapper == null");
             return ActionResult.PASS;
         }
 
@@ -450,45 +507,94 @@ public class WorldUtils
             // Already placed to that position, possible server sync delay
             if (easyPlaceIsPositionCached(pos))
             {
+                //dumpPosDebug("FAIL - position restricted", pos);
                 return ActionResult.FAIL;
             }
 
-            // Ignore action if too fast
-            if (easyPlaceIsTooFast())
+            // Action too fast
+            if (System.nanoTime() < easyPlaceTimeout)
             {
+                //dumpPosDebug("FAIL - too fast", pos);
                 return ActionResult.FAIL;
             }
 
             if (stack.isEmpty() == false)
             {
+                boolean mayPlace = false;
+                
+                if (ignoreEnderChest || ignoreShulkerBox)
+                {
+                    final Block blockInHand = Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem());
+                    if ((ignoreEnderChest && (blockInHand instanceof EnderChestBlock)) ||
+                            (ignoreShulkerBox && (blockInHand instanceof ShulkerBoxBlock)))
+                    {
+                        mayPlace = true;
+                    }
+                }
+
                 BlockState stateClient = mc.world.getBlockState(pos);
 
                 if (stateSchematic == stateClient)
                 {
-                    return ActionResult.FAIL;
+                    //dumpPosDebug("PASS/FAIL - state already correct", pos);
+                    return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
                 // Abort if there is already a block in the target position
-                if (easyPlaceBlockChecksCancel(stateSchematic, stateClient, mc.player, traceVanilla, stack))
+                // unless there is an action on the block (note block, repeater, so on)
+                ActionResult actionResult = easyPlaceBlockChecksCancel(stateSchematic, stateClient, mc.player, traceVanilla, stack);
+                if (actionResult == ActionResult.FAIL)
                 {
-                    return ActionResult.FAIL;
+                    //dumpPosDebug("PASS/FAIL - a block is already in position", pos);
+                    return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
+                }
+                else if (actionResult == ActionResult.SUCCESS)
+                {
+                    if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                        Litematica.logger.info("interact block");
+
+                    if (mc.crosshairTarget instanceof BlockHitResult blockHitResult)
+                    {
+                        allowNestedInteractBlock = true;
+                        easyPlaceInformFailure = false;
+                        mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, blockHitResult);
+                        allowNestedInteractBlock = false;
+                        cacheEasyPlacePosition(pos);
+                        return ActionResult.SUCCESS;
+                    }
+                    else
+                    {
+                        //dumpPosDebug("FAIL - target not a block", pos);
+                        return ActionResult.FAIL;
+                    }
                 }
 
-                InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+                boolean didAction = InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+                if (didAction && !EntityUtils.isCreativeMode(mc.player))
+                {
+                    // Avoid desyncing with the server, causing wrong block placements
+                    easyPlaceInformFailure = false;
+                    //dumpPosDebug("FAIL schematicWorldPickBlock wait next iteration");
+                    return ActionResult.FAIL;
+                }
                 Hand hand = EntityUtils.getUsedHandForItem(mc.player, stack);
 
                 // Abort if a wrong item is in the player's hand
                 if (hand == null)
                 {
-                    return ActionResult.FAIL;
+                    //dumpPosDebug("PASS/FAIL - wrong item in hand", pos);
+                    return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
                 Vec3d hitPos = trace.getPos();
                 Direction sideOrig = trace.getSide();
 
+                //dumpPosDebug("sideTrace: " + sideOrig + " hitPosTrace: " + hitPos, pos);
+
                 // If there is a block in the world right behind the targeted schematic block, then use
                 // that block as the click position
-                if (traceVanilla != null && traceVanilla.getType() == HitResult.Type.BLOCK)
+                HitResult.Type type = traceVanilla.getType();
+                if (type == HitResult.Type.BLOCK || type == HitResult.Type.MISS)
                 {
                     BlockHitResult hitResult = (BlockHitResult) traceVanilla;
                     BlockPos posVanilla = hitResult.getBlockPos();
@@ -505,12 +611,20 @@ public class WorldUtils
                         {
                             hitPos = hit;
                             sideOrig = sideVanilla;
+                            //dumpPosDebug("changed side: " + sideOrig + " hitPos: " + hitPos, pos);
                         }
                     }
                 }
 
-                Direction side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                 EasyPlaceProtocol protocol = PlacementHandler.getEffectiveProtocolVersion();
+
+                BlockPos posOut = pos;
+                Direction sideOut = sideOrig;
+                
+                if (protocol != EasyPlaceProtocol.RESTRICTED)
+                {
+                    sideOut = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
+                }
 
                 if (protocol == EasyPlaceProtocol.V3)
                 {
@@ -526,14 +640,31 @@ public class WorldUtils
                     // Slab support only
                     hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
                 }
+                else if (protocol == EasyPlaceProtocol.RESTRICTED)
+                {
+                    //Use vanilla / Paper restrictions
+                    var changedHitResult = applyRestrictedProtocol(pos, stateSchematic, sideOrig, hitPos, mc, hand);
+                    if (changedHitResult == null)
+                    {
+                        //dumpPosDebug("FAIL - can't orientate", hitPos);
+                        return ActionResult.FAIL;
+                    }
+
+                    posOut = changedHitResult.getLeft();
+                    sideOut = changedHitResult.getMiddle();
+                    hitPos = changedHitResult.getRight();
+                }
 
                 // Mark that this position has been handled (use the non-offset position that is checked above)
                 cacheEasyPlacePosition(pos);
+                easyPlaceTimeout = System.nanoTime() + (20 * Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue() * 1_000_000L);
+                easyPlaceLastBlockPos = pos;
 
-                BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
+                BlockHitResult hitResult = new BlockHitResult(hitPos, sideOut, posOut, false);
 
-                //System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
-                // pos, side, hitPos
+                //dumpPosDebug("sideOut: " + sideOut + " hitPosOut: " + hitPos + " posOut: " + posOut, hitPos);
+                allowNestedInteractBlock = true;
+                easyPlaceInformFailure = false;
                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 
                 if (stateSchematic.getBlock() instanceof SlabBlock && stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE)
@@ -542,11 +673,19 @@ public class WorldUtils
 
                     if (stateClient.getBlock() instanceof SlabBlock && stateClient.get(SlabBlock.TYPE) != SlabType.DOUBLE)
                     {
-                        side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
-                        hitResult = new BlockHitResult(hitPos, side, pos, false);
+                        sideOut = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
+                        hitResult = new BlockHitResult(hitPos, sideOut, pos, false);
+                        allowNestedInteractBlock = true;
                         mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                     }
                 }
+
+                allowNestedInteractBlock = false;
+                dumpPosDebug("-- easyPlaced @ " + posOut.getX() + ',' + posOut.getY() + ',' + posOut.getZ());
+            }
+            else
+            {
+                dumpPosDebug("SUCCESS");
             }
 
             return ActionResult.SUCCESS;
@@ -556,10 +695,11 @@ public class WorldUtils
             return placementRestrictionInEffect(mc) ? ActionResult.FAIL : ActionResult.PASS;
         }
 
+        dumpPosDebug("PASS");
         return ActionResult.PASS;
     }
 
-    private static boolean easyPlaceBlockChecksCancel(BlockState stateSchematic, BlockState stateClient,
+    private static ActionResult easyPlaceBlockChecksCancel(BlockState stateSchematic, BlockState stateClient,
             PlayerEntity player, HitResult trace, ItemStack stack)
     {
         Block blockSchematic = stateSchematic.getBlock();
@@ -570,13 +710,79 @@ public class WorldUtils
 
             if (blockClient instanceof SlabBlock && stateClient.get(SlabBlock.TYPE) != SlabType.DOUBLE)
             {
-                return blockSchematic != blockClient;
+                return blockSchematic == blockClient ? ActionResult.SUCCESS : ActionResult.FAIL;
+            }
+        }
+        else if (player.isSneaking() == false)
+        {
+            if (blockSchematic instanceof NoteBlock)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof NoteBlock)
+                {
+                    return stateSchematic.get(Properties.NOTE).intValue() != stateClient.get(Properties.NOTE).intValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
+            }
+            else if (blockSchematic instanceof RepeaterBlock)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof RepeaterBlock)
+                {
+                    return stateSchematic.get(Properties.DELAY).intValue() != stateClient.get(Properties.DELAY).intValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
+            }
+            else if (blockSchematic instanceof TrapdoorBlock && stateSchematic.getMaterial() != Material.METAL)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof TrapdoorBlock && stateClient.getMaterial() == stateSchematic.getMaterial())
+                {
+                    return stateSchematic.get(Properties.OPEN).booleanValue() != stateClient.get(Properties.OPEN).booleanValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
+            }
+            else if (blockSchematic instanceof DoorBlock && stateSchematic.getMaterial() != Material.METAL)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof DoorBlock && stateClient.getMaterial() == stateSchematic.getMaterial())
+                {
+                    if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                    {
+                        Litematica.logger.info(stateSchematic.get(Properties.OPEN));
+                        Litematica.logger.info(stateClient.get(Properties.OPEN));
+                    }
+
+                    return stateSchematic.get(Properties.OPEN).booleanValue() != stateClient.get(Properties.OPEN).booleanValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
+            }
+            else if (blockSchematic instanceof LeverBlock && stateSchematic.getMaterial() != Material.METAL)
+            {
+                Block blockClient = stateClient.getBlock();
+
+                if (blockClient instanceof LeverBlock && stateClient.getMaterial() == stateSchematic.getMaterial())
+                {
+                    if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                    {
+                        Litematica.logger.info(stateSchematic.get(Properties.POWERED));
+                        Litematica.logger.info(stateClient.get(Properties.POWERED));
+                    }
+
+                    return stateSchematic.get(Properties.POWERED).booleanValue() != stateClient.get(Properties.POWERED).booleanValue()
+                            ? ActionResult.SUCCESS : ActionResult.FAIL;
+                }
             }
         }
 
-        if (trace.getType() != HitResult.Type.BLOCK)
+        HitResult.Type type = trace.getType();
+        if (type != HitResult.Type.BLOCK && type != HitResult.Type.MISS)
         {
-            return false;
+            return ActionResult.PASS;
         }
 
         BlockHitResult hitResult = (BlockHitResult) trace;
@@ -584,10 +790,10 @@ public class WorldUtils
 
         if (stateClient.canReplace(ctx) == false)
         {
-            return true;
+            return ActionResult.FAIL;
         }
 
-        return false;
+        return ActionResult.PASS;
     }
 
     /**
@@ -673,6 +879,239 @@ public class WorldUtils
     {
         double newY = applySlabOrStairHitVecY(hitVecIn.y, pos, state);
         return newY != hitVecIn.y ? new Vec3d(hitVecIn.x, newY, hitVecIn.z) : hitVecIn;
+    }
+
+    private static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
+    {
+        if (state1 == null || state2 == null)
+        {
+            return false;
+        }
+
+        if (state1 == state2)
+        {
+            return true;
+        }
+
+        var orientationProperties = new Property<?>[] {
+                Properties.FACING, //pistons
+                Properties.BLOCK_HALF, //stairs, trapdoors
+                Properties.HOPPER_FACING,
+                Properties.DOOR_HINGE,
+                Properties.HORIZONTAL_FACING, //small dripleaf
+                Properties.AXIS, //logs
+                Properties.SLAB_TYPE,
+                Properties.VERTICAL_DIRECTION,
+                Properties.ROTATION, //banners
+                Properties.HANGING, //lanterns
+                Properties.WALL_MOUNT_LOCATION, //lever
+                Properties.ATTACHMENT, //bell (double-check for single-wall / double-wall)
+                //Properties.HORIZONTAL_AXIS, //Nether portals, though they aren't directly placeable
+                //Properties.ORIENTATION, //jigsaw blocks
+        };
+
+        for (var property : orientationProperties)
+        {
+            boolean hasProperty1 = state1.contains(property);
+            boolean hasProperty2 = state2.contains(property);
+
+            if (hasProperty1 != hasProperty2)
+                return false;
+            if (!hasProperty1)
+                continue;
+
+            if (state1.get(property) != state2.get(property))
+                return false;
+        }
+
+        //Other properties are considered as matching
+        return true;
+    }
+
+    private static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    {
+        ItemPlacementContext ctx;
+
+        //Handle axis and slabs first, as they are exclusive with other orientation properties
+        if (stateSchematic.contains(Properties.AXIS))
+        {
+            var orientation = getAxisOrientation(pos, stateSchematic, sideIn, hitVecIn);
+            if (orientation == null)
+                return null;
+            return Triple.of(pos, orientation.getLeft(), orientation.getRight());
+        }
+        if (stateSchematic.contains(Properties.SLAB_TYPE))
+        {
+            var orientation = getSlabOrientation(stateSchematic, sideIn, hitVecIn);
+            return Triple.of(pos, orientation.getLeft(), orientation.getRight());
+        }
+
+        //Last types are interdependent
+        Vec3d hitVecOut = hitVecIn;
+        Direction sideOut = sideIn;
+
+        //Handle attachment (bell)
+        if (stateSchematic.contains(Properties.ATTACHMENT)) {
+            var property = stateSchematic.get(Properties.ATTACHMENT);
+            if (property == Attachment.CEILING)
+            {
+                sideOut = Direction.DOWN;
+            }
+            else if (property == Attachment.FLOOR)
+            {
+                sideOut = Direction.UP;
+            }
+            else
+            {
+                if (stateSchematic.contains(Properties.HORIZONTAL_FACING))
+                {
+                    sideOut = stateSchematic.get(Properties.HORIZONTAL_FACING).getOpposite();
+                }
+            }
+        }
+
+        if (stateSchematic.contains(Properties.BLOCK_HALF))
+        {
+            //use floored coordinates
+            double x = pos.getX();
+            double y = pos.getY();
+            double z = pos.getZ();
+
+            if (stateSchematic.get(Properties.BLOCK_HALF) == BlockHalf.TOP)
+            {
+                y += 0.9;
+                sideOut = Direction.DOWN;
+            }
+            else
+            {
+                sideOut = Direction.UP;
+            }
+
+            //Check with getPlacementState
+            hitVecOut = new Vec3d(x, y, z);
+        }
+
+        var block = stateSchematic.getBlock();
+        if (block instanceof TorchBlock) //Torch, Soul Torch, Redstone Torch
+        {
+            boolean isOnWall = block instanceof WallTorchBlock || block instanceof WallRedstoneTorchBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecOut, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractBannerBlock)
+        {
+            boolean isOnWall = block instanceof WallBannerBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecOut, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractSignBlock)
+        {
+            boolean isOnWall = block instanceof WallSignBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecOut, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractSkullBlock) //Wither Skull, Player Skull
+        {
+            boolean isOnWall = block instanceof WallSkullBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecOut, mc, hand, isOnWall);
+        }
+
+        var updatedHitResult = new BlockHitResult(hitVecOut, sideOut, pos, false);
+        ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
+        var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
+        if (isMatchingStateRestrictedProtocol (attemptState, stateSchematic))
+            return Triple.of(pos, sideOut, hitVecOut);
+        else
+            return null; //give up
+    }
+
+    private static Triple<BlockPos, Direction, Vec3d> getWallPlaceableOrientation(BlockPos pos, BlockState stateSchematic, Vec3d hitVecOut, MinecraftClient mc, Hand hand, boolean isOnWall) {
+        Direction sideOut;
+        BlockPos posOrig = pos;
+
+        if (isOnWall)
+        {
+            if (!stateSchematic.contains(Properties.HORIZONTAL_FACING))
+            {
+                //Shouldn't happen, fail instead of crashing just in case
+                return null;
+            }
+
+            sideOut = stateSchematic.get(Properties.HORIZONTAL_FACING);
+            pos = pos.offset(sideOut.getOpposite());
+        }
+        else
+        {
+            sideOut = Direction.UP;
+            pos = pos.down();
+        }
+        BlockState stateFacing = mc.world.getBlockState(pos);
+
+        if (stateFacing == null || stateFacing.isAir())
+            return null;
+
+        //Check for blocks that have rotation property (Banners, Signs, Skulls)
+        if (stateSchematic.contains(Properties.ROTATION))
+        {
+            var updatedHitResult = new BlockHitResult(hitVecOut, sideOut, posOrig, false);
+            var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
+            var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
+            if (!isMatchingStateRestrictedProtocol (attemptState, stateSchematic))
+                return null;
+        }
+
+        return Triple.of(pos, sideOut, hitVecOut);
+    }
+
+    private static Pair<Direction, Vec3d> getAxisOrientation(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn) {
+        var property = stateSchematic.get(Properties.AXIS);
+        if (property == Direction.Axis.Y)
+        {
+            if (sideIn == Direction.DOWN || sideIn == Direction.UP)
+            {
+                //Side already correct
+                return Pair.of(sideIn, hitVecIn);
+            }
+
+            //Wrong side - check which direction to use
+            return Pair.of(hitVecIn.y - pos.getY() < 0.5 ? Direction.DOWN : Direction.UP, hitVecIn);
+        }
+        else if (property == Direction.Axis.X)
+        {
+            if (sideIn == Direction.WEST || sideIn == Direction.EAST)
+            {
+                //Side already correct
+                return Pair.of(sideIn, hitVecIn);
+            }
+
+            //Wrong side - check which direction to use
+            return Pair.of(hitVecIn.x - pos.getX() < 0.5 ? Direction.WEST : Direction.EAST, hitVecIn);
+        }
+        else if (property == Direction.Axis.Z)
+        {
+            if (sideIn == Direction.NORTH || sideIn == Direction.SOUTH)
+            {
+                //Side already correct
+                return Pair.of(sideIn, hitVecIn);
+            }
+
+            //Wrong side - check which direction to use
+            return Pair.of(hitVecIn.z - pos.getZ() < 0.5 ? Direction.NORTH : Direction.SOUTH, hitVecIn);
+        }
+        return null;
+    }
+    private static Pair<Direction, Vec3d> getSlabOrientation(BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn) {
+        var property = stateSchematic.get(Properties.SLAB_TYPE);
+
+        if (property == SlabType.TOP)
+        {
+            return Pair.of(Direction.DOWN, new Vec3d(hitVecIn.x, hitVecIn.y + 0.9, hitVecIn.z));
+        }
+        else if (property == SlabType.BOTTOM)
+        {
+            return Pair.of(Direction.UP, hitVecIn);
+        }
+        else
+        {
+            return Pair.of(sideIn, hitVecIn);
+        }
     }
 
     public static <T extends Comparable<T>> Vec3d applyPlacementProtocolV3(BlockPos pos, BlockState state, Vec3d hitVecIn)
@@ -795,7 +1234,7 @@ public class WorldUtils
 
             if (type == MessageOutputType.MESSAGE)
             {
-                InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, "litematica.message.placement_restriction_fail");
+                InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, 1000, "litematica.message.placement_restriction_fail");
             }
             else if (type == MessageOutputType.ACTIONBAR)
             {
@@ -1045,72 +1484,69 @@ public class WorldUtils
         return true;
     }
 
+    public static void easyPlaceRemovePosition(BlockPos pos)
+    {
+        EASY_PLACE_POSITIONS.remove(pos);
+
+        if (easyPlaceLastBlockPos != null && pos.compareTo(easyPlaceLastBlockPos) == 0)
+            easyPlaceTimeout = 0;
+    }
+
     public static boolean easyPlaceIsPositionCached(BlockPos pos)
     {
-        long currentTime = System.nanoTime();
-        boolean cached = false;
-
-        for (int i = 0; i < EASY_PLACE_POSITIONS.size(); ++i)
+        var timeout = EASY_PLACE_POSITIONS.get(pos);
+        if (timeout == null)
         {
-            PositionCache val = EASY_PLACE_POSITIONS.get(i);
-            boolean expired = val.hasExpired(currentTime);
-
-            if (expired)
-            {
-                EASY_PLACE_POSITIONS.remove(i);
-                --i;
-            }
-            else if (val.getPos().equals(pos))
-            {
-                cached = true;
-
-                // Keep checking and removing old entries if there are a fair amount
-                if (EASY_PLACE_POSITIONS.size() < 16)
-                {
-                    break;
-                }
-            }
+            return false;
         }
 
-        return cached;
+        final long now = System.nanoTime();
+        if (now < timeout)
+        {
+            return true;
+        }
+        else
+        {
+            // Expired
+            EASY_PLACE_POSITIONS.remove(pos);
+            return false;
+        }
     }
 
     private static void cacheEasyPlacePosition(BlockPos pos)
     {
-        EASY_PLACE_POSITIONS.add(new PositionCache(pos, System.nanoTime(), 2000000000));
+        EASY_PLACE_POSITIONS.put(pos, System.nanoTime() + 2_000_000_000L);
     }
 
-    public static class PositionCache
+    public static boolean shouldDoEasyPlaceActions()
     {
-        private final BlockPos pos;
-        private final long time;
-        private final long timeout;
-
-        private PositionCache(BlockPos pos, long time, long timeout)
-        {
-            this.pos = pos;
-            this.time = time;
-            this.timeout = timeout;
-        }
-
-        public BlockPos getPos()
-        {
-            return this.pos;
-        }
-
-        public boolean hasExpired(long currentTime)
-        {
-            return currentTime - this.time > this.timeout;
-        }
+        return Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
+                DataManager.getToolMode() != ToolMode.REBUILD &&
+                Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld() &&
+                easyPlaceAllowedInTick &&
+                isHandlingEasyPlace == false;
     }
 
-    private static boolean easyPlaceIsTooFast()
+    public static boolean handleEasyPlaceWithMessage(MinecraftClient mc)
     {
-        return System.nanoTime() - easyPlaceLastPickBlockTime < 1000000L * Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue();
-    }
+        isHandlingEasyPlace = true;
+        ActionResult result = doEasyPlaceAction(mc);
+        isHandlingEasyPlace = false;
 
-    public static void setEasyPlaceLastPickBlockTime()
-    {
-        easyPlaceLastPickBlockTime = System.nanoTime();
+        if (easyPlaceInformFailure)
+        {
+            MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
+
+            if (type == MessageOutputType.MESSAGE)
+            {
+                InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, 1000, "litematica.message.easy_place_fail");
+            }
+            else if (type == MessageOutputType.ACTIONBAR)
+            {
+                InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
+            }
+        }
+
+        return result != ActionResult.PASS;
     }
 }

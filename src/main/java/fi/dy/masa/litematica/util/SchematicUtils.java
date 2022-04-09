@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import javax.annotation.Nullable;
+
+import fi.dy.masa.malilib.util.LayerMode;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -904,7 +906,7 @@ public class SchematicUtils
                     TaskBase taskPaste;
                     LayerRange range = new LayerRange(SchematicWorldRefresher.INSTANCE);
 
-                    if (mc.isIntegratedServerRunning())
+                    if (mc.isIntegratedServerRunning() && range.getLayerMode() == LayerMode.ALL) //TaskPasteSchematicPerChunkDirect ignores range atm
                     {
                         taskPaste = new TaskPasteSchematicPerChunkDirect(Collections.singletonList(placement), range, false);
                     }

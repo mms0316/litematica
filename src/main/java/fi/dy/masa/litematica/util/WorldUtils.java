@@ -103,7 +103,6 @@ public class WorldUtils
     private static final Map<BlockPos, Long> EASY_PLACE_POSITIONS = new HashMap<>();
     private static boolean isHandlingEasyPlace;
     public static boolean easyPlaceAllowedInTick;
-    private static long easyPlaceTimeout = 0;
     public static BlockPos easyPlaceLastBlockPos = null;
     public static boolean allowNestedInteractBlock = false;
     public static boolean easyPlaceInformFailure = false;
@@ -511,13 +510,6 @@ public class WorldUtils
                 return ActionResult.FAIL;
             }
 
-            // Action too fast
-            if (System.nanoTime() < easyPlaceTimeout)
-            {
-                //dumpPosDebug("FAIL - too fast", pos);
-                return ActionResult.FAIL;
-            }
-
             if (stack.isEmpty() == false)
             {
                 boolean mayPlace = false;
@@ -657,7 +649,6 @@ public class WorldUtils
 
                 // Mark that this position has been handled (use the non-offset position that is checked above)
                 cacheEasyPlacePosition(pos);
-                easyPlaceTimeout = System.nanoTime() + (20 * Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue() * 1_000_000L);
                 easyPlaceLastBlockPos = pos;
 
                 BlockHitResult hitResult = new BlockHitResult(hitPos, sideOut, posOut, false);
@@ -1484,12 +1475,10 @@ public class WorldUtils
         return true;
     }
 
-    public static void easyPlaceRemovePosition(BlockPos pos)
+    public static void easyPlaceRefreshPosition(BlockPos pos)
     {
-        EASY_PLACE_POSITIONS.remove(pos);
-
-        if (easyPlaceLastBlockPos != null && pos.compareTo(easyPlaceLastBlockPos) == 0)
-            easyPlaceTimeout = 0;
+        final long nextTimeout = System.nanoTime() + Configs.Generic.EASY_PLACE_INTERVAL.getIntegerValue() * 1_000_000L;
+        EASY_PLACE_POSITIONS.put(pos, nextTimeout);
     }
 
     public static boolean easyPlaceIsPositionCached(BlockPos pos)
@@ -1515,7 +1504,7 @@ public class WorldUtils
 
     private static void cacheEasyPlacePosition(BlockPos pos)
     {
-        EASY_PLACE_POSITIONS.put(pos, System.nanoTime() + 2_000_000_000L);
+        EASY_PLACE_POSITIONS.put(pos, System.nanoTime() + Configs.Generic.EASY_PLACE_INTERVAL.getIntegerValue() * 1_000_000L);
     }
 
     public static boolean shouldDoEasyPlaceActions()

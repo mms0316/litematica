@@ -28,6 +28,9 @@ public abstract class MixinWorldChunk
     @Inject(method = "setBlockState", at = @At(value = "TAIL"))
     private void onSetBlockState(BlockPos pos, BlockState state, boolean moved, CallbackInfoReturnable<BlockState> cir)
     {
-        WorldUtils.easyPlaceRemovePosition(pos);
+        if (state.isAir() == false && WorldUtils.easyPlaceIsPositionCached(pos))
+        {
+            WorldUtils.easyPlaceRefreshPosition(pos);
+        }
     }
 }

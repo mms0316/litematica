@@ -534,12 +534,7 @@ public class WorldUtils
                 EasyPlaceProtocol protocol = PlacementHandler.getEffectiveProtocolVersion();
 
                 BlockPos posOut = pos;
-                Direction sideOut = sideOrig;
-                
-                if (protocol != EasyPlaceProtocol.RESTRICTED)
-                {
-                    sideOut = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
-                }
+                Direction sideOut = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
 
                 if (protocol == EasyPlaceProtocol.V3)
                 {
@@ -558,19 +553,23 @@ public class WorldUtils
                 else if (protocol == EasyPlaceProtocol.RESTRICTED)
                 {
                     //Use vanilla / Paper restrictions
-                    var changedHitResult = applyRestrictedProtocol(pos, stateSchematic, sideOrig, hitPos, mc, hand);
-                    if (changedHitResult == null)
+                    hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
+                    if (stateSchematic.contains(Properties.SLAB_TYPE) == false)
                     {
-                        if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                        var changedHitResult = applyRestrictedProtocol(pos, stateSchematic, sideOut, hitPos, mc, hand);
+                        if (changedHitResult == null)
                         {
-                            Litematica.logger.info("Can't orientate");
+                            if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                            {
+                                Litematica.logger.info("Can't orientate");
+                            }
+                            return ActionResult.FAIL;
                         }
-                        return ActionResult.FAIL;
-                    }
 
-                    posOut = changedHitResult.getLeft();
-                    sideOut = changedHitResult.getMiddle();
-                    hitPos = changedHitResult.getRight();
+                        posOut = changedHitResult.getLeft();
+                        sideOut = changedHitResult.getMiddle();
+                        hitPos = changedHitResult.getRight();
+                    }
                 }
 
                 // Mark that this position has been handled (use the non-offset position that is checked above)
@@ -774,7 +773,7 @@ public class WorldUtils
     {
         ItemPlacementContext ctx;
 
-        //Handle axis and slabs first, as they are exclusive with other orientation properties
+        //Handle axis first, as it is exclusive with other orientation properties
         if (stateSchematic.contains(Properties.AXIS))
         {
             var orientation = getAxisOrientation(pos, stateSchematic, sideIn, hitVecIn);
@@ -782,14 +781,8 @@ public class WorldUtils
                 return null;
             return Triple.of(pos, orientation.getLeft(), orientation.getRight());
         }
-        if (stateSchematic.contains(Properties.SLAB_TYPE))
-        {
-            var orientation = getSlabOrientation(stateSchematic, sideIn, hitVecIn);
-            return Triple.of(pos, orientation.getLeft(), orientation.getRight());
-        }
 
         //Last types are interdependent
-        Vec3d hitVecOut = hitVecIn;
         Direction sideOut = sideIn;
 
         //Handle attachment (bell)
@@ -812,54 +805,33 @@ public class WorldUtils
             }
         }
 
-        if (stateSchematic.contains(Properties.BLOCK_HALF))
-        {
-            //use floored coordinates
-            double x = pos.getX();
-            double y = pos.getY();
-            double z = pos.getZ();
-
-            if (stateSchematic.get(Properties.BLOCK_HALF) == BlockHalf.TOP)
-            {
-                y += 0.9;
-                sideOut = Direction.DOWN;
-            }
-            else
-            {
-                sideOut = Direction.UP;
-            }
-
-            //Check with getPlacementState
-            hitVecOut = new Vec3d(x, y, z);
-        }
-
         var block = stateSchematic.getBlock();
         if (block instanceof TorchBlock) //Torch, Soul Torch, Redstone Torch
         {
             boolean isOnWall = block instanceof WallTorchBlock || block instanceof WallRedstoneTorchBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecOut, mc, hand, isOnWall);
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
         }
         else if (block instanceof AbstractBannerBlock)
         {
             boolean isOnWall = block instanceof WallBannerBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecOut, mc, hand, isOnWall);
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
         }
         else if (block instanceof AbstractSignBlock)
         {
             boolean isOnWall = block instanceof WallSignBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecOut, mc, hand, isOnWall);
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
         }
         else if (block instanceof AbstractSkullBlock) //Wither Skull, Player Skull
         {
             boolean isOnWall = block instanceof WallSkullBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecOut, mc, hand, isOnWall);
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
         }
 
-        var updatedHitResult = new BlockHitResult(hitVecOut, sideOut, pos, false);
+        var updatedHitResult = new BlockHitResult(hitVecIn, sideOut, pos, false);
         ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
         var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
         if (isMatchingStateRestrictedProtocol (attemptState, stateSchematic))
-            return Triple.of(pos, sideOut, hitVecOut);
+            return Triple.of(pos, sideOut, hitVecIn);
         else
             return null; //give up
     }

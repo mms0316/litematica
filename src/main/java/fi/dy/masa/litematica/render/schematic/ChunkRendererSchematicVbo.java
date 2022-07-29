@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.systems.RenderSystem;
+import fi.dy.masa.litematica.util.InventoryUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -25,10 +26,13 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.WorldChunk;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
@@ -41,6 +45,7 @@ import fi.dy.masa.malilib.util.EntityUtils;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.SubChunkPos;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class ChunkRendererSchematicVbo
 {
@@ -62,7 +67,6 @@ public class ChunkRendererSchematicVbo
     private net.minecraft.util.math.Box boundingBox;
     protected Color4f overlayColor;
     protected boolean hasOverlay = false;
-    private boolean ignoreClientWorldFluids;
 
     protected ChunkCacheSchematic schematicWorldView;
     protected ChunkCacheSchematic clientWorldView;
@@ -654,37 +658,7 @@ public class ChunkRendererSchematicVbo
 
     protected OverlayType getOverlayType(BlockState stateSchematic, BlockState stateClient)
     {
-        if (stateSchematic == stateClient)
-        {
-            return OverlayType.NONE;
-        }
-        else
-        {
-            boolean clientHasAir = stateClient.isAir();
-            boolean schematicHasAir = stateSchematic.isAir();
-
-            if (schematicHasAir)
-            {
-                return (clientHasAir || (this.ignoreClientWorldFluids && stateClient.getMaterial().isLiquid())) ? OverlayType.NONE : OverlayType.EXTRA;
-            }
-            else
-            {
-                if (clientHasAir || (this.ignoreClientWorldFluids && stateClient.getMaterial().isLiquid()))
-                {
-                    return OverlayType.MISSING;
-                }
-                // Wrong block
-                else if (stateSchematic.getBlock() != stateClient.getBlock())
-                {
-                    return OverlayType.WRONG_BLOCK;
-                }
-                // Wrong state
-                else
-                {
-                    return OverlayType.WRONG_STATE;
-                }
-            }
-        }
+        return InventoryUtils.getOverlayType(stateSchematic, stateClient);
     }
 
     @Nullable
@@ -896,7 +870,6 @@ public class ChunkRendererSchematicVbo
     {
         synchronized (this.boxes)
         {
-            this.ignoreClientWorldFluids = Configs.Visuals.IGNORE_EXISTING_FLUIDS.getBooleanValue();
             ClientWorld worldClient = MinecraftClient.getInstance().world;
             this.schematicWorldView = new ChunkCacheSchematic(this.world, worldClient, this.position, 2);
             this.clientWorldView    = new ChunkCacheSchematic(worldClient, worldClient, this.position, 2);

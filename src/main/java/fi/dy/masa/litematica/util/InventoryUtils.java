@@ -1,31 +1,43 @@
 package fi.dy.masa.litematica.util;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import fi.dy.masa.litematica.Litematica;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.malilib.gui.GuiBase;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class InventoryUtils
 {
     private static final Map<Integer, Long> PICK_BLOCKABLE_SLOTS = new HashMap<>();
+    private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
 
     public static void setPickBlockableSlots(String configStr)
     {
@@ -155,31 +167,56 @@ public class InventoryUtils
             else
             {
                 int slot = inv.getSlotWithStack(stack);
-                boolean shouldPick = inv.selectedSlot != slot;
 
-                if (slot != -1)
+                slot = pickBlockSurvival(slot, stack, inv, mc);
+
+                // Pick block did not happen - try substitutions
+                if (slot == -1)
                 {
-                    if (shouldPick)
-                    {
-                        setPickedItemToHand(stack, mc);
-                    }
+                    HashSet<String> substitutions = InventoryUtils.getSubstitutions(Registry.ITEM.getId(stack.getItem()).toString());
 
-                    preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
-                }
-                else if (Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())
-                {
-                    slot = findSlotWithBoxWithItem(mc.player.playerScreenHandler, stack, false);
-
-                    if (slot != -1)
+                    for (int i = 0; i < inv.main.size(); ++i)
                     {
-                        ItemStack boxStack = mc.player.playerScreenHandler.slots.get(slot).getStack();
-                        setPickedItemToHand(boxStack, mc);
+                        ItemStack iter = inv.main.get(i);
+                        if (iter.isEmpty()) continue;
+
+                        if (!substitutions.contains(Registry.ITEM.getId(iter.getItem()).toString())) continue;
+
+                        slot = pickBlockSurvival(i, iter, inv, mc);
+                        if (slot != -1) break;
                     }
                 }
 
                 //return shouldPick == false || canPick;
             }
         }
+    }
+
+    private static int pickBlockSurvival(int slot, ItemStack stack, PlayerInventory inv, MinecraftClient mc)
+    {
+        boolean shouldPick = inv.selectedSlot != slot;
+
+        if (slot != -1)
+        {
+            if (shouldPick)
+            {
+                setPickedItemToHand(stack, mc);
+            }
+
+            preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
+        }
+        else if (Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())
+        {
+            slot = findSlotWithBoxWithItem(mc.player.playerScreenHandler, stack, false);
+
+            if (slot != -1)
+            {
+                ItemStack boxStack = mc.player.playerScreenHandler.slots.get(slot).getStack();
+                setPickedItemToHand(boxStack, mc);
+            }
+        }
+
+        return slot;
     }
 
     private static int getPickBlockTargetSlot(PlayerEntity player)
@@ -317,5 +354,113 @@ public class InventoryUtils
             }
         }
 
+    }
+
+    public static void setSubstitutions(List<String> substitutionList)
+    {
+        SUBSTITUTIONS.clear();
+
+        for (String substitutionItem : substitutionList)
+        {
+            //Each substitution is separated by semicolons
+            String[] substitutions = substitutionItem.split(";");
+
+            SUBSTITUTIONS.add(substitutions);
+        }
+    }
+
+    public static HashSet<String> getSubstitutions(String id)
+    {
+        HashSet<String> substitutionList = new HashSet<>();
+
+        for (String[] substitutions : SUBSTITUTIONS)
+        {
+            if (ArrayUtils.contains(substitutions, id))
+            {
+                Collections.addAll(substitutionList, substitutions);
+                //does not break here, because there may be multiple entries
+            }
+        }
+        return substitutionList;
+    }
+
+    public static boolean maySubstitute(Identifier schematicId, Identifier clientId)
+    {
+        if (schematicId.equals(clientId))
+        {
+            return true;
+        }
+
+        for (String[] substitutions : SUBSTITUTIONS)
+        {
+            if (ArrayUtils.contains(substitutions, schematicId.toString()) &&
+                    ArrayUtils.contains(substitutions, clientId.toString()))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean hasEqualProperties(BlockState blockState1, BlockState blockState2)
+    {
+        final var properties1 = blockState1.getEntries();
+        final var properties2 = blockState2.getEntries();
+
+        if (properties1 == properties2) return true;
+        if (properties1.size() != properties2.size()) return false;
+
+        for (var entry : properties1.entrySet()) {
+            var val1 = entry.getValue();
+            var val2 = properties2.get(entry.getKey());
+
+            if (val1 != val2) return false;
+        }
+
+        return true;
+    }
+
+    public static OverlayType getOverlayType(BlockState stateSchematic, BlockState stateClient)
+    {
+        boolean ignoreClientWorldFluids = Configs.Visuals.IGNORE_EXISTING_FLUIDS.getBooleanValue();
+        if (stateSchematic == stateClient)
+        {
+            return OverlayType.NONE;
+        }
+        else
+        {
+            boolean clientHasAir = stateClient.isAir();
+            boolean schematicHasAir = stateSchematic.isAir();
+
+            if (schematicHasAir)
+            {
+                return (clientHasAir || (ignoreClientWorldFluids && stateClient.getMaterial().isLiquid())) ? OverlayType.NONE : OverlayType.EXTRA;
+            }
+            else
+            {
+                if (clientHasAir || (ignoreClientWorldFluids && stateClient.getMaterial().isLiquid()))
+                {
+                    return OverlayType.MISSING;
+                }
+
+                final Block schematicBlock = stateSchematic.getBlock();
+                final Block clientBlock = stateClient.getBlock();
+                final Identifier schematicBlockName = Registry.BLOCK.getId(schematicBlock);
+                final Identifier clientBlockName = Registry.BLOCK.getId(clientBlock);
+
+                if (!InventoryUtils.maySubstitute(schematicBlockName, clientBlockName))
+                {
+                    return OverlayType.WRONG_BLOCK;
+                }
+
+                if (!InventoryUtils.hasEqualProperties(stateSchematic, stateClient))
+                {
+                    return OverlayType.WRONG_STATE;
+                }
+
+                return OverlayType.NONE;
+            }
+        }
     }
 }

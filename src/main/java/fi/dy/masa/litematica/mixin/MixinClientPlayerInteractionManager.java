@@ -23,7 +23,7 @@ public abstract class MixinClientPlayerInteractionManager
     @Shadow @Final private net.minecraft.client.MinecraftClient client;
 
     @Inject(method = "interactBlock", at = @At("HEAD"), cancellable = true)
-    private void onInteractBlock(ClientPlayerEntity player, ClientWorld world, Hand hand, BlockHitResult hitResult,
+    private void onInteractBlock(ClientPlayerEntity player, Hand hand, BlockHitResult hitResult,
             CallbackInfoReturnable<ActionResult> cir)
     {
         // Prevent recursion, since the Easy Place mode can call this code again
@@ -52,7 +52,7 @@ public abstract class MixinClientPlayerInteractionManager
     // Handle right clicks on air, which needs to happen for Easy Place mode
     @Inject(method = "interactItem", cancellable = true, at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;syncSelectedSlot()V"))
-    private void onInteractItem(PlayerEntity player, World world, Hand hand, CallbackInfoReturnable<ActionResult> cir)
+    private void onInteractItem(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir)
     {
         // Prevent recursion, since the Easy Place mode can call this code again
         if (WorldUtils.isHandlingEasyPlace() == false)

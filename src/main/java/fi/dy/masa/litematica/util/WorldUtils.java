@@ -499,7 +499,7 @@ public class WorldUtils
                 else if (actionResult == ActionResult.SUCCESS)
                 {
                     cacheEasyPlacePosition(pos, hasUseAction);
-                    mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, trace);
+                    mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, trace);
                     easyPlaceShowFailMessage = false;
                     return ActionResult.FAIL;
                 }

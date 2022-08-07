@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.registry.RegistryEntry;
 import net.minecraft.util.registry.RegistryKey;
@@ -29,12 +30,25 @@ public abstract class MixinClientWorld extends World
     }
 
     @Inject(method = "handleBlockUpdate", at = @At("HEAD"))
-    private void litematica_onHandleBlockUpdate(BlockPos pos, BlockState state, int flags, CallbackInfo ci)
+    private void onSetBlockStateWithoutNeighborUpdates(BlockPos pos, BlockState state, int flags, CallbackInfo ci)
     {
         SchematicVerifier.markVerifierBlockChanges(pos);
 
         if (Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
-            Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
+                Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
+        {
+            SchematicWorldRefresher.INSTANCE.markSchematicChunkForRenderUpdate(pos);
+        }
+    }
+
+    @Inject(method = "processPendingUpdate", at = @At("HEAD"))
+    private void onSetBlockStateWithoutNeighborUpdates(BlockPos pos, BlockState state, Vec3d playerPos, CallbackInfo ci)
+    {
+        // TODO it is necessary?
+        SchematicVerifier.markVerifierBlockChanges(pos);
+
+        if (Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
+                Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
         {
             SchematicWorldRefresher.INSTANCE.markSchematicChunkForRenderUpdate(pos);
         }

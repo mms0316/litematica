@@ -5,9 +5,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.s2c.play.BlockUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
+import net.minecraft.network.packet.s2c.play.ChunkDeltaUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
-import net.minecraft.network.packet.s2c.play.LightData;
 import net.minecraft.network.packet.s2c.play.UnloadChunkS2CPacket;
 import net.minecraft.util.math.BlockPos;
 import fi.dy.masa.litematica.config.Configs;
@@ -18,9 +20,12 @@ import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class MixinClientPlayNetworkHandler
 {
-    @Inject(method = "updateChunk", at = @At("HEAD"))
-    private void litematica_onUpdateChunk(int x, int z, LightData lightData, CallbackInfo ci)
+    @Inject(method = "onChunkData", at = @At("RETURN"))
+    private void litematica_onChunkData(ChunkDataS2CPacket packet, CallbackInfo ci)
     {
+        final int x = packet.getX();
+        final int z = packet.getZ();
+
         if (Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
             Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
         {
@@ -33,7 +38,6 @@ public abstract class MixinClientPlayNetworkHandler
         }
 
         DataManager.getSchematicPlacementManager().onClientChunkLoad(x, z);
-        // TODO verifier updates?
     }
 
     @Inject(method = "onExplosion", at = @At("RETURN"))
@@ -47,6 +51,23 @@ public abstract class MixinClientPlayNetworkHandler
                 SchematicVerifier.markVerifierBlockChanges(block);
             }
         }
+    }
+
+    @Inject(method = "onChunkDeltaUpdate", at = @At("RETURN"))
+    private void onChunkDeltaUpdate(ChunkDeltaUpdateS2CPacket packet, CallbackInfo ci)
+    {
+        packet.visitUpdates((p, s) -> {
+            SchematicWorldRefresher.INSTANCE.markSchematicChunkForRenderUpdate(p);
+            SchematicVerifier.markVerifierBlockChanges(p);
+        });
+    }
+
+    @Inject(method = "onBlockUpdate", at = @At("RETURN"))
+    private void onBlockUpdate(BlockUpdateS2CPacket packet, CallbackInfo ci)
+    {
+        final var p = packet.getPos();
+        SchematicWorldRefresher.INSTANCE.markSchematicChunkForRenderUpdate(p);
+        SchematicVerifier.markVerifierBlockChanges(p);
     }
 
     @Inject(method = "onUnloadChunk", at = @At("RETURN"))

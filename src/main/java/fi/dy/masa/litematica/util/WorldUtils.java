@@ -29,8 +29,6 @@ import net.minecraft.block.WallRedstoneTorchBlock;
 import net.minecraft.block.WallSignBlock;
 import net.minecraft.block.WallSkullBlock;
 import net.minecraft.block.WallTorchBlock;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.enums.Attachment;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
@@ -1498,23 +1496,5 @@ public class WorldUtils
         }
 
         return val;
-    }
-
-    public static void insertSignTextFromSchematic(SignBlockEntity sbeClient, String[] text)
-    {
-        WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
-
-        if (worldSchematic != null)
-        {
-            BlockEntity be = worldSchematic.getBlockEntity(sbeClient.getPos());
-
-            if (be instanceof SignBlockEntity sbeSchematic)
-            {
-                for (int i = 0; i < text.length; ++i)
-                {
-                    text[i] = sbeSchematic.getTextOnRow(i, true).getString();
-                }
-            }
-        }
     }
 }

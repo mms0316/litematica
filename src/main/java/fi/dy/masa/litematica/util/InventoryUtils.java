@@ -32,6 +32,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.malilib.gui.GuiBase;
+import fi.dy.masa.malilib.util.InfoUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
 public class InventoryUtils
@@ -168,10 +169,10 @@ public class InventoryUtils
             {
                 int slot = inv.getSlotWithStack(stack);
 
-                slot = pickBlockSurvival(slot, stack, inv, mc);
+                var pickBlockResult = pickBlockSurvival(slot, stack, inv, mc);
 
                 // Pick block did not happen - try substitutions
-                if (slot == -1)
+                if (pickBlockResult.slot == -1)
                 {
                     HashSet<String> substitutions = InventoryUtils.getSubstitutions(Registry.ITEM.getId(stack.getItem()).toString());
 
@@ -182,9 +183,18 @@ public class InventoryUtils
 
                         if (!substitutions.contains(Registry.ITEM.getId(iter.getItem()).toString())) continue;
 
-                        slot = pickBlockSurvival(i, iter, inv, mc);
-                        if (slot != -1) break;
+                        pickBlockResult = pickBlockSurvival(i, iter, inv, mc);
+                        if (pickBlockResult.slot != -1) break;
                     }
+                }
+
+                if (pickBlockResult.slot == -1)
+                {
+                    InfoUtils.printActionbarMessage(GuiBase.TXT_RED + "Ran out of " + GuiBase.TXT_RST + stack.getName().getString());
+                }
+                else if (pickBlockResult.pickedShulker)
+                {
+                    InfoUtils.printActionbarMessage(GuiBase.TXT_YELLOW + "Refill " + GuiBase.TXT_RST + stack.getName().getString());
                 }
 
                 //return shouldPick == false || canPick;
@@ -192,9 +202,12 @@ public class InventoryUtils
         }
     }
 
-    private static int pickBlockSurvival(int slot, ItemStack stack, PlayerInventory inv, MinecraftClient mc)
+    private record PickBlockResult(int slot, boolean pickedShulker) { }
+
+    private static PickBlockResult pickBlockSurvival(int slot, ItemStack stack, PlayerInventory inv, MinecraftClient mc)
     {
         boolean shouldPick = inv.selectedSlot != slot;
+        boolean pickedShulker = false;
 
         if (slot != -1)
         {
@@ -213,10 +226,11 @@ public class InventoryUtils
             {
                 ItemStack boxStack = mc.player.playerScreenHandler.slots.get(slot).getStack();
                 setPickedItemToHand(boxStack, mc);
+                pickedShulker = true;
             }
         }
 
-        return slot;
+        return new PickBlockResult(slot, pickedShulker);
     }
 
     private static int getPickBlockTargetSlot(PlayerEntity player)

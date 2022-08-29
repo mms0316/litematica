@@ -18,6 +18,7 @@
 		"MixinClientPlayNetworkHandler",
 		"MixinClientWorld",
 		"MixinDebugHud",
+		"MixinGuiEditSign",
 		"MixinHandledScreen",
 		"MixinIntegratedServer",
 		"MixinMinecraftClient",

@@ -423,7 +423,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                 }
                 else if (remainder > 0)
                 {
-                    strCount = String.format("%02d x %2d + %2d = %d", stacks, maxStackSize, remainder, total);
+                    strCount = String.format("%2d x %2d + %2d = %d", stacks, maxStackSize, remainder, total);
                 }
                 else
                 {

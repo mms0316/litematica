@@ -426,6 +426,7 @@ public class WorldUtils
         final boolean ignoreShulkerBox = Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue();
         if (ignoreEnderChest || ignoreShulkerBox)
         {
+            // Allow opening ender chest / shulker box
             if (mc.player.isSneaking() == false && mc.crosshairTarget instanceof BlockHitResult blockHitResult)
             {
                 Block blockClient = mc.world.getBlockState(blockHitResult.getBlockPos()).getBlock();
@@ -621,6 +622,15 @@ public class WorldUtils
         }
         else if (traceWrapper.getHitType() == RayTraceWrapper.HitType.VANILLA_BLOCK)
         {
+            if (ignoreEnderChest || ignoreShulkerBox)
+            {
+                final Block blockInHand = Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem());
+                if ((ignoreEnderChest && (blockInHand instanceof EnderChestBlock)) ||
+                        (ignoreShulkerBox && (blockInHand instanceof ShulkerBoxBlock)))
+                {
+                    return ActionResult.PASS;
+                }
+            }
             return placementRestrictionInEffect(mc) ? ActionResult.FAIL : ActionResult.PASS;
         }
 

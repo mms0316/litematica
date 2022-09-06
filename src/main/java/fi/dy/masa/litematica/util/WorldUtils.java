@@ -63,6 +63,7 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
+import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message;
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.interfaces.IStringConsumer;
@@ -514,6 +515,17 @@ public class WorldUtils
                 if (hand == null)
                 {
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
+                }
+
+                // Check if it's the last remaining item
+                if (Configs.Generic.EASY_PLACE_LEAVE_ONE.getBooleanValue() && EntityUtils.isCreativeMode(mc.player) == false)
+                {
+                    final var handStack = mc.player.getStackInHand(hand);
+                    if (handStack.getMaxCount() > 1 && handStack.getCount() == 1)
+                    {
+                        InfoUtils.printActionbarMessage(GuiBase.TXT_RED + "Last item of " + GuiBase.TXT_RST + handStack.getName().getString());
+                        return ActionResult.FAIL;
+                    }
                 }
 
                 Vec3d hitPos = trace.getPos();

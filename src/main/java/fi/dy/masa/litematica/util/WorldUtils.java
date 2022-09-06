@@ -97,6 +97,7 @@ import org.apache.commons.lang3.tuple.Triple;
 public class WorldUtils
 {
     private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
+    private static long easyPlaceLastSwap = 0;
     private static final HashMap<Block, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
     private static boolean isHandlingEasyPlace;
     private static boolean isFirstClickEasyPlace;
@@ -508,7 +509,20 @@ public class WorldUtils
                     return ActionResult.FAIL;
                 }
 
-                InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+                final var changed = InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+                final var swapInterval = Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue();
+                if (changed && swapInterval > 0 && EntityUtils.isCreativeMode(mc.player) == false)
+                {
+                    if (System.nanoTime() < easyPlaceLastSwap + swapInterval * 1_000_000L)
+                    {
+                        //An inventory packet was already sent, so it's better not to emit too many packets
+                        //This could cause wrong blocks
+                        return ActionResult.FAIL;
+                    }
+
+                    easyPlaceLastSwap = System.nanoTime();
+                }
+
                 Hand hand = EntityUtils.getUsedHandForItem(mc.player, stack);
 
                 // Abort if a wrong item is in the player's hand

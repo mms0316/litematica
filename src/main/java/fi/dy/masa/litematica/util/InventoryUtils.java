@@ -81,14 +81,15 @@ public class InventoryUtils
         }
     }
 
-    public static void setPickedItemToHand(ItemStack stack, MinecraftClient mc)
+    public static boolean setPickedItemToHand(ItemStack stack, MinecraftClient mc)
     {
         int slotNum = mc.player.getInventory().getSlotWithStack(stack);
-        setPickedItemToHand(slotNum, stack, mc);
+        return setPickedItemToHand(slotNum, stack, mc);
     }
 
-    public static void setPickedItemToHand(int sourceSlot, ItemStack stack, MinecraftClient mc)
+    public static boolean setPickedItemToHand(int sourceSlot, ItemStack stack, MinecraftClient mc)
     {
+        boolean changed = false;
         PlayerEntity player = mc.player;
         PlayerInventory inventory = player.getInventory();
         final long now = System.nanoTime();
@@ -100,13 +101,18 @@ public class InventoryUtils
             {
                 PICK_BLOCKABLE_SLOTS.put(sourceSlot, nextTimeout);
             }
-            inventory.selectedSlot = sourceSlot;
+
+            if (sourceSlot != inventory.selectedSlot)
+            {
+                inventory.selectedSlot = sourceSlot;
+                changed = true;
+            }
         }
         else
         {
             if (PICK_BLOCKABLE_SLOTS.size() == 0)
             {
-                return;
+                return changed;
             }
 
             int hotbarSlot = sourceSlot;
@@ -129,18 +135,23 @@ public class InventoryUtils
                 if (EntityUtils.isCreativeMode(player))
                 {
                     inventory.main.set(hotbarSlot, stack.copy());
+                    changed = true;
                 }
                 else
                 {
-                    fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack.copy(), mc);
+                    changed = fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack.copy(), mc) || changed;
                 }
             }
         }
+
+        return changed;
     }
 
-    public static void schematicWorldPickBlock(ItemStack stack, BlockPos pos,
+    public static boolean schematicWorldPickBlock(ItemStack stack, BlockPos pos,
                                                World schematicWorld, MinecraftClient mc)
     {
+        boolean changed = false;
+
         if (stack.isEmpty() == false)
         {
             PlayerInventory inv = mc.player.getInventory();
@@ -161,7 +172,7 @@ public class InventoryUtils
                 setPickedItemToHand(stack, mc);
                 mc.interactionManager.clickCreativeStack(mc.player.getStackInHand(Hand.MAIN_HAND), 36 + inv.selectedSlot);
 
-                //return true;
+                return true;
             }
             else
             {
@@ -195,17 +206,20 @@ public class InventoryUtils
                     InfoUtils.printActionbarMessage(GuiBase.TXT_YELLOW + "Refill " + GuiBase.TXT_RST + stack.getName().getString());
                 }
 
-                //return shouldPick == false || canPick;
+                changed = pickBlockResult.changed;
             }
         }
+
+        return changed;
     }
 
-    private record PickBlockResult(int slot, boolean pickedShulker) { }
+    private record PickBlockResult(int slot, boolean pickedShulker, boolean changed) { }
 
     private static PickBlockResult pickBlockSurvival(int slot, ItemStack stack, PlayerInventory inv, MinecraftClient mc)
     {
         boolean shouldPick = inv.selectedSlot != slot;
         boolean pickedShulker = false;
+        boolean changed = false;
 
         if (slot != -1)
         {
@@ -214,7 +228,7 @@ public class InventoryUtils
                 setPickedItemToHand(stack, mc);
             }
 
-            preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
+            changed = preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
         }
         else if (Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())
         {
@@ -228,7 +242,7 @@ public class InventoryUtils
             }
         }
 
-        return new PickBlockResult(slot, pickedShulker);
+        return new PickBlockResult(slot, pickedShulker, changed);
     }
 
 
@@ -333,8 +347,9 @@ public class InventoryUtils
      * @param threshold the number of items at or below which the re-stocking will happen
      * @param allowHotbar whether or not to allow taking items from other hotbar slots
      */
-    public static void preRestockHand(PlayerEntity player, Hand hand, int threshold, boolean allowHotbar)
+    public static boolean preRestockHand(PlayerEntity player, Hand hand, int threshold, boolean allowHotbar)
     {
+        boolean changed = false;
         final ItemStack stackHand = player.getEquippedStack(hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
         final int count = stackHand.getCount();
         final int max = stackHand.getMaxCount();
@@ -374,12 +389,14 @@ public class InventoryUtils
 
                     mc.interactionManager.clickSlot(container.syncId, slotNum, button, SlotActionType.PICKUP, player);
                     mc.interactionManager.clickSlot(container.syncId, currentSlot, 0, SlotActionType.PICKUP, player);
+                    changed = true;
 
                     break;
                 }
             }
         }
 
+        return changed;
     }
 
     public static void setSubstitutions(List<String> substitutionList)

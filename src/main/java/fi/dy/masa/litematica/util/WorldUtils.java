@@ -844,42 +844,16 @@ public class WorldUtils
         return true;
     }
 
+    private static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    {
+        final var updatedHitResult = new BlockHitResult(hitVecIn, direction, pos, false);
+        final var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
+        final var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
+        return isMatchingStateRestrictedProtocol(attemptState, stateSchematic);
+    }
+
     private static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
     {
-        ItemPlacementContext ctx;
-
-        //Handle axis first, as it is exclusive with other orientation properties
-        if (stateSchematic.contains(Properties.AXIS))
-        {
-            var orientation = getAxisOrientation(pos, stateSchematic, sideIn, hitVecIn);
-            if (orientation == null)
-                return null;
-            return Triple.of(pos, orientation.getLeft(), orientation.getRight());
-        }
-
-        //Last types are interdependent
-        Direction sideOut = sideIn;
-
-        //Handle attachment (bell)
-        if (stateSchematic.contains(Properties.ATTACHMENT)) {
-            var property = stateSchematic.get(Properties.ATTACHMENT);
-            if (property == Attachment.CEILING)
-            {
-                sideOut = Direction.DOWN;
-            }
-            else if (property == Attachment.FLOOR)
-            {
-                sideOut = Direction.UP;
-            }
-            else
-            {
-                if (stateSchematic.contains(Properties.HORIZONTAL_FACING))
-                {
-                    sideOut = stateSchematic.get(Properties.HORIZONTAL_FACING).getOpposite();
-                }
-            }
-        }
-
         var block = stateSchematic.getBlock();
         if (block instanceof TorchBlock) //Torch, Soul Torch, Redstone Torch
         {
@@ -902,13 +876,11 @@ public class WorldUtils
             return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
         }
 
-        var updatedHitResult = new BlockHitResult(hitVecIn, sideOut, pos, false);
-        ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
-        var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
-        if (isMatchingStateRestrictedProtocol (attemptState, stateSchematic))
-            return Triple.of(pos, sideOut, hitVecIn);
-        else
-            return null; //give up
+        return Direction.stream()
+                .filter(direction -> isMatchingStateRestrictedProtocol(pos, stateSchematic, direction, hitVecIn, mc, hand))
+                .findAny()
+                .map(direction -> Triple.of(pos, direction, hitVecIn))
+                .orElse(null);
     }
 
     private static Triple<BlockPos, Direction, Vec3d> getWallPlaceableOrientation(BlockPos pos, BlockState stateSchematic, Vec3d hitVecOut, MinecraftClient mc, Hand hand, boolean isOnWall) {
@@ -939,10 +911,7 @@ public class WorldUtils
         //Check for blocks that have rotation property (Banners, Signs, Skulls)
         if (stateSchematic.contains(Properties.ROTATION))
         {
-            var updatedHitResult = new BlockHitResult(hitVecOut, sideOut, posOrig, false);
-            var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
-            var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
-            if (!isMatchingStateRestrictedProtocol (attemptState, stateSchematic))
+            if (!isMatchingStateRestrictedProtocol(posOrig, stateSchematic, sideOut, hitVecOut, mc, hand))
                 return null;
         }
 

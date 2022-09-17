@@ -181,7 +181,7 @@ public class InventoryUtils
                 var pickBlockResult = pickBlockSurvival(slot, stack, inv, mc);
 
                 // Pick block did not happen - try substitutions
-                if (pickBlockResult.slot == -1)
+                if (pickBlockResult.changed == false && pickBlockResult.slot == -1)
                 {
                     HashSet<String> substitutions = InventoryUtils.getSubstitutions(Registry.ITEM.getId(stack.getItem()).toString());
 
@@ -226,9 +226,12 @@ public class InventoryUtils
             if (shouldPick)
             {
                 setPickedItemToHand(stack, mc);
+                changed = true;
             }
-
-            changed = preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
+            else
+            {
+                changed = preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
+            }
         }
         else if (Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())
         {
@@ -239,6 +242,7 @@ public class InventoryUtils
                 ItemStack boxStack = mc.player.playerScreenHandler.slots.get(slot).getStack();
                 setPickedItemToHand(boxStack, mc);
                 pickedShulker = true;
+                changed = true;
             }
         }
 

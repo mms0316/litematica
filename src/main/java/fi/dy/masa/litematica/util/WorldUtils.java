@@ -100,9 +100,8 @@ public class WorldUtils
     private static long easyPlaceNextSwap = 0;
     private static final HashMap<Block, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
     private static boolean isHandlingEasyPlace;
-    private static boolean isFirstClickEasyPlace;
-    private static boolean isFirstClickPlacementRestriction;
     private static boolean easyPlaceShowFailMessage;
+    private static ActionResult easyPlaceResult;
     private static final Property<?>[] CHECKED_PROPERTIES = new Property<?>[] {
             Properties.NOTE,
             Properties.DELAY
@@ -406,21 +405,52 @@ public class WorldUtils
         return false;
     }
 
-    public static void easyPlaceOnUseTick(MinecraftClient mc)
+    public static void easyPlaceOnBegin(MinecraftClient mc)
     {
-        if (mc.player != null && isHandlingEasyPlace == false &&
-            shouldDoEasyPlaceActions() &&
-            Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() &&
-            Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
+        // Clear variables
+        isHandlingEasyPlace = false;
+        easyPlaceShowFailMessage = true;
+        easyPlaceResult = null;
+    }
+
+    public static boolean easyPlaceOnInteract(MinecraftClient mc)
+    {
+        easyPlaceResult = doEasyPlaceAction(mc);
+
+        return (easyPlaceResult != ActionResult.PASS);
+    }
+
+    public static void easyPlaceOnEnd(MinecraftClient mc)
+    {
+        if (shouldDoEasyPlaceActions(mc.player) &&
+                Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue())
         {
-            isHandlingEasyPlace = true;
-            WorldUtils.doEasyPlaceAction(mc);
-            isHandlingEasyPlace = false;
+            easyPlaceResult = doEasyPlaceAction(mc);
+            easyPlaceShowFailMessage = false; // skip failure messages, so it doesn't spam
+        }
+
+        // Print the warning message once per right click
+        if (easyPlaceShowFailMessage && easyPlaceResult == ActionResult.FAIL)
+        {
+            MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
+
+            if (type == MessageOutputType.MESSAGE)
+            {
+                InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, 1000, "litematica.message.easy_place_fail");
+            }
+            else if (type == MessageOutputType.ACTIONBAR)
+            {
+                InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
+            }
+
+            easyPlaceShowFailMessage = false;
         }
     }
 
-    private static ActionResult doEasyPlaceAction(MinecraftClient mc)
+    public static ActionResult doEasyPlaceAction(MinecraftClient mc)
     {
+        isHandlingEasyPlace = true;
+
         RayTraceWrapper traceWrapper;
         double traceMaxRange = mc.interactionManager.getReachDistance();
 
@@ -509,9 +539,16 @@ public class WorldUtils
                     return ActionResult.FAIL;
                 }
 
-                final var changed = InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+                final var pickBlockResult = InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
                 final var swapInterval = Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue();
-                if (changed && swapInterval > 0 && EntityUtils.isCreativeMode(mc.player) == false)
+
+                if (pickBlockResult.slot() == -1 || pickBlockResult.pickedShulker())
+                {
+                    // An internal message was displayed
+                    easyPlaceShowFailMessage = false; // Do not overlap message
+                }
+
+                if (pickBlockResult.changed() && swapInterval > 0 && EntityUtils.isCreativeMode(mc.player) == false)
                 {
                     final var now = System.nanoTime();
                     final var beforeSwap = easyPlaceNextSwap;
@@ -539,6 +576,7 @@ public class WorldUtils
                     if (handStack.getMaxCount() > 1 && handStack.getCount() == 1)
                     {
                         InfoUtils.printActionbarMessage(GuiBase.TXT_RED + "Last item of " + GuiBase.TXT_RST + handStack.getName().getString());
+                        easyPlaceShowFailMessage = false;
                         return ActionResult.FAIL;
                     }
                 }
@@ -1423,66 +1461,11 @@ public class WorldUtils
         isHandlingEasyPlace = handling;
     }
 
-    public static void setIsFirstClickEasyPlace()
+    public static boolean shouldDoEasyPlaceActions(PlayerEntity player)
     {
-        if (shouldDoEasyPlaceActions())
-        {
-            isFirstClickEasyPlace = true;
-        }
-
-        if (Configs.Generic.PLACEMENT_RESTRICTION.getBooleanValue())
-        {
-            isFirstClickPlacementRestriction = true;
-        }
-    }
-
-    public static boolean shouldDoEasyPlaceActions()
-    {
-        return Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && DataManager.getToolMode() != ToolMode.REBUILD &&
+        return isHandlingEasyPlace == false && player != null &&
+                Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && DataManager.getToolMode() != ToolMode.REBUILD &&
                 Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld();
-    }
-
-    public static boolean handleEasyPlaceWithMessage(MinecraftClient mc)
-    {
-        if (isHandlingEasyPlace)
-        {
-            return false;
-        }
-
-        isHandlingEasyPlace = true;
-        easyPlaceShowFailMessage = true;
-        ActionResult result = doEasyPlaceAction(mc);
-        isHandlingEasyPlace = false;
-
-        // Only print the warning message once per right click
-        if (isFirstClickEasyPlace && result == ActionResult.FAIL && easyPlaceShowFailMessage)
-        {
-            MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
-
-            if (type == MessageOutputType.MESSAGE)
-            {
-                InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, 1000, "litematica.message.easy_place_fail");
-            }
-            else if (type == MessageOutputType.ACTIONBAR)
-            {
-                InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
-            }
-        }
-
-        isFirstClickEasyPlace = false;
-
-        return result != ActionResult.PASS;
-    }
-
-    public static void onRightClickTail(MinecraftClient mc)
-    {
-        // If the click wasn't handled yet, handle it now.
-        // This is only called when right clicking on air with an empty hand,
-        // as in that case neither the processRightClickBlock nor the processRightClick method get called.
-        if (isFirstClickEasyPlace)
-        {
-            handleEasyPlaceWithMessage(mc);
-        }
     }
 
     private static boolean hasUseAction(Block block)

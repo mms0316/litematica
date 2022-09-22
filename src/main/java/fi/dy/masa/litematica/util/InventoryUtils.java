@@ -147,11 +147,9 @@ public class InventoryUtils
         return changed;
     }
 
-    public static boolean schematicWorldPickBlock(ItemStack stack, BlockPos pos,
+    public static PickBlockResult schematicWorldPickBlock(ItemStack stack, BlockPos pos,
                                                World schematicWorld, MinecraftClient mc)
     {
-        boolean changed = false;
-
         if (stack.isEmpty() == false)
         {
             PlayerInventory inv = mc.player.getInventory();
@@ -172,7 +170,7 @@ public class InventoryUtils
                 setPickedItemToHand(stack, mc);
                 mc.interactionManager.clickCreativeStack(mc.player.getStackInHand(Hand.MAIN_HAND), 36 + inv.selectedSlot);
 
-                return true;
+                return new PickBlockResult(inv.selectedSlot, false, true);
             }
             else
             {
@@ -206,14 +204,14 @@ public class InventoryUtils
                     InfoUtils.printActionbarMessage(GuiBase.TXT_YELLOW + "Refill " + GuiBase.TXT_RST + stack.getName().getString());
                 }
 
-                changed = pickBlockResult.changed;
+                return pickBlockResult;
             }
         }
 
-        return changed;
+        return new PickBlockResult(-1, false, false);
     }
 
-    private record PickBlockResult(int slot, boolean pickedShulker, boolean changed) { }
+    public record PickBlockResult(int slot, boolean pickedShulker, boolean changed) { }
 
     private static PickBlockResult pickBlockSurvival(int slot, ItemStack stack, PlayerInventory inv, MinecraftClient mc)
     {

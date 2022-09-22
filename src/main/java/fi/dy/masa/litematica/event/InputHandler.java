@@ -18,7 +18,6 @@ import fi.dy.masa.litematica.util.EntityUtils;
 import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.util.PositionUtils.Corner;
 import fi.dy.masa.litematica.util.SchematicUtils;
-import fi.dy.masa.litematica.util.WorldUtils;
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
 import fi.dy.masa.malilib.hotkeys.IKeybindManager;
@@ -296,10 +295,6 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
                 {
                     return SchematicUtils.placeSchematicBlock(mc);
                 }
-            }
-            else
-            {
-                WorldUtils.setIsFirstClickEasyPlace();
             }
         }
 

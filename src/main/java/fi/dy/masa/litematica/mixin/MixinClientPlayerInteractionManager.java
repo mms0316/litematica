@@ -3,12 +3,10 @@ package fi.dy.masa.litematica.mixin;
 import fi.dy.masa.litematica.util.WorldUtils;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,23 +25,20 @@ public abstract class MixinClientPlayerInteractionManager
             CallbackInfoReturnable<ActionResult> cir)
     {
         // Prevent recursion, since the Easy Place mode can call this code again
-        if (WorldUtils.isHandlingEasyPlace() == false)
+        if (WorldUtils.shouldDoEasyPlaceActions(player))
         {
-            if (WorldUtils.shouldDoEasyPlaceActions())
+            if (WorldUtils.easyPlaceOnInteract(this.client))
             {
-                if (WorldUtils.handleEasyPlaceWithMessage(this.client))
-                {
-                    cir.setReturnValue(net.minecraft.util.ActionResult.FAIL);
-                }
+                cir.setReturnValue(ActionResult.FAIL);
             }
-            else
+        }
+        else
+        {
+            if (Configs.Generic.PLACEMENT_RESTRICTION.getBooleanValue())
             {
-                if (Configs.Generic.PLACEMENT_RESTRICTION.getBooleanValue())
+                if (WorldUtils.handlePlacementRestriction(this.client))
                 {
-                    if (WorldUtils.handlePlacementRestriction(this.client))
-                    {
-                        cir.setReturnValue(net.minecraft.util.ActionResult.FAIL);
-                    }
+                    cir.setReturnValue(ActionResult.FAIL);
                 }
             }
         }
@@ -55,10 +50,9 @@ public abstract class MixinClientPlayerInteractionManager
     private void onInteractItem(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir)
     {
         // Prevent recursion, since the Easy Place mode can call this code again
-        if (WorldUtils.isHandlingEasyPlace() == false)
+        if (WorldUtils.shouldDoEasyPlaceActions(player))
         {
-            if (WorldUtils.shouldDoEasyPlaceActions() &&
-                    WorldUtils.handleEasyPlaceWithMessage(this.client))
+            if (WorldUtils.easyPlaceOnInteract(this.client))
             {
                 cir.setReturnValue(ActionResult.FAIL);
             }

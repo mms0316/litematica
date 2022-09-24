@@ -13,12 +13,14 @@ import java.util.regex.Pattern;
 import fi.dy.masa.litematica.Litematica;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
@@ -192,6 +194,25 @@ public class InventoryUtils
 
                         pickBlockResult = pickBlockSurvival(i, iter, inv, mc);
                         if (pickBlockResult.slot != -1) break;
+                    }
+
+                    // Try Shulker boxes
+                    if (pickBlockResult.changed == false && pickBlockResult.slot == -1 &&
+                            Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())
+                    {
+                        for (String s : substitutions)
+                        {
+                            ItemStack substStack = new ItemStack(Registry.ITEM.get(new Identifier(s)));
+                            slot = findSlotWithBoxWithItem(mc.player.playerScreenHandler, substStack, false);
+                            if (slot != -1)
+                            {
+                                ItemStack boxStack = mc.player.playerScreenHandler.slots.get(slot).getStack();
+                                setPickedItemToHand(boxStack, mc);
+
+                                pickBlockResult = new PickBlockResult(slot, true, true);
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -426,6 +447,9 @@ public class InventoryUtils
                 //does not break here, because there may be multiple entries
             }
         }
+
+        substitutionList.remove(id); //remove self
+
         return substitutionList;
     }
 

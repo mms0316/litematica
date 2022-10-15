@@ -29,6 +29,8 @@ import net.minecraft.block.WallRedstoneTorchBlock;
 import net.minecraft.block.WallSignBlock;
 import net.minecraft.block.WallSkullBlock;
 import net.minecraft.block.WallTorchBlock;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.enums.Attachment;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
@@ -49,6 +51,7 @@ import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.structure.StructureTemplate;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -77,6 +80,7 @@ import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.materials.MaterialCache;
+import fi.dy.masa.litematica.mixin.IMixinSignBlockEntity;
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
 import fi.dy.masa.litematica.schematic.SchematicaSchematic;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
@@ -401,6 +405,30 @@ public class WorldUtils
         }
 
         return false;
+    }
+
+    public static void insertSignTextFromSchematic(SignBlockEntity beClient, String[] screenTextArr)
+    {
+        WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
+
+        if (worldSchematic != null)
+        {
+            BlockEntity beSchem = worldSchematic.getBlockEntity(beClient.getPos());
+
+            if (beSchem != null)
+            {
+                Text[] textSchematic = ((IMixinSignBlockEntity) beSchem).litematica_getText();
+
+                if (textSchematic != null)
+                {
+                    for (int i = 0; i < screenTextArr.length; ++i)
+                    {
+                        screenTextArr[i] = textSchematic[i].getString();
+                        beClient.setTextOnRow(i, textSchematic[i]);
+                    }
+                }
+            }
+        }
     }
 
     public static void easyPlaceOnBegin(MinecraftClient mc)

@@ -33,7 +33,7 @@ public abstract class MixinClientPlayNetworkHandler
 
             if (Configs.Generic.SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD.getBooleanValue())
             {
-                SchematicVerifier.markVerifierChunkChanges(x, z);
+                SchematicVerifier.markVerifierChunkChanges(chunkX, chunkZ);
             }
         }
 

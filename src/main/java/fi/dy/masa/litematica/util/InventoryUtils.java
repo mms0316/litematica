@@ -94,15 +94,10 @@ public class InventoryUtils
         boolean changed = false;
         PlayerEntity player = mc.player;
         PlayerInventory inventory = player.getInventory();
-        final long now = System.nanoTime();
-        final long nextTimeout = now + (20 + Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue()) * 1_000_000L;
 
         if (PlayerInventory.isValidHotbarIndex(sourceSlot))
         {
-            if (PICK_BLOCKABLE_SLOTS.containsKey(sourceSlot))
-            {
-                PICK_BLOCKABLE_SLOTS.put(sourceSlot, nextTimeout);
-            }
+            refreshSlotTimeout(sourceSlot);
 
             if (sourceSlot != inventory.selectedSlot)
             {
@@ -131,7 +126,8 @@ public class InventoryUtils
 
             if (hotbarSlot != -1)
             {
-                PICK_BLOCKABLE_SLOTS.put(hotbarSlot, nextTimeout);
+                refreshSlotTimeout(hotbarSlot);
+
                 inventory.selectedSlot = hotbarSlot;
 
                 if (EntityUtils.isCreativeMode(player))
@@ -147,6 +143,16 @@ public class InventoryUtils
         }
 
         return changed;
+    }
+
+    public static void refreshSlotTimeout(int slot)
+    {
+        if (PICK_BLOCKABLE_SLOTS.containsKey(slot))
+        {
+            final long now = System.nanoTime();
+            final long nextTimeout = now + (20 + Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue()) * 1_000_000L;
+            PICK_BLOCKABLE_SLOTS.put(slot, nextTimeout);
+        }
     }
 
     public static PickBlockResult schematicWorldPickBlock(ItemStack stack, BlockPos pos,
@@ -216,6 +222,12 @@ public class InventoryUtils
                     }
                 }
 
+                if (pickBlockResult.changed == false && pickBlockResult.pickedShulker == false)
+                {
+                    final var changed = preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
+                    pickBlockResult = new PickBlockResult(pickBlockResult.slot, false, changed);
+                }
+
                 if (pickBlockResult.slot == -1)
                 {
                     InfoUtils.printActionbarMessage(GuiBase.TXT_RED + "Ran out of " + GuiBase.TXT_RST + stack.getName().getString());
@@ -246,10 +258,6 @@ public class InventoryUtils
             {
                 setPickedItemToHand(stack, mc);
                 changed = true;
-            }
-            else
-            {
-                changed = preRestockHand(mc.player, Hand.MAIN_HAND, 6, true);
             }
         }
         else if (Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())

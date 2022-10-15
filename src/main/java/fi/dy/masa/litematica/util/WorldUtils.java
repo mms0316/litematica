@@ -495,12 +495,7 @@ public class WorldUtils
             World world = SchematicWorldHandler.getSchematicWorld();
             BlockState stateSchematic = world.getBlockState(pos);
             ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic);
-
-            // Already placed to that position, possible server sync delay
-            if (easyPlaceIsPositionCached(pos))
-            {
-                return ActionResult.FAIL;
-            }
+            final boolean alreadyPlacedOnPosition = easyPlaceIsPositionCached(pos);
 
             if (stack.isEmpty() == false)
             {
@@ -514,6 +509,11 @@ public class WorldUtils
                     {
                         mayPlace = true;
                     }
+                }
+
+                if (alreadyPlacedOnPosition)
+                {
+                    return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
                 BlockState stateClient = mc.world.getBlockState(pos);
@@ -681,6 +681,13 @@ public class WorldUtils
                         mc.interactionManager.interactBlock(mc.player, hand, hitResult);
                     }
                 }
+
+                InventoryUtils.refreshSlotTimeout(pickBlockResult.slot());
+            }
+            else
+            {
+                if (alreadyPlacedOnPosition)
+                    return ActionResult.FAIL;
             }
 
             return ActionResult.SUCCESS;

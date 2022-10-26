@@ -101,9 +101,7 @@ public class WorldUtils
     private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
     private static long easyPlaceNextSwap = 0;
     private static final HashMap<Block, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
-    private static boolean isHandlingEasyPlace;
     private static boolean easyPlaceShowFailMessage;
-    private static ActionResult easyPlaceResult;
     private static final Property<?>[] CHECKED_PROPERTIES = new Property<?>[] {
             Properties.NOTE,
             Properties.DELAY
@@ -431,52 +429,52 @@ public class WorldUtils
         }
     }
 
-    public static void easyPlaceOnBegin(MinecraftClient mc)
+    public static void easyPlaceOnUseTick(MinecraftClient mc)
     {
-        // Clear variables
-        isHandlingEasyPlace = false;
-        easyPlaceShowFailMessage = true;
-        easyPlaceResult = null;
-    }
-
-    public static boolean easyPlaceOnInteract(MinecraftClient mc)
-    {
-        easyPlaceResult = doEasyPlaceAction(mc);
-
-        return (easyPlaceResult != ActionResult.PASS);
-    }
-
-    public static void easyPlaceOnEnd(MinecraftClient mc)
-    {
-        if (shouldDoEasyPlaceActions(mc.player) &&
-                Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue())
+        if (mc.player != null && DataManager.getToolMode() != ToolMode.REBUILD &&
+                Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
+                Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() &&
+                Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
         {
-            easyPlaceResult = doEasyPlaceAction(mc);
-            easyPlaceShowFailMessage = false; // skip failure messages, so it doesn't spam
-        }
-
-        // Print the warning message once per right click
-        if (easyPlaceShowFailMessage && easyPlaceResult == ActionResult.FAIL)
-        {
-            MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
-
-            if (type == MessageOutputType.MESSAGE)
-            {
-                InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, 1000, "litematica.message.easy_place_fail");
-            }
-            else if (type == MessageOutputType.ACTIONBAR)
-            {
-                InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
-            }
-
-            easyPlaceShowFailMessage = false;
+            WorldUtils.doEasyPlaceAction(mc);
         }
     }
 
-    public static ActionResult doEasyPlaceAction(MinecraftClient mc)
+    public static boolean handleEasyPlace(MinecraftClient mc)
     {
-        isHandlingEasyPlace = true;
+        if (Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
+                DataManager.getToolMode() != ToolMode.REBUILD)
+        {
+            easyPlaceShowFailMessage = true;
+            ActionResult result = doEasyPlaceAction(mc);
 
+            if (result == ActionResult.FAIL)
+            {
+                if (easyPlaceShowFailMessage)
+                {
+                    MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
+
+                    if (type == MessageOutputType.MESSAGE)
+                    {
+                        InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, "litematica.message.easy_place_fail");
+                    }
+                    else if (type == MessageOutputType.ACTIONBAR)
+                    {
+                        InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
+                    }
+                }
+
+                return true;
+            }
+
+            return result != ActionResult.PASS;
+        }
+
+        return false;
+    }
+
+    private static ActionResult doEasyPlaceAction(MinecraftClient mc)
+    {
         RayTraceWrapper traceWrapper;
         double traceMaxRange = mc.interactionManager.getReachDistance();
 
@@ -1482,23 +1480,6 @@ public class WorldUtils
         {
             return currentTime - this.time > this.timeout;
         }
-    }
-
-    public static boolean isHandlingEasyPlace()
-    {
-        return isHandlingEasyPlace;
-    }
-
-    public static void setHandlingEasyPlace(boolean handling)
-    {
-        isHandlingEasyPlace = handling;
-    }
-
-    public static boolean shouldDoEasyPlaceActions(PlayerEntity player)
-    {
-        return isHandlingEasyPlace == false && player != null &&
-                Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && DataManager.getToolMode() != ToolMode.REBUILD &&
-                Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld();
     }
 
     private static boolean hasUseAction(Block block)

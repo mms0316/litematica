@@ -27,6 +27,7 @@ import fi.dy.masa.litematica.util.EntityUtils;
 import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.util.PositionUtils.Corner;
 import fi.dy.masa.litematica.util.SchematicUtils;
+import fi.dy.masa.litematica.util.WorldUtils;
 
 public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IMouseInputHandler
 {
@@ -291,6 +292,18 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
                 {
                     return SchematicUtils.placeSchematicBlock(mc);
                 }
+            }
+            else if (Configs.Generic.PICK_BLOCK_ENABLED.getBooleanValue())
+            {
+                if (KeybindMulti.hotkeyMatchesKeybind(Hotkeys.PICK_BLOCK_LAST, mc.options.useKey))
+                {
+                    WorldUtils.doSchematicWorldPickBlock(false, mc);
+                }
+            }
+
+            if (Configs.Generic.PLACEMENT_RESTRICTION.getBooleanValue())
+            {
+                return WorldUtils.handlePlacementRestriction(mc);
             }
         }
 

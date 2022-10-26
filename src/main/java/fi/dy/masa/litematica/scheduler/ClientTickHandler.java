@@ -22,6 +22,8 @@ public class ClientTickHandler implements IClientTickHandler
                 sm.moveGrabbedElement(mc.player);
             }
 
+            WorldUtils.easyPlaceOnUseTick(mc);
+
             if (Configs.Generic.LAYER_MODE_DYNAMIC.getBooleanValue())
             {
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(EntityUtils.getCameraEntity());

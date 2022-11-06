@@ -186,7 +186,7 @@ public class WorldRendererSchematic
             }
 
             this.displayListEntitiesDirty = true;
-            this.renderDistanceChunks = this.mc.options.getViewDistance().getValue();
+            this.renderDistanceChunks = this.mc.options.getViewDistance().getValue() + 2;
 
             if (this.chunkRendererDispatcher != null)
             {
@@ -223,7 +223,7 @@ public class WorldRendererSchematic
     {
         this.world.getProfiler().push("setup_terrain");
 
-        if (this.chunkRendererDispatcher == null || this.mc.options.getViewDistance().getValue() != this.renderDistanceChunks)
+        if (this.chunkRendererDispatcher == null || this.mc.options.getViewDistance().getValue() + 2 != this.renderDistanceChunks)
         {
             this.loadRenderers();
         }
@@ -277,7 +277,7 @@ public class WorldRendererSchematic
         BlockPos viewPos = new BlockPos(cameraX, cameraY + (double) entity.getStandingEyeHeight(), cameraZ);
         final int centerChunkX = (viewPos.getX() >> 4);
         final int centerChunkZ = (viewPos.getZ() >> 4);
-        final int renderDistance = this.mc.options.getViewDistance().getValue();
+        final int renderDistance = this.mc.options.getViewDistance().getValue() + 2;
         SubChunkPos viewSubChunk = new SubChunkPos(centerChunkX, viewPos.getY() >> 4, centerChunkZ);
         BlockPos viewPosSubChunk = new BlockPos(viewSubChunk.getX() << 4, viewSubChunk.getY() << 4, viewSubChunk.getZ() << 4);
 

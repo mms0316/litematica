@@ -17,7 +17,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.Registries;
 import net.minecraft.world.World;
 
 public class ItemUtils
@@ -159,7 +159,7 @@ public class ItemUtils
     {
         if (stack.isEmpty() == false)
         {
-            Identifier rl = Registry.ITEM.getId(stack.getItem());
+            Identifier rl = Registries.ITEM.getId(stack.getItem());
 
             return String.format("[%s - display: %s - NBT: %s] (%s)",
                                  rl != null ? rl.toString() : "null", stack.getName().getString(),

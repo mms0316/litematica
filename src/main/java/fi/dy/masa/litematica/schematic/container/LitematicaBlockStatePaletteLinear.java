@@ -6,6 +6,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtHelper;
+import net.minecraft.util.registry.Registries;
 
 public class LitematicaBlockStatePaletteLinear implements ILitematicaBlockStatePalette
 {
@@ -88,7 +89,7 @@ public class LitematicaBlockStatePaletteLinear implements ILitematicaBlockStateP
         for (int i = 0; i < size; ++i)
         {
             NbtCompound tag = tagList.getCompound(i);
-            BlockState state = NbtHelper.toBlockState(tag);
+            BlockState state = NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(), tag);
 
             if (i > 0 || state != LitematicaBlockStateContainer.AIR_BLOCK_STATE)
             {

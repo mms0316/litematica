@@ -201,7 +201,7 @@ public class ChunkRendererSchematicVbo
         RenderLayer layerTranslucent = RenderLayer.getTranslucent();
         ChunkRenderDataSchematic data = task.getChunkRenderData();
         BufferBuilderCache buffers = task.getBufferCache();
-        BufferBuilder.State bufferState = data.getBlockBufferState(layerTranslucent);
+        BufferBuilder.TransparentSortingData bufferState = data.getBlockBufferState(layerTranslucent);
         Vec3d cameraPos = task.getCameraPosSupplier().get();
         float x = (float) cameraPos.x - this.position.getX();
         float y = (float) cameraPos.y - this.position.getY();
@@ -215,7 +215,8 @@ public class ChunkRendererSchematicVbo
 
                 RenderSystem.setShader(GameRenderer::getRenderTypeTranslucentShader);
                 this.preRenderBlocks(buffer, layerTranslucent);
-                buffer.restoreState(bufferState);
+                //buffer.restoreState(bufferState);
+                buffer.beginSortedIndexBuffer(bufferState);
                 this.postRenderBlocks(layerTranslucent, x, y, z, buffer, data);
             }
         }
@@ -231,7 +232,8 @@ public class ChunkRendererSchematicVbo
                 BufferBuilder buffer = buffers.getOverlayBuffer(type);
 
                 this.preRenderOverlay(buffer, type.getDrawMode());
-                buffer.restoreState(bufferState);
+                //buffer.restoreState(bufferState);
+                buffer.beginSortedIndexBuffer(bufferState);
                 this.postRenderOverlay(type, x, y, z, buffer, data);
             }
         }
@@ -753,7 +755,8 @@ public class ChunkRendererSchematicVbo
         if (layer == RenderLayer.getTranslucent() && chunkRenderData.isBlockLayerEmpty(layer) == false)
         {
             buffer.sortFrom(x, y, z);
-            chunkRenderData.setBlockBufferState(layer, buffer.popState());
+            //chunkRenderData.setBlockBufferState(layer, buffer.popState());
+            chunkRenderData.setBlockBufferState(layer, buffer.getSortingData());
         }
 
         buffer.end();
@@ -780,7 +783,8 @@ public class ChunkRendererSchematicVbo
         if (type == OverlayRenderType.QUAD && chunkRenderData.isOverlayTypeEmpty(type) == false)
         {
             buffer.sortFrom(x, y, z);
-            chunkRenderData.setOverlayBufferState(type, buffer.popState());
+            //chunkRenderData.setOverlayBufferState(type, buffer.popState());
+            chunkRenderData.setOverlayBufferState(type, buffer.getSortingData());
         }
 
         buffer.end();

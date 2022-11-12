@@ -16,6 +16,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.registry.Registries;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -174,7 +175,7 @@ public class SchematicConversionMaps
             }
 
             // Store the id + meta => state maps before renaming the block for the state <=> state maps
-            BlockState state = NbtHelper.toBlockState(newStateTag);
+            BlockState state = NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(), newStateTag);
             //System.out.printf("id: %5d, state: %s, tag: %s\n", idMeta, state, newStateTag);
             ID_META_TO_BLOCKSTATE.putIfAbsent(idMeta, state);
 

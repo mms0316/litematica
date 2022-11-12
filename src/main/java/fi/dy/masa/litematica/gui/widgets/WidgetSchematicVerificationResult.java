@@ -26,10 +26,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Quaternion;
-import net.minecraft.util.math.Vec3f;
 import net.minecraft.util.math.random.LocalRandom;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.Registries;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
@@ -49,6 +47,8 @@ import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.BlockMismatch;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.MismatchType;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.SortCriteria;
 import fi.dy.masa.litematica.util.ItemUtils;
+import org.joml.AxisAngle4f;
+import org.joml.Quaternionf;
 
 public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<BlockMismatchEntry>
 {
@@ -403,8 +403,8 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
 
             Block blockExpected = this.stateExpected.getBlock();
             Block blockFound = this.stateFound.getBlock();
-            Identifier rl1 = Registry.BLOCK.getId(blockExpected);
-            Identifier rl2 = Registry.BLOCK.getId(blockFound);
+            Identifier rl1 = Registries.BLOCK.getId(blockExpected);
+            Identifier rl2 = Registries.BLOCK.getId(blockFound);
 
             this.blockRegistrynameExpected = rl1 != null ? rl1.toString() : "<null>";
             this.blockRegistrynameFound = rl2 != null ? rl2.toString() : "<null>";
@@ -550,8 +550,10 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
         matrixStack.translate(x + 8.0, y + 8.0, z + 100.0);
         matrixStack.scale(16, -16, 16);
 
-        matrixStack.multiply(new Quaternion(Vec3f.POSITIVE_X, 30, true));
-        matrixStack.multiply(new Quaternion(Vec3f.POSITIVE_Y, 225, true));
+        //matrixStack.multiply(new Quaternion(Vec3f.POSITIVE_X, 30, true));
+        matrixStack.multiply(new Quaternionf(new AxisAngle4f(30 * (float)Math.PI / 180, 1.0f, 0.0f, 0.0f)));
+        //matrixStack.multiply(new Quaternion(Vec3f.POSITIVE_Y, 225, true));
+        matrixStack.multiply(new Quaternionf(new AxisAngle4f(225 * (float)Math.PI / 180, 0.0f, 1.0f, 0.0f)));
         matrixStack.scale(0.625f, 0.625f, 0.625f);
         matrixStack.translate(-0.5, -0.5, -0.5);
 

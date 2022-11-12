@@ -35,6 +35,6 @@
 
 	"depends": {
 		"minecraft": ">=1.19.1 <1.20",
-		"malilib": "0.13.x"
+		"malilib": "0.13.0+22w45a"
 	}
 }

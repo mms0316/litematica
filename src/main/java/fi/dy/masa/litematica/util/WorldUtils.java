@@ -46,6 +46,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.registry.Registries;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
@@ -284,7 +285,7 @@ public class WorldUtils
         NbtCompound nbt = NbtIo.readCompressed(stream);
         StructureTemplate template = new StructureTemplate();
         //template.read(fixer.process(FixTypes.STRUCTURE, nbt));
-        template.readNbt(nbt);
+        template.readNbt(Registries.BLOCK.getReadOnlyWrapper(), nbt);
 
         return template;
     }

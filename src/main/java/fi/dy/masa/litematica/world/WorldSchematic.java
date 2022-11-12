@@ -16,6 +16,7 @@ import net.minecraft.fluid.Fluid;
 import net.minecraft.item.map.MapState;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.recipe.RecipeManager;
+import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
@@ -27,11 +28,10 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.profiler.Profiler;
-import net.minecraft.util.registry.BuiltinRegistries;
 import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryEntry;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.util.registry.RegistryKeys;
 import net.minecraft.world.LightType;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
@@ -51,7 +51,8 @@ import fi.dy.masa.litematica.render.schematic.WorldRendererSchematic;
 
 public class WorldSchematic extends World
 {
-    private static final RegistryKey<World> REGISTRY_KEY = RegistryKey.of(Registry.WORLD_KEY, new Identifier(Reference.MOD_ID, "schematic_world"));
+    //private static final RegistryKey<World> REGISTRY_KEY = RegistryKey.of(Registry.WORLD_KEY, new Identifier(Reference.MOD_ID, "schematic_world"));
+    private static final RegistryKey<World> REGISTRY_KEY = RegistryKey.of(RegistryKeys.DIMENSION, new Identifier(Reference.MOD_ID, "schematic_world"));
 
     private final MinecraftClient mc;
     private final WorldRendererSchematic worldRenderer;
@@ -69,7 +70,8 @@ public class WorldSchematic extends World
         this.mc = MinecraftClient.getInstance();
         this.worldRenderer = LitematicaRenderer.getInstance().getWorldRenderer();
         this.chunkManagerSchematic = new ChunkManagerSchematic(this);
-        this.biome = RegistryEntry.of(BuiltinRegistries.BIOME.get(BiomeKeys.PLAINS));
+        //this.biome = RegistryEntry.of(Registries.BIOME.get(BiomeKeys.PLAINS));
+        this.biome = mc.world.getRegistryManager().get(RegistryKeys.BIOME_WORLDGEN).entryOf(BiomeKeys.PLAINS);
     }
 
     public ChunkManagerSchematic getChunkProvider()
@@ -507,6 +509,9 @@ public class WorldSchematic extends World
     {
         return this.mc.world.getRegistryManager();
     }
+
+    @Override
+    public FeatureSet getEnabledFeatures() { return FeatureSet.empty(); }
 
     @Override
     public String asString()

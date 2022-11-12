@@ -37,9 +37,7 @@ import net.minecraft.util.crash.CrashReportSection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.Mutable;
 import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
 import net.minecraft.world.BlockRenderView;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.SubChunkPos;
@@ -49,6 +47,8 @@ import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.render.schematic.ChunkRendererSchematicVbo.OverlayRenderType;
 import fi.dy.masa.litematica.world.ChunkSchematic;
 import fi.dy.masa.litematica.world.WorldSchematic;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 public class WorldRendererSchematic
 {
@@ -467,7 +467,8 @@ public class WorldRendererSchematic
         int count = 0;
 
         Shader shader = RenderSystem.getShader();
-        BufferRenderer.unbindAll();
+        //BufferRenderer.unbindAll();
+        BufferRenderer.reset();
 
         boolean renderAsTranslucent = Configs.Visuals.RENDER_BLOCKS_AS_TRANSLUCENT.getBooleanValue();
 
@@ -500,7 +501,8 @@ public class WorldRendererSchematic
                 }
 
                 buffer.bind();
-                buffer.drawElements();
+                //buffer.drawElements();
+                buffer.draw();
                 VertexBuffer.unbind();
                 startedDrawing = true;
                 ++count;
@@ -514,7 +516,7 @@ public class WorldRendererSchematic
 
         if (chunkOffsetUniform != null)
         {
-            chunkOffsetUniform.set(Vec3f.ZERO);
+            chunkOffsetUniform.set(0.0f, 0.0f, 0.0f);
         }
 
         shader.unbind();
@@ -584,7 +586,8 @@ public class WorldRendererSchematic
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
         Shader shader = RenderSystem.getShader();
-        BufferRenderer.unbindAll();
+        //BufferRenderer.unbindAll();
+        BufferRenderer.reset();
 
         for (int i = this.renderInfos.size() - 1; i >= 0; --i)
         {

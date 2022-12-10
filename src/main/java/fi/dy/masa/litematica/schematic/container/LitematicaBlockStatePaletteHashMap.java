@@ -6,6 +6,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtHelper;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.collection.Int2ObjectBiMap;
 
 public class LitematicaBlockStatePaletteHashMap implements ILitematicaBlockStatePalette
@@ -75,7 +76,7 @@ public class LitematicaBlockStatePaletteHashMap implements ILitematicaBlockState
         for (int i = 0; i < size; ++i)
         {
             NbtCompound tag = tagList.getCompound(i);
-            BlockState state = NbtHelper.toBlockState(tag);
+            BlockState state = NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(), tag);
 
             if (i > 0 || state != LitematicaBlockStateContainer.AIR_BLOCK_STATE)
             {

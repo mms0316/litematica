@@ -45,6 +45,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.registry.Registries;
 import net.minecraft.state.property.DirectionProperty;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
@@ -308,7 +309,7 @@ public class WorldUtils
         NbtCompound nbt = NbtIo.readCompressed(stream);
         StructureTemplate template = new StructureTemplate();
         //template.read(fixer.process(FixTypes.STRUCTURE, nbt));
-        template.readNbt(nbt);
+        template.readNbt(Registries.BLOCK.getReadOnlyWrapper(), nbt);
 
         return template;
     }

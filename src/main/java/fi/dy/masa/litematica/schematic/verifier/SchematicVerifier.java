@@ -24,10 +24,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.Chunk;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message.MessageType;
@@ -771,8 +771,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 @Override
                 public int compare(Pair<BlockState, BlockState> o1, Pair<BlockState, BlockState> o2)
                 {
-                    String name1 = Registry.BLOCK.getId(o1.getLeft().getBlock()).toString();
-                    String name2 = Registry.BLOCK.getId(o2.getLeft().getBlock()).toString();
+                    String name1 = Registries.BLOCK.getId(o1.getLeft().getBlock()).toString();
+                    String name2 = Registries.BLOCK.getId(o2.getLeft().getBlock()).toString();
 
                     int val = name1.compareTo(name2);
 
@@ -786,8 +786,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                     }
                     else
                     {
-                        name1 = Registry.BLOCK.getId(o1.getRight().getBlock()).toString();
-                        name2 = Registry.BLOCK.getId(o2.getRight().getBlock()).toString();
+                        name1 = Registries.BLOCK.getId(o1.getRight().getBlock()).toString();
+                        name2 = Registries.BLOCK.getId(o2.getRight().getBlock()).toString();
 
                         return name1.compareTo(name2);
                     }

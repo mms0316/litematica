@@ -16,10 +16,10 @@ import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
@@ -632,7 +632,7 @@ public class OverlayRenderer
 
     private void addBlockInfoLines(BlockState state)
     {
-        this.blockInfoLines.add(String.valueOf(Registry.BLOCK.getId(state.getBlock())));
+        this.blockInfoLines.add(String.valueOf(Registries.BLOCK.getId(state.getBlock())));
         this.blockInfoLines.addAll(BlockUtils.getFormattedBlockStateProperties(state));
     }
 

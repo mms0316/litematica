@@ -16,6 +16,11 @@ import net.minecraft.fluid.Fluid;
 import net.minecraft.item.map.MapState;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.recipe.RecipeManager;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
@@ -27,11 +32,6 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.profiler.Profiler;
-import net.minecraft.util.registry.BuiltinRegistries;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryEntry;
-import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.LightType;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
@@ -51,7 +51,8 @@ import fi.dy.masa.litematica.render.schematic.WorldRendererSchematic;
 
 public class WorldSchematic extends World
 {
-    private static final RegistryKey<World> REGISTRY_KEY = RegistryKey.of(Registry.WORLD_KEY, new Identifier(Reference.MOD_ID, "schematic_world"));
+    //private static final RegistryKey<World> REGISTRY_KEY = RegistryKey.of(Registry.WORLD_KEY, new Identifier(Reference.MOD_ID, "schematic_world"));
+    private static final RegistryKey<World> REGISTRY_KEY = RegistryKey.of(RegistryKeys.WORLD, new Identifier(Reference.MOD_ID, "schematic_world"));
 
     private final MinecraftClient mc;
     private final WorldRendererSchematic worldRenderer;
@@ -69,7 +70,8 @@ public class WorldSchematic extends World
         this.mc = MinecraftClient.getInstance();
         this.worldRenderer = LitematicaRenderer.getInstance().getWorldRenderer();
         this.chunkManagerSchematic = new ChunkManagerSchematic(this);
-        this.biome = RegistryEntry.of(BuiltinRegistries.BIOME.get(BiomeKeys.PLAINS));
+        //this.biome = RegistryEntry.of(Registries.BIOME.get(BiomeKeys.PLAINS));
+        this.biome = mc.world.getRegistryManager().get(RegistryKeys.BIOME).entryOf(BiomeKeys.PLAINS);
     }
 
     public ChunkManagerSchematic getChunkProvider()
@@ -443,12 +445,12 @@ public class WorldSchematic extends World
     }
 
     @Override
-    public void playSoundFromEntity(@Nullable PlayerEntity except, Entity entity, SoundEvent sound, SoundCategory category, float volume, float pitch, long seed)
+    public void playSoundFromEntity(@Nullable PlayerEntity except, Entity entity, RegistryEntry<SoundEvent> sound, SoundCategory category, float volume, float pitch, long seed)
     {
         // NO-OP
     }
 
-    @Override
+     @Override
     public void emitGameEvent(@Nullable Entity entity, GameEvent event, BlockPos pos)
     {
         // NO-OP
@@ -491,13 +493,12 @@ public class WorldSchematic extends World
     }
 
     @Override
-    public void playSound(PlayerEntity player, double x, double y, double z, SoundEvent soundIn, SoundCategory category, float volume, float pitch)
-    {
+    public void playSound(@Nullable PlayerEntity except, double x, double y, double z, RegistryEntry<SoundEvent> sound, SoundCategory category, float volume, float pitch, long seed) {
         // NO-OP
     }
 
     @Override
-    public void playSoundFromEntity(@Nullable PlayerEntity player, Entity entity, SoundEvent sound, SoundCategory category, float volume, float pitch)
+    public void playSound(PlayerEntity player, double x, double y, double z, SoundEvent soundIn, SoundCategory category, float volume, float pitch)
     {
         // NO-OP
     }
@@ -507,6 +508,9 @@ public class WorldSchematic extends World
     {
         return this.mc.world.getRegistryManager();
     }
+
+    @Override
+    public FeatureSet getEnabledFeatures() { return FeatureSet.empty(); }
 
     @Override
     public String asString()

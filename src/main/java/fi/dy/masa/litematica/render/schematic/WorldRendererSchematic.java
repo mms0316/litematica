@@ -14,6 +14,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.GlUniform;
+import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferBuilderStorage;
@@ -22,7 +23,6 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.Shader;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
@@ -37,9 +37,7 @@ import net.minecraft.util.crash.CrashReportSection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.Mutable;
 import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
 import net.minecraft.world.BlockRenderView;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.SubChunkPos;
@@ -49,6 +47,8 @@ import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.render.schematic.ChunkRendererSchematicVbo.OverlayRenderType;
 import fi.dy.masa.litematica.world.ChunkSchematic;
 import fi.dy.masa.litematica.world.WorldSchematic;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 public class WorldRendererSchematic
 {
@@ -466,8 +466,9 @@ public class WorldRendererSchematic
         int increment = reverse ? -1 : 1;
         int count = 0;
 
-        Shader shader = RenderSystem.getShader();
-        BufferRenderer.unbindAll();
+        ShaderProgram shader = RenderSystem.getShader();
+        //BufferRenderer.unbindAll();
+        BufferRenderer.reset();
 
         boolean renderAsTranslucent = Configs.Visuals.RENDER_BLOCKS_AS_TRANSLUCENT.getBooleanValue();
 
@@ -500,7 +501,8 @@ public class WorldRendererSchematic
                 }
 
                 buffer.bind();
-                buffer.drawElements();
+                //buffer.drawElements();
+                buffer.draw();
                 VertexBuffer.unbind();
                 startedDrawing = true;
                 ++count;
@@ -514,7 +516,7 @@ public class WorldRendererSchematic
 
         if (chunkOffsetUniform != null)
         {
-            chunkOffsetUniform.set(Vec3f.ZERO);
+            chunkOffsetUniform.set(0.0f, 0.0f, 0.0f);
         }
 
         shader.unbind();
@@ -539,7 +541,7 @@ public class WorldRendererSchematic
         this.renderBlockOverlay(OverlayRenderType.QUAD, matrices, camera, projMatrix);
     }
 
-    private static void initShader(Shader shader, MatrixStack matrices, Matrix4f projMatrix)
+    private static void initShader(ShaderProgram shader, MatrixStack matrices, Matrix4f projMatrix)
     {
         for (int i = 0; i < 12; ++i) shader.addSampler("Sampler" + i, RenderSystem.getShaderTexture(i));
 
@@ -580,11 +582,12 @@ public class WorldRendererSchematic
             RenderSystem.enableDepthTest();
         }
 
-        Shader originalShader = RenderSystem.getShader();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        ShaderProgram originalShader = RenderSystem.getShader();
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
-        Shader shader = RenderSystem.getShader();
-        BufferRenderer.unbindAll();
+        ShaderProgram shader = RenderSystem.getShader();
+        //BufferRenderer.unbindAll();
+        BufferRenderer.reset();
 
         for (int i = this.renderInfos.size() - 1; i >= 0; --i)
         {

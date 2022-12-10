@@ -54,7 +54,7 @@ public class EntityUtils
 
         ItemStack stackHand = entity.getStackInHand(hand);
 
-        if (ItemStack.areItemsEqualIgnoreDamage(toolItem, stackHand))
+        if (toolItem.isItemEqual(stackHand))
         {
             return toolItem.hasNbt() == false || ItemUtils.areTagsEqualIgnoreDamage(toolItem, stackHand);
         }
@@ -97,7 +97,7 @@ public class EntityUtils
 
     public static boolean areStacksEqualIgnoreDurability(ItemStack stack1, ItemStack stack2)
     {
-        return ItemStack.areItemsEqualIgnoreDamage(stack1, stack2) && ItemStack.areNbtEqual(stack1, stack2);
+        return stack1.isItemEqual(stack2) && ItemStack.areNbtEqual(stack1, stack2);
     }
 
     public static Direction getHorizontalLookingDirection(Entity entity)

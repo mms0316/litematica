@@ -12,12 +12,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
@@ -73,11 +73,11 @@ public class EntityUtils
     public static Hand getUsedHandForItem(PlayerEntity player, ItemStack stack)
     {
         final var mainHandStack = player.getMainHandStack();
-        final Identifier stackId = Registry.ITEM.getId(stack.getItem());
+        final Identifier stackId = Registries.ITEM.getId(stack.getItem());
 
         if (InventoryUtils.areStacksEqual(mainHandStack, stack) ||
                 fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
-                        Registry.ITEM.getId(mainHandStack.getItem()), stackId))
+                    Registries.ITEM.getId(mainHandStack.getItem()), stackId))
         {
             return Hand.MAIN_HAND;
         }
@@ -87,7 +87,7 @@ public class EntityUtils
         if (mainHandStack.isEmpty() && (
                 InventoryUtils.areStacksEqual(offHandStack, stack) ||
                 fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
-                        Registry.ITEM.getId(offHandStack.getItem()), stackId)))
+                    Registries.ITEM.getId(offHandStack.getItem()), stackId)))
         {
             return Hand.OFF_HAND;
         }

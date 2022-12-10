@@ -23,6 +23,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolItem;
+import net.minecraft.registry.Registries;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
@@ -31,7 +32,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message.MessageType;
@@ -196,14 +196,14 @@ public class InventoryUtils
                 // Pick block did not happen - try substitutions
                 if (pickBlockResult.changed == false && pickBlockResult.slot == -1)
                 {
-                    HashSet<String> substitutions = InventoryUtils.getSubstitutions(Registry.ITEM.getId(stack.getItem()).toString());
+                    HashSet<String> substitutions = InventoryUtils.getSubstitutions(Registries.ITEM.getId(stack.getItem()).toString());
 
                     for (int i = 0; i < inv.main.size(); ++i)
                     {
                         ItemStack iter = inv.main.get(i);
                         if (iter.isEmpty()) continue;
 
-                        if (!substitutions.contains(Registry.ITEM.getId(iter.getItem()).toString())) continue;
+                        if (!substitutions.contains(Registries.ITEM.getId(iter.getItem()).toString())) continue;
 
                         pickBlockResult = pickBlockSurvival(i, iter, inv, mc);
                         if (pickBlockResult.slot != -1) break;
@@ -215,7 +215,7 @@ public class InventoryUtils
                     {
                         for (String s : substitutions)
                         {
-                            ItemStack substStack = new ItemStack(Registry.ITEM.get(new Identifier(s)));
+                            ItemStack substStack = new ItemStack(Registries.ITEM.get(new Identifier(s)));
                             slot = findSlotWithBoxWithItem(mc.player.playerScreenHandler, substStack, false);
                             if (slot != -1)
                             {
@@ -428,7 +428,7 @@ public class InventoryUtils
 
                 ItemStack stackSlot = inventory.getStack(slotNum >= 36 ? slotNum - 36 : slotNum);
 
-                if (stackHand.isItemEqualIgnoreDamage(stackSlot))
+                if (stackHand.isItemEqual(stackSlot))
                 {
                     // If all the items from the found slot can fit into the current
                     // stack in hand, then left click, otherwise right click to split the stack
@@ -539,8 +539,8 @@ public class InventoryUtils
 
                 final Block schematicBlock = stateSchematic.getBlock();
                 final Block clientBlock = stateClient.getBlock();
-                final Identifier schematicBlockName = Registry.BLOCK.getId(schematicBlock);
-                final Identifier clientBlockName = Registry.BLOCK.getId(clientBlock);
+                final Identifier schematicBlockName = Registries.BLOCK.getId(schematicBlock);
+                final Identifier clientBlockName = Registries.BLOCK.getId(clientBlock);
 
                 if (!InventoryUtils.maySubstitute(schematicBlockName, clientBlockName))
                 {

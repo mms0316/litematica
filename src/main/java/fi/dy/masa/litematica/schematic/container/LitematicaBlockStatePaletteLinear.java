@@ -6,7 +6,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtHelper;
-import net.minecraft.util.registry.Registries;
+import net.minecraft.registry.Registries;
 
 public class LitematicaBlockStatePaletteLinear implements ILitematicaBlockStatePalette
 {

@@ -213,7 +213,7 @@ public class ChunkRendererSchematicVbo
             {
                 BufferBuilder buffer = buffers.getBlockBufferByLayer(layerTranslucent);
 
-                RenderSystem.setShader(GameRenderer::getRenderTypeTranslucentShader);
+                RenderSystem.setShader(GameRenderer::getRenderTypeTranslucentProgram);
                 this.preRenderBlocks(buffer, layerTranslucent);
                 //buffer.restoreState(bufferState);
                 buffer.beginSortedIndexBuffer(bufferState);
@@ -435,7 +435,7 @@ public class ChunkRendererSchematicVbo
 
     protected void renderOverlay(OverlayType type, BlockPos pos, BlockState stateSchematic, boolean missing, ChunkRenderDataSchematic data, BufferBuilderCache buffers)
     {
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         BlockPos.Mutable relPos = this.getChunkRelativePosition(pos);
 
         if (Configs.Visuals.SCHEMATIC_OVERLAY_ENABLE_SIDES.getBooleanValue())
@@ -767,13 +767,13 @@ public class ChunkRendererSchematicVbo
         this.existingOverlays.add(type);
         this.hasOverlay = true;
 
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         buffer.begin(type.getDrawMode(), VertexFormats.POSITION_COLOR);
     }
 
     private void preRenderOverlay(BufferBuilder buffer, VertexFormat.DrawMode drawMode)
     {
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         buffer.begin(drawMode, VertexFormats.POSITION_COLOR);
     }
 

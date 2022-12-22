@@ -1,7 +1,10 @@
 package fi.dy.masa.litematica.event;
 
+import org.joml.Matrix4f;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.MatrixStack;
+import fi.dy.masa.malilib.interfaces.IRenderer;
+import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.gui.GuiSchematicManager;
@@ -9,9 +12,6 @@ import fi.dy.masa.litematica.render.OverlayRenderer;
 import fi.dy.masa.litematica.render.infohud.InfoHud;
 import fi.dy.masa.litematica.render.infohud.ToolHud;
 import fi.dy.masa.litematica.tool.ToolMode;
-import fi.dy.masa.malilib.interfaces.IRenderer;
-import fi.dy.masa.malilib.util.GuiUtils;
-import org.joml.Matrix4f;
 
 public class RenderHandler implements IRenderer
 {

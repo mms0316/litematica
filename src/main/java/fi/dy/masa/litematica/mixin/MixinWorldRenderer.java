@@ -66,7 +66,7 @@ public abstract class MixinWorldRenderer
             net.minecraft.client.render.Camera camera,
             net.minecraft.client.render.GameRenderer gameRenderer,
             net.minecraft.client.render.LightmapTextureManager lightmapTextureManager,
-            org.joml.Matrix4f matrix4f,
+            Matrix4f matrix4f,
             CallbackInfo ci)
     {
         LitematicaRenderer.getInstance().piecewiseRenderEntities(matrices, tickDelta);

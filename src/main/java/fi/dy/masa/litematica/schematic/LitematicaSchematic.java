@@ -18,7 +18,6 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
@@ -31,6 +30,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtLongArray;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryEntryLookup;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
@@ -1185,11 +1185,12 @@ public class LitematicaSchematic
     {
         final int size = tagList.size();
         List<BlockState> list = new ArrayList<>(size);
+        RegistryEntryLookup<Block> lookup = Registries.BLOCK.getReadOnlyWrapper();
 
         for (int id = 0; id < size; ++id)
         {
             NbtCompound tag = tagList.getCompound(id);
-            BlockState state = NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(), tag);
+            BlockState state = NbtHelper.toBlockState(lookup, tag);
             list.add(state);
         }
 
@@ -1394,11 +1395,12 @@ public class LitematicaSchematic
             BlockState air = Blocks.AIR.getDefaultState();
             int paletteSize = paletteTag.size();
             List<BlockState> list = new ArrayList<>(paletteSize);
+            RegistryEntryLookup<Block> lookup = Registries.BLOCK.getReadOnlyWrapper();
 
             for (int id = 0; id < paletteSize; ++id)
             {
                 NbtCompound t = paletteTag.getCompound(id);
-                BlockState state = NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(), t);
+                BlockState state = NbtHelper.toBlockState(lookup, t);
                 list.add(state);
             }
 
@@ -1572,12 +1574,13 @@ public class LitematicaSchematic
     public static List<BlockState> getStatesFromPaletteTag(NbtList palette)
     {
         List<BlockState> states = new ArrayList<>();
+        RegistryEntryLookup<Block> lookup = Registries.BLOCK.getReadOnlyWrapper();
         final int size = palette.size();
 
         for (int i = 0; i < size; ++i)
         {
             NbtCompound tag = palette.getCompound(i);
-            BlockState state = NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(), tag);
+            BlockState state = NbtHelper.toBlockState(lookup, tag);
 
             if (i > 0 || state != LitematicaBlockStateContainer.AIR_BLOCK_STATE)
             {

@@ -3,6 +3,7 @@ package fi.dy.masa.litematica.gui.widgets;
 import java.util.List;
 import javax.annotation.Nullable;
 import com.mojang.blaze3d.systems.RenderSystem;
+import org.joml.Quaternionf;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -47,8 +48,6 @@ import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.BlockMismatch;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.MismatchType;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.SortCriteria;
 import fi.dy.masa.litematica.util.ItemUtils;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
 
 public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<BlockMismatchEntry>
 {
@@ -550,10 +549,10 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
         matrixStack.translate(x + 8.0, y + 8.0, z + 100.0);
         matrixStack.scale(16, -16, 16);
 
-        //matrixStack.multiply(new Quaternion(Vec3f.POSITIVE_X, 30, true));
-        matrixStack.multiply(new Quaternionf(new AxisAngle4f(30 * (float)Math.PI / 180, 1.0f, 0.0f, 0.0f)));
-        //matrixStack.multiply(new Quaternion(Vec3f.POSITIVE_Y, 225, true));
-        matrixStack.multiply(new Quaternionf(new AxisAngle4f(225 * (float)Math.PI / 180, 0.0f, 1.0f, 0.0f)));
+        Quaternionf rot = new Quaternionf().rotationXYZ(30 * (float) (Math.PI / 180.0), 225 * (float) (Math.PI / 180.0), 0.0F);
+        matrixStack.multiply(rot);
+        //matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(30));
+        //matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(225));
         matrixStack.scale(0.625f, 0.625f, 0.625f);
         matrixStack.translate(-0.5, -0.5, -0.5);
 

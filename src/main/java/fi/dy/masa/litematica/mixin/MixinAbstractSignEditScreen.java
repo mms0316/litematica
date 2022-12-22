@@ -12,7 +12,7 @@ import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.util.WorldUtils;
 
 @Mixin(value = AbstractSignEditScreen.class, priority = 990)
-public class MixinSignEditScreen
+public class MixinAbstractSignEditScreen
 {
     @Shadow @Final protected SignBlockEntity blockEntity;
     @Shadow @Final protected String[] text;

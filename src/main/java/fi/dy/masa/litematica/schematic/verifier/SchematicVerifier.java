@@ -662,18 +662,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         {
             this.ignoredMismatches.add(ignore);
             this.getMapForMismatchType(mismatch.mismatchType).removeAll(ignore);
-
-            Iterator<Map.Entry<BlockPos, BlockMismatch>> iter = this.verifiedPositions.entrySet().iterator();
-
-            while (iter.hasNext())
-            {
-                Map.Entry<BlockPos, BlockMismatch> entry = iter.next();
-
-                if (entry.getValue().equals(mismatch))
-                {
-                    iter.remove();
-                }
-            }
+            this.verifiedPositions.entrySet().removeIf(entry -> entry.getValue().equals(mismatch));
         }
 
         if (updateOverlay)
@@ -767,30 +756,26 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
         try
         {
-            Collections.sort(list, new Comparator<Pair<BlockState, BlockState>>() {
-                @Override
-                public int compare(Pair<BlockState, BlockState> o1, Pair<BlockState, BlockState> o2)
+            list.sort((o1, o2) -> {
+                String name1 = Registries.BLOCK.getId(o1.getLeft().getBlock()).toString();
+                String name2 = Registries.BLOCK.getId(o2.getLeft().getBlock()).toString();
+
+                int val = name1.compareTo(name2);
+
+                if (val < 0)
                 {
-                    String name1 = Registries.BLOCK.getId(o1.getLeft().getBlock()).toString();
-                    String name2 = Registries.BLOCK.getId(o2.getLeft().getBlock()).toString();
+                    return -1;
+                }
+                else if (val > 0)
+                {
+                    return 1;
+                }
+                else
+                {
+                    name1 = Registries.BLOCK.getId(o1.getRight().getBlock()).toString();
+                    name2 = Registries.BLOCK.getId(o2.getRight().getBlock()).toString();
 
-                    int val = name1.compareTo(name2);
-
-                    if (val < 0)
-                    {
-                        return -1;
-                    }
-                    else if (val > 0)
-                    {
-                        return 1;
-                    }
-                    else
-                    {
-                        name1 = Registries.BLOCK.getId(o1.getRight().getBlock()).toString();
-                        name2 = Registries.BLOCK.getId(o2.getRight().getBlock()).toString();
-
-                        return name1.compareTo(name2);
-                    }
+                    return name1.compareTo(name2);
                 }
             });
         }
@@ -1029,7 +1014,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
             }
         }
 
-        Collections.sort(listOut, PositionUtils.BLOCK_POS_COMPARATOR);
+        listOut.sort(PositionUtils.BLOCK_POS_COMPARATOR);
 
         /*
         final int max = Math.min(maxEntries, tempList.size());
@@ -1053,7 +1038,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         this.getMismatchRenderPositionFor(MismatchType.EXTRA, tempList);
         this.getMismatchRenderPositionFor(MismatchType.MISSING, tempList);
 
-        Collections.sort(tempList, new RenderPosComparator(centerPos, true));
+        tempList.sort(new RenderPosComparator(centerPos, true));
 
         final int max = Math.min(maxEntries, tempList.size());
 

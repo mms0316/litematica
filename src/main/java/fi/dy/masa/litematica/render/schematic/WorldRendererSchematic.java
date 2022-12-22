@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import com.mojang.blaze3d.systems.RenderSystem;
+import org.joml.Matrix4f;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -47,8 +48,6 @@ import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.render.schematic.ChunkRendererSchematicVbo.OverlayRenderType;
 import fi.dy.masa.litematica.world.ChunkSchematic;
 import fi.dy.masa.litematica.world.WorldSchematic;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
 
 public class WorldRendererSchematic
 {
@@ -467,7 +466,6 @@ public class WorldRendererSchematic
         int count = 0;
 
         ShaderProgram shader = RenderSystem.getShader();
-        //BufferRenderer.unbindAll();
         BufferRenderer.reset();
 
         boolean renderAsTranslucent = Configs.Visuals.RENDER_BLOCKS_AS_TRANSLUCENT.getBooleanValue();
@@ -501,7 +499,6 @@ public class WorldRendererSchematic
                 }
 
                 buffer.bind();
-                //buffer.drawElements();
                 buffer.draw();
                 VertexBuffer.unbind();
                 startedDrawing = true;
@@ -516,7 +513,7 @@ public class WorldRendererSchematic
 
         if (chunkOffsetUniform != null)
         {
-            chunkOffsetUniform.set(0.0f, 0.0f, 0.0f);
+            chunkOffsetUniform.set(0.0F, 0.0F, 0.0F);
         }
 
         shader.unbind();
@@ -586,7 +583,6 @@ public class WorldRendererSchematic
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
         ShaderProgram shader = RenderSystem.getShader();
-        //BufferRenderer.unbindAll();
         BufferRenderer.reset();
 
         for (int i = this.renderInfos.size() - 1; i >= 0; --i)

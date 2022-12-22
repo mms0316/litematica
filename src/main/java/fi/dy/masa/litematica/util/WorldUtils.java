@@ -2,8 +2,6 @@ package fi.dy.masa.litematica.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,7 +9,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import javax.annotation.Nullable;
-import com.mojang.datafixers.DataFixer;
 import net.minecraft.block.AbstractBannerBlock;
 import net.minecraft.block.AbstractSignBlock;
 import net.minecraft.block.AbstractSkullBlock;
@@ -45,7 +42,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.registry.Registries;
 import net.minecraft.state.property.DirectionProperty;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
@@ -304,16 +300,6 @@ public class WorldUtils
         return false;
     }
 
-    private static StructureTemplate readTemplateFromStream(InputStream stream, DataFixer fixer) throws IOException
-    {
-        NbtCompound nbt = NbtIo.readCompressed(stream);
-        StructureTemplate template = new StructureTemplate();
-        //template.read(fixer.process(FixTypes.STRUCTURE, nbt));
-        template.readNbt(Registries.BLOCK.getReadOnlyWrapper(), nbt);
-
-        return template;
-    }
-
     public static boolean isClientChunkLoaded(ClientWorld world, int chunkX, int chunkZ)
     {
         return ((ClientChunkManager) world.getChunkManager()).getChunk(chunkX, chunkZ, ChunkStatus.FULL, false) != null;
@@ -433,9 +419,9 @@ public class WorldUtils
     public static void easyPlaceOnUseTick(MinecraftClient mc)
     {
         if (mc.player != null && DataManager.getToolMode() != ToolMode.REBUILD &&
-                Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
-                Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() &&
-                Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
+            Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
+            Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() &&
+            Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
         {
             WorldUtils.doEasyPlaceAction(mc);
         }
@@ -444,7 +430,7 @@ public class WorldUtils
     public static boolean handleEasyPlace(MinecraftClient mc)
     {
         if (Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
-                DataManager.getToolMode() != ToolMode.REBUILD)
+            DataManager.getToolMode() != ToolMode.REBUILD)
         {
             easyPlaceShowFailMessage = true;
             ActionResult result = doEasyPlaceAction(mc);

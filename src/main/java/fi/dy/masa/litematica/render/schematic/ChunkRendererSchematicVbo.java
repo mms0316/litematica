@@ -2,8 +2,8 @@ package fi.dy.masa.litematica.render.schematic;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.systems.RenderSystem;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -38,18 +39,19 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.chunk.WorldChunk;
 import org.apache.commons.lang3.ArrayUtils;
-import fi.dy.masa.malilib.util.Color4f;
-import fi.dy.masa.malilib.util.EntityUtils;
-import fi.dy.masa.malilib.util.IntBoundingBox;
-import fi.dy.masa.malilib.util.LayerRange;
-import fi.dy.masa.malilib.util.SubChunkPos;
+
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.render.RenderUtils;
+import fi.dy.masa.litematica.schematic.placement.SchematicPlacementManager.PlacementPart;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.OverlayType;
 import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.world.WorldSchematic;
+import fi.dy.masa.malilib.util.Color4f;
+import fi.dy.masa.malilib.util.EntityUtils;
+import fi.dy.masa.malilib.util.IntBoundingBox;
+import fi.dy.masa.malilib.util.LayerRange;
 
 public class ChunkRendererSchematicVbo
 {
@@ -64,7 +66,7 @@ public class ChunkRendererSchematicVbo
     protected final BlockPos.Mutable chunkRelativePos;
 
     protected final Map<RenderLayer, VertexBuffer> vertexBufferBlocks;
-    protected final VertexBuffer[] vertexBufferOverlay;
+    protected final Map<OverlayRenderType, VertexBuffer> vertexBufferOverlay;
     protected final List<IntBoundingBox> boxes = new ArrayList<>();
     protected final EnumSet<OverlayRenderType> existingOverlays = EnumSet.noneOf(OverlayRenderType.class);
 
@@ -88,20 +90,10 @@ public class ChunkRendererSchematicVbo
         this.chunkRenderData = ChunkRenderDataSchematic.EMPTY;
         this.chunkRenderLock = new ReentrantLock();
         this.chunkRenderDataLock = new ReentrantLock();
-        this.vertexBufferBlocks = new HashMap<>();
-        this.vertexBufferOverlay = new VertexBuffer[OverlayRenderType.values().length];
+        this.vertexBufferBlocks = new IdentityHashMap<>();
+        this.vertexBufferOverlay = new IdentityHashMap<>();
         this.position = new BlockPos.Mutable();
         this.chunkRelativePos = new BlockPos.Mutable();
-
-        for (RenderLayer layer : RenderLayer.getBlockLayers())
-        {
-            this.vertexBufferBlocks.put(layer, new VertexBuffer());
-        }
-
-        for (int i = 0; i < OverlayRenderType.values().length; ++i)
-        {
-            this.vertexBufferOverlay[i] = new VertexBuffer();
-        }
     }
 
     public boolean hasOverlay()
@@ -116,13 +108,13 @@ public class ChunkRendererSchematicVbo
 
     public VertexBuffer getBlocksVertexBufferByLayer(RenderLayer layer)
     {
-        return this.vertexBufferBlocks.get(layer);
+        return this.vertexBufferBlocks.computeIfAbsent(layer, l -> new VertexBuffer());
     }
 
     public VertexBuffer getOverlayVertexBuffer(OverlayRenderType type)
     {
         //if (GuiBase.isCtrlDown()) System.out.printf("getOverlayVertexBuffer: type: %s, buf: %s\n", type, this.vertexBufferOverlay[type.ordinal()]);
-        return this.vertexBufferOverlay[type.ordinal()];
+        return this.vertexBufferOverlay.computeIfAbsent(type, l -> new VertexBuffer());
     }
 
     public ChunkRenderDataSchematic getChunkRenderData()
@@ -156,7 +148,7 @@ public class ChunkRendererSchematicVbo
             int x = this.position.getX();
             int y = this.position.getY();
             int z = this.position.getZ();
-            this.boundingBox = new net.minecraft.util.math.Box(x, y, z, x + 16, y + 16, z + 16);
+            this.boundingBox = new net.minecraft.util.math.Box(x, y, z, x + 16, y + this.world.getHeight(), z + 16);
         }
 
         return this.boundingBox;
@@ -164,11 +156,13 @@ public class ChunkRendererSchematicVbo
 
     public void setPosition(int x, int y, int z)
     {
-        if (x != this.position.getX() || y != this.position.getY() || z != this.position.getZ())
+        if (x != this.position.getX() ||
+            y != this.position.getY() ||
+            z != this.position.getZ())
         {
             this.clear();
+            this.boundingBox = null;
             this.position.set(x, y, z);
-            this.boundingBox = new net.minecraft.util.math.Box(x, y, z, x + 16, y + 16, z + 16);
         }
     }
 
@@ -177,10 +171,9 @@ public class ChunkRendererSchematicVbo
         Entity entity = EntityUtils.getCameraEntity();
 
         double x = this.position.getX() + 8.0D - entity.getX();
-        double y = this.position.getY() + 8.0D - entity.getY();
         double z = this.position.getZ() + 8.0D - entity.getZ();
 
-        return x * x + y * y + z * z;
+        return x * x + z * z;
     }
 
     public void deleteGlResources()
@@ -188,15 +181,8 @@ public class ChunkRendererSchematicVbo
         this.clear();
         this.world = null;
 
-        this.vertexBufferBlocks.values().forEach((buf) -> buf.close());
-
-        for (int i = 0; i < this.vertexBufferOverlay.length; ++i)
-        {
-            if (this.vertexBufferOverlay[i] != null)
-            {
-                this.vertexBufferOverlay[i].close();
-            }
-        }
+        this.vertexBufferBlocks.values().forEach(VertexBuffer::close);
+        this.vertexBufferOverlay.values().forEach(VertexBuffer::close);
     }
 
     public void resortTransparency(ChunkRenderTaskSchematic task)
@@ -268,9 +254,16 @@ public class ChunkRendererSchematicVbo
 
         synchronized (this.boxes)
         {
+            int minX = posChunk.getX();
+            int minY = posChunk.getY();
+            int minZ = posChunk.getZ();
+            int maxX = minX + 15;
+            int maxY = minY + this.world.getHeight();
+            int maxZ = minZ + 15;
+
             if (this.boxes.isEmpty() == false &&
                 (this.schematicWorldView.isEmpty() == false || this.clientWorldView.isEmpty() == false) &&
-                 range.intersects(new SubChunkPos(posChunk.getX() >> 4, posChunk.getY() >> 4, posChunk.getZ() >> 4)))
+                 range.intersectsBox(minX, minY, minZ, maxX, maxY, maxZ))
             {
                 ++schematicRenderChunksUpdated;
 
@@ -281,6 +274,7 @@ public class ChunkRendererSchematicVbo
                 Set<RenderLayer> usedLayers = new HashSet<>();
                 BufferBuilderCache buffers = task.getBufferCache();
                 MatrixStack matrices = new MatrixStack();
+                int bottomY = this.position.getY();
 
                 for (IntBoundingBox box : this.boxes)
                 {
@@ -297,8 +291,11 @@ public class ChunkRendererSchematicVbo
 
                     for (BlockPos posMutable : BlockPos.Mutable.iterate(posFrom, posTo))
                     {
+                        // Fluid models and the overlay use the VertexConsumer#vertex(x, y, z) method.
+                        // Fluid rendering and the overlay do not use the MatrixStack.
+                        // Block models use the VertexConsumer#quad() method, and they use the MatrixStack.
                         matrices.push();
-                        matrices.translate(posMutable.getX() & 0xF, posMutable.getY() & 0xF, posMutable.getZ() & 0xF);
+                        matrices.translate(posMutable.getX() & 0xF, posMutable.getY() - bottomY, posMutable.getZ() & 0xF);
 
                         this.renderBlocksAndOverlay(posMutable, data, tileEntities, usedLayers, matrices, buffers);
 
@@ -386,7 +383,9 @@ public class ChunkRendererSchematicVbo
             if (fluidState.isEmpty() == false)
             {
                 RenderLayer layer = RenderLayers.getFluidLayer(fluidState);
-                BufferBuilder bufferSchematic = buffers.getBlockBufferByLayer(layer);
+                int offsetY = ((pos.getY() >> 4) << 4) - this.position.getY();
+                OmegaHackfixForCrashJustTemporarilyForNowISwearBecauseOfShittyBrokenCodeBufferBuilder bufferSchematic = buffers.getBlockBufferByLayer(layer);
+                bufferSchematic.setYOffset(offsetY);
 
                 if (data.isBlockLayerStarted(layer) == false)
                 {
@@ -396,6 +395,7 @@ public class ChunkRendererSchematicVbo
 
                 this.worldRenderer.renderFluid(this.schematicWorldView, fluidState, pos, bufferSchematic);
                 usedLayers.add(layer);
+                bufferSchematic.setYOffset(0.0);
             }
 
             if (stateSchematic.getRenderType() != BlockRenderType.INVISIBLE)
@@ -573,7 +573,7 @@ public class ChunkRendererSchematicVbo
 
     protected BlockPos.Mutable getChunkRelativePosition(BlockPos pos)
     {
-        return this.chunkRelativePos.set(pos.getX() & 0xF, pos.getY() & 0xF, pos.getZ() & 0xF);
+        return this.chunkRelativePos.set(pos.getX() & 0xF, pos.getY() - this.position.getY(), pos.getZ() & 0xF);
     }
 
     protected void renderOverlayReducedEdges(BlockPos pos, OverlayType[][][] adjTypes, OverlayType typeSelf, BufferBuilder bufferOverlayOutlines)
@@ -872,11 +872,15 @@ public class ChunkRendererSchematicVbo
             ClientWorld worldClient = MinecraftClient.getInstance().world;
             this.schematicWorldView = new ChunkCacheSchematic(this.world, worldClient, this.position, 2);
             this.clientWorldView    = new ChunkCacheSchematic(worldClient, worldClient, this.position, 2);
-
-            BlockPos pos = this.position;
-            SubChunkPos subChunk = new SubChunkPos(pos.getX() >> 4, pos.getY() >> 4, pos.getZ() >> 4);
             this.boxes.clear();
-            this.boxes.addAll(DataManager.getSchematicPlacementManager().getTouchedBoxesInSubChunk(subChunk));
+
+            int chunkX = this.position.getX() >> 4;
+            int chunkZ = this.position.getZ() >> 4;
+
+            for (PlacementPart part : DataManager.getSchematicPlacementManager().getPlacementPartsInChunk(chunkX, chunkZ))
+            {
+                this.boxes.add(part.bb);
+            }
         }
     }
 

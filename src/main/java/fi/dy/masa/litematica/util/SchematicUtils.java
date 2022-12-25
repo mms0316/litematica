@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import javax.annotation.Nullable;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+
 
 import fi.dy.masa.malilib.util.LayerMode;
 import net.minecraft.block.BlockState;
@@ -28,6 +30,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
+
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.SchematicHolder;
@@ -62,7 +65,6 @@ import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.SubChunkPos;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 public class SchematicUtils
 {
@@ -397,7 +399,7 @@ public class SchematicUtils
         if (pos != null)
         {
             SubChunkPos cpos = new SubChunkPos(pos);
-            List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
+            List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingChunk(pos);
 
             if (list.isEmpty() == false)
             {
@@ -456,8 +458,7 @@ public class SchematicUtils
     {
         if (posStart != null && posEnd != null)
         {
-            SubChunkPos cpos = new SubChunkPos(posStart);
-            List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
+            List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingChunk(posStart);
 
             if (list.isEmpty() == false)
             {
@@ -550,9 +551,8 @@ public class SchematicUtils
     {
         if (posStart != null)
         {
-            SubChunkPos cpos = new SubChunkPos(posStart);
             SchematicPlacementManager manager = DataManager.getSchematicPlacementManager();
-            List<PlacementPart> list = manager.getAllPlacementsTouchingSubChunk(cpos);
+            List<PlacementPart> list = manager.getAllPlacementsTouchingChunk(posStart);
 
             if (list.isEmpty() == false)
             {
@@ -580,9 +580,8 @@ public class SchematicUtils
     {
         if (pos != null)
         {
-            SubChunkPos cpos = new SubChunkPos(pos);
             SchematicPlacementManager manager = DataManager.getSchematicPlacementManager();
-            List<PlacementPart> list = manager.getAllPlacementsTouchingSubChunk(cpos);
+            List<PlacementPart> list = manager.getAllPlacementsTouchingChunk(pos);
 
             if (list.isEmpty() == false)
             {

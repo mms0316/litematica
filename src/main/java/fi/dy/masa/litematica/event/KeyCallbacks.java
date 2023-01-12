@@ -2,6 +2,10 @@ package fi.dy.masa.litematica.event;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.screen.ShulkerBoxScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.BlockPos;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
@@ -65,6 +69,7 @@ public class KeyCallbacks
         Hotkeys.LAYER_NEXT.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_PREVIOUS.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_SET_HERE.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind().setCallback(callbackHotkeys);
@@ -413,6 +418,45 @@ public class KeyCallbacks
             else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())
             {
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(fi.dy.masa.malilib.util.EntityUtils.getCameraEntity());
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_FETCH.getKeybind())
+            {
+                var container = mc.player.currentScreenHandler;
+                if (!(container instanceof GenericContainerScreenHandler ||
+                        container instanceof ShulkerBoxScreenHandler)) return true;
+                var containerSlots = container.slots;
+
+                var materialList = DataManager.getMaterialList();
+                if (materialList == null) return true;
+
+                var missingMaterials = materialList.getMaterialsMissingOnly(false);
+                if (missingMaterials == null || missingMaterials.isEmpty()) return true;
+
+                for (var entry : missingMaterials) {
+                    var stackMissing = entry.getStack();
+                    var countMissing = entry.getCountMissing();
+
+                    for (var containerSlot : containerSlots) {
+                        var containerStack = containerSlot.getStack();
+                        if (!containerStack.isItemEqual(stackMissing)) continue;
+
+                        var containerCountOld = containerStack.getCount();
+                        mc.interactionManager.clickSlot(container.syncId, containerSlot.getIndex(), 0, SlotActionType.QUICK_MOVE, mc.player);
+                        var containerCountNew = containerStack.getCount();
+
+                        if (containerCountOld == containerCountNew) {
+                            // No space in player inventory to take this stack
+                            break;
+                        }
+
+                        countMissing -= (containerCountOld - containerCountNew);
+                        if (countMissing <= 0) {
+                            break;
+                        }
+                    }
+                }
+
                 return true;
             }
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())

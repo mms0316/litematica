@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.data.DataManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShulkerBoxBlock;
@@ -24,8 +25,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolItem;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
@@ -553,6 +556,63 @@ public class InventoryUtils
                 }
 
                 return OverlayType.NONE;
+            }
+        }
+    }
+
+    public static void fetchMaterials(MinecraftClient mc) {
+        if (mc.player == null) return;
+        var container = mc.player.currentScreenHandler;
+        if (!(container instanceof GenericContainerScreenHandler ||
+                container instanceof ShulkerBoxScreenHandler)) return;
+
+        var materialList = DataManager.getMaterialList();
+        if (materialList == null) return;
+
+        var missingMaterials = materialList.getMaterialsMissingOnly(true);
+        if (missingMaterials == null || missingMaterials.isEmpty()) return;
+
+        var containerSlots = container.slots;
+        var containerSlotsSize = containerSlots.size();
+        int containerMaxSlot;
+        if (containerSlotsSize == 90) {
+            //https://wiki.vg/Inventory#Large_chest
+            //Skip if slot is already in player's inventory or hotbar
+            containerMaxSlot = 53;
+        } else {
+            //https://wiki.vg/Inventory#Chest
+            //https://wiki.vg/Inventory#Shulker_box
+            containerMaxSlot = 26;
+        }
+
+        for (var entry : missingMaterials) {
+            var stackMissing = entry.getStack();
+            var countMissing = entry.getCountMissing() - entry.getCountAvailable();
+            if (countMissing <= 0) continue;
+
+            for (var idx = 0; idx <= containerMaxSlot; idx++) {
+                var containerSlot = containerSlots.get(idx);
+
+                var containerStack = containerSlot.getStack();
+                if (!containerStack.isItemEqual(stackMissing)) continue;
+
+                Litematica.debugLog("Fetching " + countMissing + " from " + containerStack.getName());
+
+                var containerCountOld = containerStack.getCount();
+                mc.interactionManager.clickSlot(container.syncId, containerSlot.getIndex(), 0, SlotActionType.QUICK_MOVE, mc.player);
+                var containerCountNew = containerStack.getCount();
+
+                Litematica.debugLog(containerCountOld + " => " + containerCountNew);
+
+                if (containerCountOld == containerCountNew) {
+                    // No space in player inventory to take this stack
+                    break;
+                }
+
+                countMissing -= (containerCountOld - containerCountNew);
+                if (countMissing <= 0) {
+                    break;
+                }
             }
         }
     }

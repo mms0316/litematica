@@ -422,41 +422,7 @@ public class KeyCallbacks
             }
             else if (key == Hotkeys.MATERIAL_LIST_FETCH.getKeybind())
             {
-                var container = mc.player.currentScreenHandler;
-                if (!(container instanceof GenericContainerScreenHandler ||
-                        container instanceof ShulkerBoxScreenHandler)) return true;
-                var containerSlots = container.slots;
-
-                var materialList = DataManager.getMaterialList();
-                if (materialList == null) return true;
-
-                var missingMaterials = materialList.getMaterialsMissingOnly(false);
-                if (missingMaterials == null || missingMaterials.isEmpty()) return true;
-
-                for (var entry : missingMaterials) {
-                    var stackMissing = entry.getStack();
-                    var countMissing = entry.getCountMissing();
-
-                    for (var containerSlot : containerSlots) {
-                        var containerStack = containerSlot.getStack();
-                        if (!containerStack.isItemEqual(stackMissing)) continue;
-
-                        var containerCountOld = containerStack.getCount();
-                        mc.interactionManager.clickSlot(container.syncId, containerSlot.getIndex(), 0, SlotActionType.QUICK_MOVE, mc.player);
-                        var containerCountNew = containerStack.getCount();
-
-                        if (containerCountOld == containerCountNew) {
-                            // No space in player inventory to take this stack
-                            break;
-                        }
-
-                        countMissing -= (containerCountOld - containerCountNew);
-                        if (countMissing <= 0) {
-                            break;
-                        }
-                    }
-                }
-
+                InventoryUtils.fetchMaterials(mc);
                 return true;
             }
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())

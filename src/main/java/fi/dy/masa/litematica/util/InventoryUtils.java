@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.data.DataManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShulkerBoxBlock;
@@ -24,8 +25,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolItem;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
@@ -554,6 +557,159 @@ public class InventoryUtils
 
                 return OverlayType.NONE;
             }
+        }
+    }
+
+    public static void fetchMaterials(MinecraftClient mc) {
+        if (mc.player == null) return;
+        var screenHandler = mc.player.currentScreenHandler;
+        if (!(screenHandler instanceof GenericContainerScreenHandler ||
+                screenHandler instanceof ShulkerBoxScreenHandler)) return;
+
+        var materialList = DataManager.getMaterialList();
+        if (materialList == null) return;
+
+        var missingMaterials = materialList.getMaterialsMissingOnly(true);
+        if (missingMaterials == null || missingMaterials.isEmpty()) return;
+
+        var screenSlots = screenHandler.slots;
+        var screenSlotsSize = screenSlots.size();
+        int screenMaxSlot;
+        if (screenSlotsSize == 90) {
+            //https://wiki.vg/Inventory#Large_chest
+            //Skip if slot is already in player's inventory or hotbar
+            screenMaxSlot = 53;
+        } else {
+            //https://wiki.vg/Inventory#Chest
+            //https://wiki.vg/Inventory#Shulker_box
+            screenMaxSlot = 26;
+        }
+
+        var playerInventory = mc.player.getInventory();
+
+        for (var entry : missingMaterials) {
+            var stackMissing = entry.getStack();
+            var countMissing = entry.getCountMissing() - entry.getCountAvailable();
+            if (countMissing <= 0) continue;
+
+            for (var idx = 0; idx <= screenMaxSlot; idx++) {
+                var containerSlot = screenSlots.get(idx);
+
+                var containerStack = containerSlot.getStack();
+                if (!containerStack.isItemEqual(stackMissing)) continue;
+
+                Litematica.debugLog("Fetching " + countMissing + " from " + containerStack.getName());
+
+                //https://wiki.vg/Protocol#Click_Container
+
+                var containerCountOld = containerStack.getCount();
+                if (containerCountOld <= countMissing) {
+                    //Fetch entire stack
+                    mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.QUICK_MOVE, mc.player);
+                    if (containerStack.getCount() != 0) {
+                        //Couldn't get entire stack - this material is finished
+                        break;
+                    }
+                } else {
+                    if (containerCountOld / 2 <= countMissing) {
+                        //Move half to cursor
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 1, SlotActionType.PICKUP, mc.player);
+                        //Fetch the other half
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.QUICK_MOVE, mc.player);
+                        var remainingContainerStack = containerStack.getCount();
+                        //Restore cursor
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.PICKUP, mc.player);
+
+                        if (remainingContainerStack != 0) {
+                            //Couldn't get entirely the other half - this material is finished
+                            break;
+                        } else {
+                            idx--; //Repeat this iteration
+                        }
+                    } else {
+                        //Find available stack to drop one
+                        var targetSlot = findInventorySlotToFill(screenHandler, stackMissing);
+                        if (targetSlot < 0)
+                            break; //No space in inventory
+
+                        //Move stack to cursor
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.PICKUP, mc.player);
+                        //Drop one by one
+                        for (int i = 0; i < countMissing; i++) {
+                            var cursorBefore = screenHandler.getCursorStack().getCount();
+                            mc.interactionManager.clickSlot(screenHandler.syncId, targetSlot, 1, SlotActionType.PICKUP, mc.player);
+                            var cursorAfter = screenHandler.getCursorStack().getCount();
+                            if (cursorBefore == cursorAfter) {
+                                //Nothing moved - target slot has become full
+                                idx--; //Repeat this iteration (to try another target slot)
+                                break;
+                            }
+                        }
+                        //Restore cursor
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.PICKUP, mc.player);
+                    }
+                }
+
+                var containerCountNew = containerSlot.getStack().getCount();
+                countMissing -= (containerCountOld - containerCountNew);
+                if (countMissing <= 0)
+                    break;
+            }
+        }
+    }
+
+    /**
+     * @param screenHandler Chest / Double Chest / Shulker Box screen handler
+     * @param match ItemStack that will be searched for in screen handler
+     * @return Slot index pointing to the slot with the fewest count of the ItemStack, or an empty slot, of the
+     * player's inventory or hotbar.
+     */
+    private static int findInventorySlotToFill(ScreenHandler screenHandler, ItemStack match) {
+        //https://wiki.vg/Inventory#Chest
+        int minDestSlot = 27;
+        int maxDestSlot = 62;
+        if (screenHandler.slots.size() == 90) {
+            //https://wiki.vg/Inventory#Large_chest
+            minDestSlot += 27;
+            maxDestSlot += 27;
+        }
+
+        int emptySlot = -1;
+        int partialSlot = -1;
+        int partialSlotCount = -1;
+        // Reversed because shift+click also does this
+        for (int destSlot = maxDestSlot; destSlot >= minDestSlot; destSlot--) {
+            var slot = screenHandler.slots.get(destSlot);
+            var slotStack = slot.getStack();
+
+            if (slotStack.isEmpty()) {
+                if (emptySlot == -1) {
+                    emptySlot = destSlot;
+                }
+            } else {
+                var slotStackCount = slotStack.getCount();
+                if (slotStackCount == slotStack.getMaxCount()) {
+                    //Not a partial slot
+                    continue;
+                }
+
+                if (ItemStack.canCombine(match, slotStack)) {
+                    if (partialSlot == -1 || slotStackCount < partialSlotCount) {
+                        partialSlot = destSlot;
+                        partialSlotCount = slotStack.getCount();
+
+                        if (partialSlotCount == 1) {
+                            break; //cant get lower than this
+                        }
+                    }
+                }
+            }
+        }
+
+        if (partialSlot == -1) {
+            return emptySlot;
+        } else {
+            return partialSlot;
         }
     }
 }

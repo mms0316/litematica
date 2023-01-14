@@ -2,6 +2,10 @@ package fi.dy.masa.litematica.event;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.screen.ShulkerBoxScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.BlockPos;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
@@ -65,6 +69,7 @@ public class KeyCallbacks
         Hotkeys.LAYER_NEXT.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_PREVIOUS.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_SET_HERE.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind().setCallback(callbackHotkeys);
@@ -413,6 +418,11 @@ public class KeyCallbacks
             else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())
             {
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(fi.dy.masa.malilib.util.EntityUtils.getCameraEntity());
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_FETCH.getKeybind())
+            {
+                InventoryUtils.fetchMaterials(mc);
                 return true;
             }
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())

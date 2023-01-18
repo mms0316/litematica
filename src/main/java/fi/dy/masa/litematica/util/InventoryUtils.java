@@ -594,6 +594,7 @@ public class InventoryUtils
 
             for (var idx = 0; idx <= screenMaxSlot; idx++) {
                 var containerSlot = screenSlots.get(idx);
+                var repeatIteration = false;
 
                 var containerStack = containerSlot.getStack();
                 if (!containerStack.isItemEqual(stackMissing)) continue;
@@ -624,7 +625,7 @@ public class InventoryUtils
                             //Couldn't get entirely the other half - this material is finished
                             break;
                         } else {
-                            idx--; //Repeat this iteration
+                            repeatIteration = true;
                         }
                     } else {
                         //Find available stack to drop one
@@ -641,7 +642,7 @@ public class InventoryUtils
                             var cursorAfter = screenHandler.getCursorStack().getCount();
                             if (cursorBefore == cursorAfter) {
                                 //Nothing moved - target slot has become full
-                                idx--; //Repeat this iteration (to try another target slot)
+                                repeatIteration = true; //Try another destination slot
                                 break;
                             }
                         }
@@ -654,6 +655,9 @@ public class InventoryUtils
                 countMissing -= (containerCountOld - containerCountNew);
                 if (countMissing <= 0)
                     break;
+
+                if (repeatIteration)
+                    idx--;
             }
         }
     }

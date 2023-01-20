@@ -391,7 +391,7 @@ public class InventoryUtils
         return -1;
     }
 
-    //Adapted from malilib liteloader_1.12.2 branch
+    //Adapted from malilib liteloader_1.12.2 branch, and changed code to use a single packet
     /**
      * Re-stocks more items to the stack in the player's current hotbar slot.
      * @param threshold the number of items at or below which the re-stocking will happen
@@ -433,12 +433,20 @@ public class InventoryUtils
 
                 if (stackHand.isItemEqual(stackSlot))
                 {
-                    // If all the items from the found slot can fit into the current
-                    // stack in hand, then left click, otherwise right click to split the stack
-                    int button = stackSlot.getCount() + count <= max ? 0 : 1;
+                    if (hand == Hand.OFF_HAND)
+                    {
+                        // If all the items from the found slot can fit into the current
+                        // stack in hand, then left click, otherwise right click to split the stack
+                        int button = stackSlot.getCount() + count <= max ? 0 : 1;
 
-                    mc.interactionManager.clickSlot(container.syncId, slotNum, button, SlotActionType.PICKUP, player);
-                    mc.interactionManager.clickSlot(container.syncId, currentSlot, 0, SlotActionType.PICKUP, player);
+                        mc.interactionManager.clickSlot(container.syncId, slotNum, button, SlotActionType.PICKUP, player);
+                        mc.interactionManager.clickSlot(container.syncId, currentSlot, 0, SlotActionType.PICKUP, player);
+                    }
+                    else
+                    {
+                        //Do shift-click
+                        mc.interactionManager.clickSlot(container.syncId, slotNum, 0, SlotActionType.QUICK_MOVE, player);
+                    }
                     changed = true;
 
                     break;

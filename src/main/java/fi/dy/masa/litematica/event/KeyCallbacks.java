@@ -69,6 +69,8 @@ public class KeyCallbacks
         Hotkeys.LAYER_NEXT.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_PREVIOUS.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_SET_HERE.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind().setCallback(callbackHotkeys);
@@ -420,9 +422,19 @@ public class KeyCallbacks
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(fi.dy.masa.malilib.util.EntityUtils.getCameraEntity());
                 return true;
             }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind())
+            {
+                DataManager.getContainerManager().registerContainer(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind())
+            {
+                DataManager.getContainerManager().unregisterContainer(mc);
+                return true;
+            }
             else if (key == Hotkeys.MATERIAL_LIST_FETCH.getKeybind())
             {
-                InventoryUtils.fetchMaterials(mc);
+                DataManager.getContainerManager().fetchMaterials(mc);
                 return true;
             }
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())

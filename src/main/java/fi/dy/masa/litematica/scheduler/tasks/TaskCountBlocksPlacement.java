@@ -56,7 +56,6 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
             }
             else if (stateClient != stateSchematic)
             {
-                this.countsMissing.addTo(stateSchematic, 1);
                 this.countsMismatch.addTo(stateSchematic, 1);
             }
         }

@@ -34,6 +34,7 @@ import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.interfaces.ICompletionListener;
 import fi.dy.masa.malilib.util.Color4f;
 import fi.dy.masa.malilib.util.IntBoundingBox;
+import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.litematica.config.Configs;
@@ -371,7 +372,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         this.schematicPlacement = schematicPlacement;
 
         this.setCompletionListener(completionListener);
-        this.requiredChunks.addAll(schematicPlacement.getTouchedChunks());
+        prepareRequiredChunks(schematicPlacement);
         this.totalRequiredChunks = this.requiredChunks.size();
         this.verificationStarted = true;
 
@@ -387,6 +388,35 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
         this.updateRequiredChunksStringList = false;
         this.updateMismatchOverlays = false;
+    }
+
+    private void prepareRequiredChunks(SchematicPlacement schematicPlacement)
+    {
+        Collection<Box> boxes = schematicPlacement.getSubRegionBoxes(SubRegionPlacement.RequiredEnabled.PLACEMENT_ENABLED).values();
+
+        LayerRange range = null;
+        // Filter/clamp the boxes to intersect with the render layer
+        if (schematicPlacement.getSchematicVerifierType() == BlockInfoListType.RENDER_LAYERS)
+            range = DataManager.getRenderLayerRange();
+
+        if (range == null || range.getLayerMode() == LayerMode.ALL)
+        {
+            PositionUtils.getPerChunkBoxes(boxes, this::clampToWorldHeightAndAddBox);
+        }
+        else
+        {
+            PositionUtils.getLayerRangeClampedPerChunkBoxes(boxes, range, this::clampToWorldHeightAndAddBox);
+        }
+    }
+
+    private void clampToWorldHeightAndAddBox(ChunkPos chunkPos, IntBoundingBox box)
+    {
+        box = PositionUtils.clampBoxToWorldHeightRange(box, this.worldClient);
+
+        if (box != null)
+        {
+            this.requiredChunks.add(chunkPos);
+        }
     }
 
     public void resume()

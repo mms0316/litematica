@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -11,6 +12,7 @@ import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.decoration.painting.PaintingEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.nbt.NbtCompound;
@@ -19,6 +21,8 @@ import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Direction.AxisDirection;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
@@ -32,6 +36,7 @@ import fi.dy.masa.litematica.schematic.LitematicaSchematic.EntityInfo;
 import fi.dy.masa.litematica.schematic.container.LitematicaBlockStateContainer;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
+import fi.dy.masa.malilib.util.NBTUtils;
 
 public class SchematicPlacingUtils
 {
@@ -373,18 +378,42 @@ public class SchematicPlacingUtils
 
         for (EntityInfo info : entityList)
         {
-            Entity entity = EntityUtils.createEntityAndPassengersFromNBT(info.nbt, world);
+            Vec3d pos = info.posVec;
+            pos = PositionUtils.getTransformedPosition(pos, schematicPlacement.getMirror(), schematicPlacement.getRotation());
+            pos = PositionUtils.getTransformedPosition(pos, placement.getMirror(), placement.getRotation());
+            double x = pos.x + offX;
+            double y = pos.y + offY;
+            double z = pos.z + offZ;
 
-            if (entity != null)
+            if (x >= minX && x < maxX && z >= minZ && z < maxZ)
             {
-                Vec3d pos = info.posVec;
-                pos = PositionUtils.getTransformedPosition(pos, schematicPlacement.getMirror(), schematicPlacement.getRotation());
-                pos = PositionUtils.getTransformedPosition(pos, placement.getMirror(), placement.getRotation());
-                double x = pos.x + offX;
-                double y = pos.y + offY;
-                double z = pos.z + offZ;
+                NbtCompound tag = info.nbt.copy();
+                String id = tag.getString("id");
 
-                if (x >= minX && x < maxX && z >= minZ && z < maxZ)
+                // Avoid warning about invalid hanging position.
+                // Note that this position isn't technically correct, but it only needs to be within 16 blocks
+                // of the entity position to avoid the warning.
+                if (id.equals("minecraft:glow_item_frame") ||
+                    id.equals("minecraft:item_frame") ||
+                    id.equals("minecraft:leash_knot") ||
+                    id.equals("minecraft:painting"))
+                {
+                    Vec3d p = NBTUtils.readEntityPositionFromTag(tag);
+
+                    if (p == null)
+                    {
+                        p = new Vec3d(x, y, z);
+                        NBTUtils.writeEntityPositionToTag(p, tag);
+                    }
+
+                    tag.putInt("TileX", (int) p.x);
+                    tag.putInt("TileY", (int) p.y);
+                    tag.putInt("TileZ", (int) p.z);
+                }
+
+                Entity entity = EntityUtils.createEntityAndPassengersFromNBT(tag, world);
+
+                if (entity != null)
                 {
                     rotateEntity(entity, x, y, z, rotationCombined, mirrorMain, mirrorSub);
                     //System.out.printf("post: %.1f - rot: %s, mm: %s, ms: %s\n", rotationYaw, rotationCombined, mirrorMain, mirrorSub);
@@ -393,6 +422,30 @@ public class SchematicPlacingUtils
                     if (entity instanceof LivingEntity living && living.isSleeping())
                     {
                         living.setSleepingPosition(new BlockPos(x, y, z));
+                    }
+
+                    // Hack fix to fix the painting position offsets.
+                    // The vanilla code will end up moving the position by one in two of the orientations,
+                    // because it sets the hanging position to the given position (floored)
+                    // and then it offsets the position from the hanging position
+                    // by 0.5 or 1.0 blocks depending on the painting size.
+                    if (entity instanceof PaintingEntity paintingEntity)
+                    {
+                        Direction right = paintingEntity.getHorizontalFacing().rotateYCounterclockwise();
+
+                        if ((paintingEntity.getWidthPixels() % 32) == 0 &&
+                            right.getDirection() == AxisDirection.POSITIVE)
+                        {
+                            x -= 1.0 * right.getOffsetX();
+                            z -= 1.0 * right.getOffsetZ();
+                        }
+
+                        if ((paintingEntity.getHeightPixels() % 32) == 0)
+                        {
+                            y -= 1.0;
+                        }
+
+                        entity.setPosition(x, y, z);
                     }
 
                     EntityUtils.spawnEntityAndPassengersInWorld(entity, world);

@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -19,12 +20,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
-import fi.dy.masa.malilib.util.Constants;
-import fi.dy.masa.malilib.util.InventoryUtils;
+
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
+import fi.dy.masa.malilib.util.Constants;
 
 public class EntityUtils
 {
@@ -75,7 +76,7 @@ public class EntityUtils
         final var mainHandStack = player.getMainHandStack();
         final Identifier stackId = Registries.ITEM.getId(stack.getItem());
 
-        if (InventoryUtils.areStacksEqual(mainHandStack, stack) ||
+        if (ItemStack.areItemsEqual(mainHandStack, stack) ||
                 fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
                     Registries.ITEM.getId(mainHandStack.getItem()), stackId))
         {
@@ -85,7 +86,7 @@ public class EntityUtils
         final var offHandStack = player.getOffHandStack();
 
         if (mainHandStack.isEmpty() && (
-                InventoryUtils.areStacksEqual(offHandStack, stack) ||
+                ItemStack.areItemsEqual(offHandStack, stack) ||
                 fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
                     Registries.ITEM.getId(offHandStack.getItem()), stackId)))
         {

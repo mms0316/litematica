@@ -61,6 +61,7 @@ public class Configs implements IConfigHandler
         public static final ConfigInteger       EASY_PLACE_SWAP_INTERVAL = new ConfigInteger(   "easyPlaceSwapInterval", 0, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter swapping inventory slots and placing a block.\nUseful to avoid placing wrong blocks when having high ping.");
         public static final ConfigInteger       EASY_PLACE_USE_INTERVAL = new ConfigInteger(    "easyPlaceUseInterval", 20, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter interacting with a block.\nUseful to avoid overshooting Note Blocks when having high ping.");
         public static final ConfigBoolean       EXECUTE_REQUIRE_TOOL    = new ConfigBoolean(    "executeRequireHoldingTool", true, "Require holding an enabled tool item\nfor the executeOperation hotkey to work");
+        public static final ConfigBoolean       FIX_CHEST_MIRROR        = new ConfigBoolean(    "fixChestMirror", true, "Enable a fix to the broken chest mirror code in vanilla");
         public static final ConfigBoolean       FIX_RAIL_ROTATION       = new ConfigBoolean(    "fixRailRotation", true, "If true, then a fix is applied for the vanilla bug in rails,\nwhere the 180 degree rotations of straight north-south and\neast-west rails rotate 90 degrees counterclockwise instead >_>");
         public static final ConfigBoolean       GENERATE_LOWERCASE_NAMES = new ConfigBoolean(   "generateLowercaseNames", false, "If enabled, then by default the suggested schematic names\nwill be lowercase and using underscores instead of spaces");
         public static final ConfigBoolean       HIGHLIGHT_BLOCK_IN_INV  = new ConfigBoolean(    "highlightBlockInInventory", false, "When enabled, highlights the item (including Shulker Boxes containing it)\nof the looked at block in the schematic");
@@ -113,6 +114,7 @@ public class Configs implements IConfigHandler
                 EASY_PLACE_SP_HANDLING,
                 EASY_PLACE_PROTOCOL,
                 EXECUTE_REQUIRE_TOOL,
+                FIX_CHEST_MIRROR,
                 FIX_RAIL_ROTATION,
                 GENERATE_LOWERCASE_NAMES,
                 HIGHLIGHT_BLOCK_IN_INV,

@@ -356,7 +356,10 @@ public class WorldRendererSchematic
 
     public void updateChunks(long finishTimeNano)
     {
+        this.mc.getProfiler().push("litematica_run_chunk_uploads");
         this.displayListEntitiesDirty |= this.renderDispatcher.runChunkUploads(finishTimeNano);
+
+        this.mc.getProfiler().swap("litematica_check_update");
 
         if (this.chunksToUpdate.isEmpty() == false)
         {
@@ -369,12 +372,16 @@ public class WorldRendererSchematic
 
                 if (renderChunk.needsImmediateUpdate())
                 {
+                    this.mc.getProfiler().push("litematica_update_now");
                     flag = this.renderDispatcher.updateChunkNow(renderChunk);
                 }
                 else
                 {
+                    this.mc.getProfiler().push("litematica_update_later");
                     flag = this.renderDispatcher.updateChunkLater(renderChunk);
                 }
+
+                this.mc.getProfiler().pop();
 
                 if (!flag)
                 {
@@ -391,6 +398,8 @@ public class WorldRendererSchematic
                 }
             }
         }
+
+        this.mc.getProfiler().pop();
     }
 
     public int renderBlockLayer(RenderLayer renderLayer, MatrixStack matrices, Camera camera, Matrix4f projMatrix)
@@ -515,7 +524,7 @@ public class WorldRendererSchematic
         this.renderBlockOverlay(OverlayRenderType.QUAD, matrices, camera, projMatrix);
     }
 
-    private static void initShader(ShaderProgram shader, MatrixStack matrices, Matrix4f projMatrix)
+    protected static void initShader(ShaderProgram shader, MatrixStack matrices, Matrix4f projMatrix)
     {
         for (int i = 0; i < 12; ++i) shader.addSampler("Sampler" + i, RenderSystem.getShaderTexture(i));
 
@@ -529,7 +538,7 @@ public class WorldRendererSchematic
         if (shader.gameTime != null) shader.gameTime.set(RenderSystem.getShaderGameTime());
     }
 
-    private void renderBlockOverlay(OverlayRenderType type, MatrixStack matrixStack, Camera camera, Matrix4f projMatrix)
+    protected void renderBlockOverlay(OverlayRenderType type, MatrixStack matrixStack, Camera camera, Matrix4f projMatrix)
     {
         RenderLayer renderLayer = RenderLayer.getTranslucent();
         renderLayer.startDrawing();
@@ -666,7 +675,7 @@ public class WorldRendererSchematic
             {
                 BlockPos pos = chunkRenderer.getOrigin();
                 ChunkSchematic chunk = this.world.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
-                List<Entity> list = chunk.getEntityListForSectionIfExists(pos.getY() >> 4);
+                List<Entity> list = chunk.getEntityList();
 
                 if (list.isEmpty() == false)
                 {

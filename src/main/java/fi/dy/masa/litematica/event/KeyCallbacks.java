@@ -619,7 +619,7 @@ public class KeyCallbacks
 
                     if (selection != null)
                     {
-                        BlockPos pos = new BlockPos(this.mc.player.getPos());
+                        BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
 
                         if (mode == ToolMode.MOVE)
                         {
@@ -635,7 +635,7 @@ public class KeyCallbacks
                 }
                 else if (mode.getUsesSchematic())
                 {
-                    BlockPos pos = new BlockPos(this.mc.player.getPos());
+                    BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
                     DataManager.getSchematicPlacementManager().setPositionOfCurrentSelectionTo(pos, this.mc);
                     return true;
                 }
@@ -666,7 +666,7 @@ public class KeyCallbacks
 
                     if (area != null)
                     {
-                        BlockPos pos = new BlockPos(this.mc.player.getPos());
+                        BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
                         area.setExplicitOrigin(pos);
                         String posStr = String.format("x: %d, y: %d, z: %d", pos.getX(), pos.getY(), pos.getZ());
                         InfoUtils.printActionbarMessage("litematica.message.set_area_origin", posStr);
@@ -684,7 +684,7 @@ public class KeyCallbacks
 
                     if (area != null && area.getSelectedSubRegionBox() != null)
                     {
-                        BlockPos pos = new BlockPos(this.mc.player.getPos());
+                        BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
                         Corner corner = key == Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind() ? Corner.CORNER_1 : Corner.CORNER_2;
                         area.setSelectedSubRegionCornerPos(pos, corner);
 

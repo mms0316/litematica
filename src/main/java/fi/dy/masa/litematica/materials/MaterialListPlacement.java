@@ -51,6 +51,5 @@ public class MaterialListPlacement extends MaterialListBase
     {
         TaskCountBlocksPlacement task = new TaskCountBlocksPlacement(this.placement, this);
         TaskScheduler.getInstanceClient().scheduleTask(task, 20);
-        InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
     }
 }

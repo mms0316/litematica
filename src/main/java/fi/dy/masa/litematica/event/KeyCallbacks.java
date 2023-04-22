@@ -107,6 +107,7 @@ public class KeyCallbacks
         Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind().setCallback(callbackMessage);
         Hotkeys.SELECTION_MODE_CYCLE.getKeybind().setCallback(callbackMessage);
         Hotkeys.SET_AREA_ORIGIN.getKeybind().setCallback(callbackMessage);
+        Hotkeys.SET_SCHEMATIC_ORIGIN.getKeybind().setCallback(callbackMessage);
         Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind().setCallback(callbackMessage);
         Hotkeys.SET_SELECTION_BOX_POSITION_2.getKeybind().setCallback(callbackMessage);
         Hotkeys.TOGGLE_ALL_RENDERING.getKeybind().setCallback(new RenderToggle(Configs.Visuals.ENABLE_RENDERING));
@@ -675,6 +676,18 @@ public class KeyCallbacks
                         area.setExplicitOrigin(pos);
                         String posStr = String.format("x: %d, y: %d, z: %d", pos.getX(), pos.getY(), pos.getZ());
                         InfoUtils.printActionbarMessage("litematica.message.set_area_origin", posStr);
+                        return true;
+                    }
+                }
+            }
+            else if (key == Hotkeys.SET_SCHEMATIC_ORIGIN.getKeybind())
+            {
+                if (mc.player != null)
+                {
+                    var project = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
+                    if (project != null)
+                    {
+                        project.setOrigin(fi.dy.masa.malilib.util.PositionUtils.getEntityBlockPos(mc.player), null);
                         return true;
                     }
                 }

@@ -61,6 +61,7 @@ public class Hotkeys
     public static final ConfigHotkey SELECTION_MODE_CYCLE               = new ConfigHotkey("selectionModeCycle",                "LEFT_CONTROL,M", "Change the mode between Corners and Cuboid\nin the Area Selection mode");
     public static final ConfigHotkey SELECTION_SHRINK_HOTKEY            = new ConfigHotkey("selectionShrink",                   "",     "The action hotkey to shrink the selection box so that there\nisn't any empty space (empty layers) on any side");
     public static final ConfigHotkey SET_AREA_ORIGIN                    = new ConfigHotkey("setAreaOrigin",                     "",     "Set/move the origin point of the current\narea selection to the player's position");
+    public static final ConfigHotkey SET_SCHEMATIC_ORIGIN               = new ConfigHotkey("setSchematicOrigin",                "",     "Set the active schematic placement\n to the player's position");
     public static final ConfigHotkey SET_SELECTION_BOX_POSITION_1       = new ConfigHotkey("setSelectionBoxPosition1",          "",     "Set the first position of the currently selected\nbox to the player's position");
     public static final ConfigHotkey SET_SELECTION_BOX_POSITION_2       = new ConfigHotkey("setSelectionBoxPosition2",          "",     "Set the second position of the currently selected\nbox to the player's position");
     public static final ConfigHotkey TOGGLE_ALL_RENDERING               = new ConfigHotkey("toggleAllRendering",                "M,R",  "Toggle all rendering on/off", "All Rendering");
@@ -139,6 +140,7 @@ public class Hotkeys
             SELECTION_MODE_CYCLE,
             SELECTION_SHRINK_HOTKEY,
             SET_AREA_ORIGIN,
+            SET_SCHEMATIC_ORIGIN,
             SET_SELECTION_BOX_POSITION_1,
             SET_SELECTION_BOX_POSITION_2,
             TOGGLE_ALL_RENDERING,

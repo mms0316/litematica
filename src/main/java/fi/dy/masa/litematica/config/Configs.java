@@ -94,7 +94,6 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       TOOL_ITEM_ENABLED       = new ConfigBoolean(    "toolItemEnabled", true, "If true, then the \"tool\" item can be used to control selections etc.", "Tool Item Enabled");
         public static final ConfigBoolean       UNHIDE_SCHEMATIC_PROJECTS = new ConfigBoolean(  "unhideSchematicVCS", false, "Un-hides the Schematic VCS (Version Control System) menu button,\nand enables the hotkey and the VCS functionality in general.\n(This was called Schematic Projects before.)\n\nIn general you §6should not§r be using this feature,\nunless you really know how it works and what it does.\nIt somewhat changes how the area selections, placements and pasting works,\nin particular that there is also an area delete operation when pasting.\n\nBasically this feature is intended for §6iterative, in-place§r design work,\nand it allows you to easier create multiple versions/snapshots\nof the same build, and also to switch between the versions by deleting what is\nin the world first, and then pasting the next version in its place.");
         public static final ConfigStringList    SUBSTITUTIONS           = new ConfigStringList( "substitutions", ImmutableList.of(), "Materials that may be replaced by others \n(without triggering blocks listing as wrong).\nThese are in the format: block1;block2;...;blockN\nThe blocks string format is the vanilla format, such as:\n- minecraft:dirt;minecraft:grass\n- minecraft:quartz_stairs;minecraft:smooth_quartz_stairs");
-        public static final ConfigBoolean       REFRESH_ON_LAYER_CHANGE = new ConfigBoolean(    "refreshOnLayerChange", true, "Automatically refreshes current material list and schematic verifier if on Render Layers mode");
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 AREAS_PER_WORLD,
@@ -137,7 +136,6 @@ public class Configs implements IConfigHandler
                 PICK_BLOCK_SHULKERS,
                 PLACEMENT_RESTRICTION,
                 PLACEMENT_RESTRICTION_WARN,
-                REFRESH_ON_LAYER_CHANGE,
                 RENDER_MATERIALS_IN_GUI,
                 RENDER_THREAD_NO_TIMEOUT,
                 SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD,

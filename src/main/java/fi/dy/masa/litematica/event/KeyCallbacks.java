@@ -410,16 +410,19 @@ public class KeyCallbacks
             else if (key == Hotkeys.LAYER_NEXT.getKeybind())
             {
                 DataManager.getRenderLayerRange().moveLayer(1);
+                SchematicUtils.refreshOnLayerChange();
                 return true;
             }
             else if (key == Hotkeys.LAYER_PREVIOUS.getKeybind())
             {
                 DataManager.getRenderLayerRange().moveLayer(-1);
+                SchematicUtils.refreshOnLayerChange();
                 return true;
             }
             else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())
             {
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(fi.dy.masa.malilib.util.EntityUtils.getCameraEntity());
+                SchematicUtils.refreshOnLayerChange();
                 return true;
             }
             else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind())
@@ -440,11 +443,13 @@ public class KeyCallbacks
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())
             {
                 DataManager.getRenderLayerRange().setLayerMode((LayerMode) DataManager.getRenderLayerRange().getLayerMode().cycle(true));
+                SchematicUtils.refreshOnLayerChange();
                 return true;
             }
             else if (key == Hotkeys.LAYER_MODE_PREVIOUS.getKeybind())
             {
                 DataManager.getRenderLayerRange().setLayerMode((LayerMode) DataManager.getRenderLayerRange().getLayerMode().cycle(false));
+                SchematicUtils.refreshOnLayerChange();
                 return true;
             }
             else if (key == Hotkeys.PICK_BLOCK_FIRST.getKeybind())

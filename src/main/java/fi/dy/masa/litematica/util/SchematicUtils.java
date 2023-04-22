@@ -1121,4 +1121,30 @@ public class SchematicUtils
             return DataManager.getSchematicProjectsManager().commitNewVersion(string);
         }
     }
+
+    public static void refreshOnLayerChange()
+    {
+        if (Configs.Generic.REFRESH_ON_LAYER_CHANGE.getBooleanValue())
+        {
+            var layerRange = DataManager.getRenderLayerRange();
+            if (layerRange.getLayerMode() != LayerMode.ALL)
+            {
+                var materialList = DataManager.getMaterialList();
+                if (materialList != null)
+                    materialList.reCreateMaterialList();
+
+                var schematicPlacement = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
+                if (schematicPlacement != null &&
+                        schematicPlacement.getSchematicVerifierType() != BlockInfoListType.ALL &&
+                        schematicPlacement.hasVerifier())
+                {
+                    var verifier = schematicPlacement.getSchematicVerifier();
+                    verifier.startVerification(MinecraftClient.getInstance().world,
+                            SchematicWorldHandler.getSchematicWorld(),
+                            schematicPlacement,
+                            null);
+                }
+            }
+        }
+    }
 }

@@ -72,6 +72,7 @@ public class KeyCallbacks
         Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_REFRESH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind().setCallback(callbackHotkeys);
@@ -437,6 +438,15 @@ public class KeyCallbacks
             {
                 DataManager.getContainerManager().fetchMaterials(mc);
                 return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_REFRESH.getKeybind())
+            {
+                var materialList = DataManager.getMaterialList();
+                if (materialList != null)
+                {
+                    materialList.reCreateMaterialList();
+                    return true;
+                }
             }
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())
             {

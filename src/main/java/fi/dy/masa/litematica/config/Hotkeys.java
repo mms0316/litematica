@@ -23,6 +23,7 @@ public class Hotkeys
     public static final ConfigHotkey MATERIAL_LIST_CONTAINER_REGISTER   = new ConfigHotkey("materialListContainerRegister",     "", KeybindSettings.MODIFIER_GUI, "Register materials inside an opened container to be used for Material List");
     public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER = new ConfigHotkey("materialListContainerUnregister",   "", "Unregister container used for Material List");
     public static final ConfigHotkey MATERIAL_LIST_FETCH                = new ConfigHotkey("materialListFetch",                 "", KeybindSettings.MODIFIER_GUI, "Fetch materials required by the active Material List from opened container");
+    public static final ConfigHotkey MATERIAL_LIST_REFRESH              = new ConfigHotkey("materialListRefresh",               "",     "Refresh active Material List");
     public static final ConfigHotkey NUDGE_SELECTION_NEGATIVE           = new ConfigHotkey("nudgeSelectionNegative",            "",     "Nudge the current selection in the \"negative\" direction\nThis is basically the same as mouse wheel down\nwith the Nudge modifier pressed");
     public static final ConfigHotkey NUDGE_SELECTION_POSITIVE           = new ConfigHotkey("nudgeSelectionPositive",            "",     "Nudge the current selection in the \"positive\" direction\nThis is basically the same as mouse wheel up\nwith the Nudge modifier pressed");
     public static final ConfigHotkey MOVE_ENTIRE_SELECTION              = new ConfigHotkey("moveEntireSelection",               "",     "Move the entire current selection here");
@@ -102,6 +103,7 @@ public class Hotkeys
             MATERIAL_LIST_CONTAINER_REGISTER,
             MATERIAL_LIST_CONTAINER_UNREGISTER,
             MATERIAL_LIST_FETCH,
+            MATERIAL_LIST_REFRESH,
             NUDGE_SELECTION_NEGATIVE,
             NUDGE_SELECTION_POSITIVE,
             MOVE_ENTIRE_SELECTION,

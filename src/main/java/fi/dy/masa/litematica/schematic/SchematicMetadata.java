@@ -225,15 +225,15 @@ public class SchematicMetadata
 
                 metadata.setRegionCount(0);
 
-                short width = 0;
-                short height = 0;
-                short length = 0;
+                int width = 0;
+                int height = 0;
+                int length = 0;
                 if (nbt.contains("Width", Constants.NBT.TAG_SHORT))
-                    width = nbt.getShort("Width");
+                    width = nbt.getShort("Width") & 0xFFFF;
                 if (nbt.contains("Height", Constants.NBT.TAG_SHORT))
-                    height = nbt.getShort("Height");
+                    height = nbt.getShort("Height") & 0xFFFF;
                 if (nbt.contains("Length", Constants.NBT.TAG_SHORT))
-                    length = nbt.getShort("Length");
+                    length = nbt.getShort("Length") & 0xFFFF;
 
                 metadata.setEnclosingSize(new Vec3i(width, height, length));
                 int volume = width * height * length;

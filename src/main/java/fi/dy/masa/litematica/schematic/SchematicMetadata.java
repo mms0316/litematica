@@ -221,6 +221,10 @@ public class SchematicMetadata
                         metadata.setTimeCreated(date);
                         metadata.setTimeModified(date);
                     }
+
+                    //Extension - ARGB square picture
+                    if (spongeMetadata.contains("PreviewImageData", Constants.NBT.TAG_INT_ARRAY))
+                        metadata.setPreviewImagePixelData(spongeMetadata.getIntArray("PreviewImageData"));
                 }
 
                 metadata.setRegionCount(0);
@@ -330,6 +334,13 @@ public class SchematicMetadata
                     var blocks = nbt.getList("blocks", Constants.NBT.TAG_COMPOUND);
                     metadata.setTotalBlocks(blocks.size());
                 }
+
+                //Extension - ARGB square picture
+                if (nbt.contains("PreviewImageData", Constants.NBT.TAG_INT_ARRAY))
+                    metadata.setPreviewImagePixelData(nbt.getIntArray("PreviewImageData"));
+                else if (nbt.contains("previewImageData", Constants.NBT.TAG_INT_ARRAY))
+                    metadata.setPreviewImagePixelData(nbt.getIntArray("previewImageData"));
+
 
                 return metadata;
             }

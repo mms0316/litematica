@@ -20,6 +20,7 @@ import fi.dy.masa.litematica.gui.GuiSchematicBrowserBase;
 import fi.dy.masa.litematica.gui.Icons;
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
 import fi.dy.masa.litematica.schematic.SchematicMetadata;
+import fi.dy.masa.litematica.util.FileType;
 import fi.dy.masa.malilib.gui.interfaces.ISelectionListener;
 import fi.dy.masa.malilib.gui.widgets.WidgetFileBrowserBase;
 import fi.dy.masa.malilib.render.RenderUtils;
@@ -113,22 +114,30 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
             this.drawString(matrixStack, str, x, y, textColor);
             y += 12;
 
-            String strDate = DATE_FORMAT.format(new Date(meta.getTimeCreated()));
-            str = StringUtils.translate("litematica.gui.label.schematic_info.time_created", strDate);
-            this.drawString(matrixStack, str, x, y, textColor);
-            y += 12;
-
-            if (meta.hasBeenModified())
+            long timeCreated = meta.getTimeCreated();
+            if (timeCreated > 0)
             {
-                strDate = DATE_FORMAT.format(new Date(meta.getTimeModified()));
-                str = StringUtils.translate("litematica.gui.label.schematic_info.time_modified", strDate);
+                String strDate = DATE_FORMAT.format(new Date(timeCreated));
+                str = StringUtils.translate("litematica.gui.label.schematic_info.time_created", strDate);
+                this.drawString(matrixStack, str, x, y, textColor);
+                y += 12;
+
+                if (meta.hasBeenModified())
+                {
+                    strDate = DATE_FORMAT.format(new Date(meta.getTimeModified()));
+                    str = StringUtils.translate("litematica.gui.label.schematic_info.time_modified", strDate);
+                    this.drawString(matrixStack, str, x, y, textColor);
+                    y += 12;
+                }
+            }
+
+            int regionCount = meta.getRegionCount();
+            if (regionCount > 0)
+            {
+                str = StringUtils.translate("litematica.gui.label.schematic_info.region_count", meta.getRegionCount());
                 this.drawString(matrixStack, str, x, y, textColor);
                 y += 12;
             }
-
-            str = StringUtils.translate("litematica.gui.label.schematic_info.region_count", meta.getRegionCount());
-            this.drawString(matrixStack, str, x, y, textColor);
-            y += 12;
 
             if (this.parent.height >= 340)
             {
@@ -202,19 +211,24 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
     @Nullable
     protected SchematicMetadata getSchematicMetadata(DirectoryEntry entry)
     {
-        File file = new File(entry.getDirectory(), entry.getName());
+        var fileDir = entry.getDirectory();
+        var fileName = entry.getName();
+        File file = new File(fileDir, fileName);
         SchematicMetadata meta = this.cachedMetadata.get(file);
 
         if (meta == null && this.cachedMetadata.containsKey(file) == false)
         {
-            if (entry.getName().endsWith(LitematicaSchematic.FILE_EXTENSION))
-            {
-                meta = LitematicaSchematic.readMetadataFromFile(entry.getDirectory(), entry.getName());
+            var fileType = FileType.fromFile(file);
+            switch (fileType) {
+                case LITEMATICA_SCHEMATIC ->
+                        meta = LitematicaSchematic.readMetadataFromFile(fileDir, fileName);
+                case SPONGE_SCHEMATIC, VANILLA_STRUCTURE ->
+                        meta = SchematicMetadata.readMetadataFromFile(fileType, file);
+            }
 
-                if (meta != null)
-                {
-                    this.createPreviewImage(file, meta);
-                }
+            if (meta != null)
+            {
+                this.createPreviewImage(file, meta);
             }
 
             this.cachedMetadata.put(file, meta);

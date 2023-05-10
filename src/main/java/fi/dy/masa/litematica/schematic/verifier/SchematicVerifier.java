@@ -92,6 +92,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     private boolean updateRequiredChunksStringList;
     private boolean updateMismatchOverlays;
 
+    private ChunkPos lastPlayerPos;
+
     public SchematicVerifier()
     {
         this.name = StringUtils.translate("litematica.gui.label.schematic_verifier.verifier");
@@ -320,6 +322,14 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         this.verifyChunks();
         this.checkChangedPositions();
         this.checkChangedChunks();
+
+        //Updates infohud
+        if (mc.player != null && !mc.player.getChunkPos().equals(lastPlayerPos) &&
+                (this.selectedCategories.size() > 0 || this.selectedEntries.size() > 0))
+        {
+            lastPlayerPos = mc.player.getChunkPos();
+            this.updateMismatchOverlays = true;
+        }
 
         if (this.updateRequiredChunksStringList)
         {
@@ -1127,12 +1137,44 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
             final int count = Math.min(positionList.size(), Configs.InfoOverlays.INFO_HUD_MAX_LINES.getIntegerValue());
 
+            BlockPos playerPos = mc.player != null ? mc.player.getBlockPos() : null;
+
             for (int i = 0; i < count; ++i)
             {
                 MismatchRenderPos entry = positionList.get(i);
                 BlockPos pos = entry.pos;
                 String pre = entry.type.getColorCode();
-                this.infoHudLines.add(String.format("%sx: %5d, y: %3d, z: %5d%s", pre, pos.getX(), pos.getY(), pos.getZ(), rst));
+
+                String direction = "";
+                String distance = "";
+                if (playerPos != null)
+                {
+                    var xDiff = pos.getX() - playerPos.getX();
+                    var zDiff = -(pos.getZ() - playerPos.getZ());
+
+                    var angle = Math.atan2(zDiff, xDiff) / Math.PI;
+                    if (angle > -1f/8 && angle <= 1f/8)
+                        direction = " E ";
+                    else if (angle > 1f/8 && angle <= 3f/8)
+                        direction = "NE ";
+                    else if (angle > 3f/8 && angle <= 5f/8)
+                        direction = " N ";
+                    else if (angle > 5f/8 && angle <= 7f/8)
+                        direction = "NW ";
+
+                    else if (angle > -3f/8 && angle <= -1f/8)
+                        direction = "SE ";
+                    else if (angle > -5f/8 && angle <= -3f/8)
+                        direction = " S ";
+                    else if (angle > -7f/8 && angle <= -5f/8)
+                        direction = "SW ";
+                    else
+                        direction = " W ";
+
+                    distance = String.format("%dm, ", (long)Math.sqrt(xDiff * xDiff + zDiff * zDiff));
+                }
+
+                this.infoHudLines.add(String.format("%s%s%sx: %5d, y: %3d, z: %5d%s", pre, direction, distance, pos.getX(), pos.getY(), pos.getZ(), rst));
             }
         }
     }

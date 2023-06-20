@@ -20,6 +20,10 @@ public class Hotkeys
     public static final ConfigHotkey LAYER_NEXT                         = new ConfigHotkey("layerNext",                         "PAGE_UP",      "Move the rendered layer selection up");
     public static final ConfigHotkey LAYER_PREVIOUS                     = new ConfigHotkey("layerPrevious",                     "PAGE_DOWN",    "Move the rendered layer selection down");
     public static final ConfigHotkey LAYER_SET_HERE                     = new ConfigHotkey("layerSetHere",                      "",     "Set the Render Layer to the player's current position");
+    public static final ConfigHotkey MATERIAL_LIST_CONTAINER_REGISTER   = new ConfigHotkey("materialListContainerRegister",     "", KeybindSettings.MODIFIER_GUI, "Register materials inside an opened container to be used for Material List");
+    public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER = new ConfigHotkey("materialListContainerUnregister",   "", "Unregister container used for Material List");
+    public static final ConfigHotkey MATERIAL_LIST_FETCH                = new ConfigHotkey("materialListFetch",                 "", KeybindSettings.MODIFIER_GUI, "Fetch materials required by the active Material List from opened container");
+    public static final ConfigHotkey MATERIAL_LIST_REFRESH              = new ConfigHotkey("materialListRefresh",               "",     "Refresh active Material List");
     public static final ConfigHotkey NUDGE_SELECTION_NEGATIVE           = new ConfigHotkey("nudgeSelectionNegative",            "",     "Nudge the current selection in the \"negative\" direction\nThis is basically the same as mouse wheel down\nwith the Nudge modifier pressed");
     public static final ConfigHotkey NUDGE_SELECTION_POSITIVE           = new ConfigHotkey("nudgeSelectionPositive",            "",     "Nudge the current selection in the \"positive\" direction\nThis is basically the same as mouse wheel up\nwith the Nudge modifier pressed");
     public static final ConfigHotkey MOVE_ENTIRE_SELECTION              = new ConfigHotkey("moveEntireSelection",               "",     "Move the entire current selection here");
@@ -58,6 +62,7 @@ public class Hotkeys
     public static final ConfigHotkey SELECTION_MODE_CYCLE               = new ConfigHotkey("selectionModeCycle",                "LEFT_CONTROL,M", "Change the mode between Corners and Cuboid\nin the Area Selection mode");
     public static final ConfigHotkey SELECTION_SHRINK_HOTKEY            = new ConfigHotkey("selectionShrink",                   "",     "The action hotkey to shrink the selection box so that there\nisn't any empty space (empty layers) on any side");
     public static final ConfigHotkey SET_AREA_ORIGIN                    = new ConfigHotkey("setAreaOrigin",                     "",     "Set/move the origin point of the current\narea selection to the player's position");
+    public static final ConfigHotkey SET_SCHEMATIC_ORIGIN               = new ConfigHotkey("setSchematicOrigin",                "",     "Set the active schematic placement\n to the player's position");
     public static final ConfigHotkey SET_SELECTION_BOX_POSITION_1       = new ConfigHotkey("setSelectionBoxPosition1",          "",     "Set the first position of the currently selected\nbox to the player's position");
     public static final ConfigHotkey SET_SELECTION_BOX_POSITION_2       = new ConfigHotkey("setSelectionBoxPosition2",          "",     "Set the second position of the currently selected\nbox to the player's position");
     public static final ConfigHotkey TOGGLE_ALL_RENDERING               = new ConfigHotkey("toggleAllRendering",                "M,R",  "Toggle all rendering on/off", "All Rendering");
@@ -95,6 +100,10 @@ public class Hotkeys
             LAYER_NEXT,
             LAYER_PREVIOUS,
             LAYER_SET_HERE,
+            MATERIAL_LIST_CONTAINER_REGISTER,
+            MATERIAL_LIST_CONTAINER_UNREGISTER,
+            MATERIAL_LIST_FETCH,
+            MATERIAL_LIST_REFRESH,
             NUDGE_SELECTION_NEGATIVE,
             NUDGE_SELECTION_POSITIVE,
             MOVE_ENTIRE_SELECTION,
@@ -133,6 +142,7 @@ public class Hotkeys
             SELECTION_MODE_CYCLE,
             SELECTION_SHRINK_HOTKEY,
             SET_AREA_ORIGIN,
+            SET_SCHEMATIC_ORIGIN,
             SET_SELECTION_BOX_POSITION_1,
             SET_SELECTION_BOX_POSITION_2,
             TOGGLE_ALL_RENDERING,

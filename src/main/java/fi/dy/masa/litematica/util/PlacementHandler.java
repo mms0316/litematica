@@ -83,7 +83,7 @@ public class PlacementHandler
                 return EasyPlaceProtocol.V2;
             }
 
-            return EasyPlaceProtocol.SLAB_ONLY;
+            return EasyPlaceProtocol.RESTRICTED;
         }
 
         return protocol;

@@ -6,12 +6,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
+import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.UnloadChunkS2CPacket;
+import net.minecraft.util.math.BlockPos;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
+import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
 
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class MixinClientPlayNetworkHandler
@@ -27,10 +30,28 @@ public abstract class MixinClientPlayNetworkHandler
             Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
         {
             SchematicWorldRefresher.INSTANCE.markSchematicChunksForRenderUpdate(chunkX, chunkZ);
+
+            if (Configs.Generic.SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD.getBooleanValue())
+            {
+                SchematicVerifier.markVerifierChunkChanges(chunkX, chunkZ);
+            }
         }
 
         DataManager.getSchematicPlacementManager().onClientChunkLoad(chunkX, chunkZ);
         // TODO verifier updates?
+    }
+
+    @Inject(method = "onExplosion", at = @At("RETURN"))
+    private void onExplosion(ExplosionS2CPacket packet, CallbackInfo ci)
+    {
+        if (Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
+                Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
+        {
+            for (BlockPos block : packet.getAffectedBlocks())
+            {
+                SchematicVerifier.markVerifierBlockChanges(block);
+            }
+        }
     }
 
     @Inject(method = "onUnloadChunk", at = @At("RETURN"))

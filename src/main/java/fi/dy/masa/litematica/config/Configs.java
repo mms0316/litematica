@@ -14,6 +14,7 @@ import fi.dy.masa.malilib.config.options.ConfigDouble;
 import fi.dy.masa.malilib.config.options.ConfigInteger;
 import fi.dy.masa.malilib.config.options.ConfigOptionList;
 import fi.dy.masa.malilib.config.options.ConfigString;
+import fi.dy.masa.malilib.config.options.ConfigStringList;
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.JsonUtils;
 import fi.dy.masa.malilib.util.MessageOutputType;
@@ -32,12 +33,13 @@ public class Configs implements IConfigHandler
 
     public static class Generic
     {
-        public static final ConfigOptionList    EASY_PLACE_PROTOCOL         = new ConfigOptionList("easyPlaceProtocolVersion", EasyPlaceProtocol.AUTO, "The type of \"accurate placement protocol\" to use.\n- Auto: Uses v3 in single player, and by default Slabs-only in multiplayer,\n  unless the server has Carpet mod that sends a 'carpet:hello'\n  packet, in which case v2 is used on that server.\n- Version 3: Only supported by Litematica itself (in single player) for now.\n- Version 2: Compatible with servers with the Carpet mod\n  (either QuickCarpet by skyrising and DeadlyMC,\n  or CarpetExtra in addition to FabricCarpet.\n  And in both cases the 'accurateBlockPlacement' Carpet rule needs\n  to be enabled on the server).\n- Slabs only: Only fixes top slabs. Compatible with Paper servers.\n- None: Does not modify coordinates.");
+        public static final ConfigOptionList    EASY_PLACE_PROTOCOL         = new ConfigOptionList("easyPlaceProtocolVersion", EasyPlaceProtocol.RESTRICTED, "The type of \"accurate placement protocol\" to use.\n- Auto: Uses v3 in single player, and by default Restricted in multiplayer,\n  unless the server has Carpet mod that sends a 'carpet:hello'\n  packet, in which case v2 is used on that server.\n- Version 3: Only supported by Litematica itself (in single player) for now.\n- Version 2: Compatible with servers with the Carpet mod\n  (either QuickCarpet by skyrising and DeadlyMC,\n  or CarpetExtra in addition to FabricCarpet.\n  And in both cases the 'accurateBlockPlacement' Carpet rule needs\n  to be enabled on the server).\n- Slabs only: Only fixes top slabs. Compatible with Paper servers.\n- Restricted: Places what is possible in Paper servers or fails when\n player's orientation does not match.\n- None: Does not modify coordinates.");
         public static final ConfigOptionList    PASTE_NBT_BEHAVIOR          = new ConfigOptionList("pasteNbtRestoreBehavior", PasteNbtBehavior.NONE, "Whether or not the NBT data of blocks is attempted to be restored,\nand which method is used for that.\n- Place & Data Modify will try to place the \"NBT-picked\" block\n  near the player, and then use the data modify\n  command to transfer the NBT data to the setblock'ed block\n- Place & Clone will try to place the \"NBT-picked\" block\n  near the player, and then clone it to the final location.\n- Teleport & Place will try to teleport the player nearby and then\n  directly place the NBT-picked item in the correct position.\nNote that the teleport & place method doesn't currently work correctly/at all.\nThe recommended method is §ePlace & Data Modify§r, however for that to work\nyou will probably need to lower the pasteCommandLimit to 1 per tick and increase\nthe pasteCommandInterval to 1-4 ticks or something.\nThus you should only use this for pasting important blocks that need the data,\nfor example by making a schematic of just the inventories,\nand then paste that with replace behavior set to None.");
         public static final ConfigOptionList    PASTE_REPLACE_BEHAVIOR      = new ConfigOptionList("pasteReplaceBehavior", ReplaceBehavior.NONE, "The behavior of replacing existing blocks\nin the Paste schematic tool mode");
         public static final ConfigOptionList    PLACEMENT_REPLACE_BEHAVIOR  = new ConfigOptionList("placementReplaceBehavior", ReplaceBehavior.ALL, "The block replace behavior when adding blocks\nto the schematic world.\n\nThis allows using overlapped placements without the\nlater handled placement always ovewriting earlier ones with air.\nOn the other hand some blocks like light blocks are considered\nto be air, so they would need the \"All\" replace behavior\nto get placed at all.");
         public static final ConfigOptionList    PLACEMENT_RESTRICTION_WARN  = new ConfigOptionList("placementRestrictionWarn", MessageOutputType.ACTIONBAR, "Selects which type of warning message to show (if any)\nwhen either the Easy Place mode or Placement Restriction prevent placing a block");
         public static final ConfigOptionList    SELECTION_CORNERS_MODE      = new ConfigOptionList("selectionCornersMode", CornerSelectionMode.CORNERS, "The Area Selection corners mode to use (Corners, or Expand)");
+        public static final ConfigStringList    SUBSTITUTIONS               = new ConfigStringList("substitutions", ImmutableList.of(), "Materials that may be replaced by others \n(without triggering blocks listing as wrong).\nThese are in the format: block1;block2;...;blockN\nThe blocks string format is the vanilla format, such as:\n- minecraft:dirt;minecraft:grass\n- minecraft:quartz_stairs;minecraft:smooth_quartz_stairs");
 
         public static final ConfigBoolean       CUSTOM_SCHEMATIC_BASE_DIRECTORY_ENABLED = new ConfigBoolean("customSchematicBaseDirectoryEnabled", false, "If enabled, then the directory set in 'customSchematicBaseDirectory'\nwill be used as the root/base schematic directory,\ninstead of the normal '.minecraft/schematics/' directory");
         public static final ConfigString        CUSTOM_SCHEMATIC_BASE_DIRECTORY         = new ConfigString( "customSchematicBaseDirectory", DataManager.getDefaultBaseSchematicDirectory().getAbsolutePath(), "The root/base schematic directory to use,\nif 'customSchematicBaseDirectoryEnabled' is enabled");
@@ -59,10 +61,13 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       DEBUG_LOGGING               = new ConfigBoolean("debugLogging", false, "Enables some debug log messages in the game console,\nfor debugging certain issues or crashes.");
         public static final ConfigBoolean       EASY_PLACE_FIRST            = new ConfigBoolean("easyPlaceFirst", true, "This causes the Easy Place mode to place the first/closest block\nyou are looking at first, instead of the furthest/bottom-most block.\nSetting this to false allows you to place multiple layers \"at once\",\nsince the furthest blocks would be placed before the closer ones block the line of sight.");
         public static final ConfigBoolean       EASY_PLACE_HOLD_ENABLED     = new ConfigBoolean("easyPlaceHoldEnabled", true, "When enabled, then you can hold down the use key\nand look at different schematic blocks to place them,\nwithout having to click on every block individually.");
+        public static final ConfigBoolean       EASY_PLACE_IGNORE_ENDER_CHEST = new ConfigBoolean("easyPlaceIgnoreEnderChest", true, "If enabled, allows placing and interacting with Ender Chests when on Easy Place mode.");
+        public static final ConfigBoolean       EASY_PLACE_IGNORE_SHULKER_BOX = new ConfigBoolean("easyPlaceIgnoreShulkerBox", true, "If enabled, allows placing and interacting with Shulker boxes when on Easy Place mode.");
+        public static final ConfigBoolean       EASY_PLACE_LEAVE_ONE        = new ConfigBoolean("easyPlaceLeaveOne", false, "When enabled, Litematica will not use\nthe last remaining item of a stack.");
         public static final ConfigBoolean       EASY_PLACE_MODE             = new ConfigBoolean("easyPlaceMode", false, "When enabled, then simply trying to use an item/place a block\non schematic blocks will place that block in that position");
         public static final ConfigBoolean       EASY_PLACE_SP_HANDLING      = new ConfigBoolean("easyPlaceSinglePlayerHandling", true, "If enabled, then Litematica handles the so called\n\"Carpet mod Accurate Block Placement Protocol\" itself in single player.\nThis is recommended to be kept enabled if you\nare going to use Easy Place in single player.");
         public static final ConfigInteger       EASY_PLACE_SWAP_INTERVAL    = new ConfigInteger("easyPlaceSwapInterval", 0, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter swapping inventory slots and placing a block.\nUseful to avoid placing wrong blocks when having high ping.");
-        public static final ConfigBoolean       EASY_PLACE_VANILLA_REACH    = new ConfigBoolean("easyPlaceVanillaReach", false, "If enabled, reduces reach distance from 6 to 4.5\nso servers don't reject placement of far blocks.");
+        public static final ConfigInteger       EASY_PLACE_USE_INTERVAL     = new ConfigInteger("easyPlaceUseInterval", 20, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter interacting with a block.\nUseful to avoid overshooting Note Blocks when having high ping.");
         public static final ConfigBoolean       EXECUTE_REQUIRE_TOOL        = new ConfigBoolean("executeRequireHoldingTool", true, "Require holding an enabled tool item\nfor the executeOperation hotkey to work");
         public static final ConfigBoolean       FIX_CHEST_MIRROR            = new ConfigBoolean("fixChestMirror", true, "Enable a fix to the broken chest mirror code in vanilla");
         public static final ConfigBoolean       FIX_RAIL_ROTATION           = new ConfigBoolean("fixRailRotation", true, "If true, then a fix is applied for the vanilla bug in rails,\nwhere the 180 degree rotations of straight north-south and\neast-west rails rotate 90 degrees counterclockwise instead >_>");
@@ -88,6 +93,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       PLACEMENT_RESTRICTION       = new ConfigBoolean("placementRestriction", false, "When enabled, the use key can only be used\nwhen holding the correct item for the targeted position,\nand the targeted position must have a missing block in the schematic", "Placement Restriction");
         public static final ConfigBoolean       RENDER_MATERIALS_IN_GUI     = new ConfigBoolean("renderMaterialListInGuis", true, "Whether or not the material list should\nbe rendered inside GUIs");
         public static final ConfigBoolean       RENDER_THREAD_NO_TIMEOUT    = new ConfigBoolean("renderThreadNoTimeout", true, "Removes the timeout from the rendering worker threads.\nIf you get very stuttery rendering when moving around\nor dealing with large schematics, try disabling this. It will however make\nthe schematic rendering a lot slower in some cases.");
+        public static final ConfigBoolean       SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD = new ConfigBoolean("schematicVerifierCheckChunkReload", false, "If enabled, Schematic Verifier rechecks blocks when chunks become visible again. Requires more processing power.");
         public static final ConfigBoolean       SIGN_TEXT_PASTE             = new ConfigBoolean("signTextPaste", true, "Automatically set the text in the sign GUIs from the schematic");
         public static final ConfigString        TOOL_ITEM                   = new ConfigString( "toolItem", "minecraft:stick", "The item to use as the \"tool\" for selections etc.");
         public static final ConfigBoolean       TOOL_ITEM_ENABLED           = new ConfigBoolean("toolItemEnabled", true, "If true, then the \"tool\" item can be used to control selections etc.", "Tool Item Enabled");
@@ -105,10 +111,12 @@ public class Configs implements IConfigHandler
                 DEBUG_LOGGING,
                 EASY_PLACE_FIRST,
                 EASY_PLACE_HOLD_ENABLED,
+                EASY_PLACE_IGNORE_ENDER_CHEST,
+                EASY_PLACE_IGNORE_SHULKER_BOX,
+                EASY_PLACE_LEAVE_ONE,
                 EASY_PLACE_MODE,
                 EASY_PLACE_SP_HANDLING,
                 EASY_PLACE_PROTOCOL,
-                EASY_PLACE_VANILLA_REACH,
                 EXECUTE_REQUIRE_TOOL,
                 FIX_CHEST_MIRROR,
                 FIX_RAIL_ROTATION,
@@ -136,6 +144,7 @@ public class Configs implements IConfigHandler
                 PLACEMENT_RESTRICTION_WARN,
                 RENDER_MATERIALS_IN_GUI,
                 RENDER_THREAD_NO_TIMEOUT,
+                SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD,
                 SIGN_TEXT_PASTE,
                 TOOL_ITEM_ENABLED,
                 UNHIDE_SCHEMATIC_PROJECTS,
@@ -152,8 +161,11 @@ public class Configs implements IConfigHandler
                 COMMAND_TASK_INTERVAL,
                 CUSTOM_SCHEMATIC_BASE_DIRECTORY,
                 EASY_PLACE_SWAP_INTERVAL,
+                EASY_PLACE_USE_INTERVAL,
                 PICK_BLOCKABLE_SLOTS,
-                TOOL_ITEM
+                TOOL_ITEM,
+
+                SUBSTITUTIONS
         );
     }
 
@@ -167,6 +179,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       ENABLE_SCHEMATIC_RENDERING          = new ConfigBoolean("enableSchematicRendering", true, "Enable rendering the schematic and overlay", "Schematic Rendering");
         public static final ConfigDouble        GHOST_BLOCK_ALPHA                   = new ConfigDouble( "ghostBlockAlpha", 0.5, 0, 1, "The alpha value of the ghost blocks,\nwhen rendering them as translucent.\n§6Note: §7You also need to enable the translucent rendering separately,\nusing the 'renderBlocksAsTranslucent' option!");
         public static final ConfigBoolean       IGNORE_EXISTING_FLUIDS              = new ConfigBoolean("ignoreExistingFluids", false, "If enabled, then any fluid blocks are ignored as \"extra blocks\"\nand as \"wrong blocks\", ie. where the schematic has air or other blocks.\nBasically this makes building stuff under water a whole lot less annoying.\nNote: You will most likely also want to enable the 'renderCollidingSchematicBlocks'\noption at the same time, to allow the blocks to get rendered inside fluids.");
+        public static final ConfigBoolean       MATERIAL_LIST_WRITE_SPLIT_MEASURES   = new ConfigBoolean("materialListWriteSplitMeasures", true, "If enabled, Material List's Write to file \nhas additional columns for shulker boxes,\nstacks and left over counts");
         public static final ConfigBoolean       OVERLAY_REDUCED_INNER_SIDES         = new ConfigBoolean("overlayReducedInnerSides", false, "If enabled, then the adjacent/touching inner sides\nfor the block overlays are removed/not rendered");
         public static final ConfigDouble        PLACEMENT_BOX_SIDE_ALPHA            = new ConfigDouble( "placementBoxSideAlpha", 0.2, 0, 1, "The alpha value of the sub-region boxes' side");
         public static final ConfigBoolean       RENDER_AREA_SELECTION_BOX_SIDES     = new ConfigBoolean("renderAreaSelectionBoxSides", true, "If enabled, then the area selection boxes will\nhave their side quads rendered");
@@ -200,6 +213,7 @@ public class Configs implements IConfigHandler
                 ENABLE_SCHEMATIC_BLOCKS,
                 ENABLE_SCHEMATIC_OVERLAY,
                 IGNORE_EXISTING_FLUIDS,
+                MATERIAL_LIST_WRITE_SPLIT_MEASURES,
                 OVERLAY_REDUCED_INNER_SIDES,
                 RENDER_AREA_SELECTION_BOX_SIDES,
                 RENDER_BLOCKS_AS_TRANSLUCENT,
@@ -294,6 +308,7 @@ public class Configs implements IConfigHandler
     {
         public static final ConfigColor AREA_SELECTION_BOX_SIDE_COLOR       = new ConfigColor("areaSelectionBoxSideColor",          "#30FFFFFF", "The color of the area selection boxes, when they are unselected");
         public static final ConfigColor HIGHTLIGHT_BLOCK_IN_INV_COLOR       = new ConfigColor("hightlightBlockInInventoryColor",    "#30FF30FF", "The highlight color for the item of the looked at block");
+        public static final ConfigColor MATERIAL_LIST_FETCH_CONTAINER_COLOR = new ConfigColor("materialListFetchContainerColor",    "#FF33B3FF", "The color of the containers overlay for Material List");
         public static final ConfigColor MATERIAL_LIST_HUD_ITEM_COUNTS       = new ConfigColor("materialListHudItemCountsColor",     "#FFFFAA00", "The color of the item count text in the Material List info HUD");
         public static final ConfigColor REBUILD_BREAK_OVERLAY_COLOR         = new ConfigColor("schematicRebuildBreakPlaceOverlayColor", "#4C33CC33", "The color of Schematic Rebuild mode's break or place blocks selector overlay");
         public static final ConfigColor REBUILD_BREAK_EXCEPT_OVERLAY_COLOR  = new ConfigColor("schematicRebuildBreakExceptPlaceOverlayColor", "#4CF03030", "The color of Schematic Rebuild mode's break all blocks except targeted selector overlay");
@@ -306,6 +321,7 @@ public class Configs implements IConfigHandler
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 AREA_SELECTION_BOX_SIDE_COLOR,
                 HIGHTLIGHT_BLOCK_IN_INV_COLOR,
+                MATERIAL_LIST_FETCH_CONTAINER_COLOR,
                 MATERIAL_LIST_HUD_ITEM_COUNTS,
                 REBUILD_BREAK_OVERLAY_COLOR,
                 REBUILD_BREAK_EXCEPT_OVERLAY_COLOR,
@@ -339,6 +355,8 @@ public class Configs implements IConfigHandler
 
         DataManager.setToolItem(Generic.TOOL_ITEM.getStringValue());
         InventoryUtils.setPickBlockableSlots(Generic.PICK_BLOCKABLE_SLOTS.getStringValue());
+
+        InventoryUtils.setSubstitutions(Generic.SUBSTITUTIONS.getStrings());
     }
 
     public static void saveToFile()

@@ -13,6 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -72,19 +73,27 @@ public class EntityUtils
     @Nullable
     public static Hand getUsedHandForItem(PlayerEntity player, ItemStack stack)
     {
-        Hand hand = null;
+        final var mainHandStack = player.getMainHandStack();
+        final Identifier stackId = Registries.ITEM.getId(stack.getItem());
 
-        if (ItemStack.areItemsEqual(player.getMainHandStack(), stack))
+        if (ItemStack.areItemsEqual(mainHandStack, stack) ||
+                fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
+                    Registries.ITEM.getId(mainHandStack.getItem()), stackId))
         {
-            hand = Hand.MAIN_HAND;
-        }
-        else if (player.getMainHandStack().isEmpty() &&
-                 ItemStack.areItemsEqual(player.getOffHandStack(), stack))
-        {
-            hand = Hand.OFF_HAND;
+            return Hand.MAIN_HAND;
         }
 
-        return hand;
+        final var offHandStack = player.getOffHandStack();
+
+        if (mainHandStack.isEmpty() && (
+                ItemStack.areItemsEqual(offHandStack, stack) ||
+                fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
+                    Registries.ITEM.getId(offHandStack.getItem()), stackId)))
+        {
+            return Hand.OFF_HAND;
+        }
+
+        return null;
     }
 
     public static boolean areStacksEqualIgnoreDurability(ItemStack stack1, ItemStack stack2)

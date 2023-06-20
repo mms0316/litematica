@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import fi.dy.masa.litematica.Reference;
+import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.gui.GuiMainMenu.ButtonListenerChangeMenu;
 import fi.dy.masa.litematica.gui.widgets.WidgetListMaterialList;
@@ -308,7 +309,18 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
 
         private DataDump getMaterialListDump(MaterialListBase materialList, boolean csv)
         {
-            DataDump dump = new DataDump(4, csv ? DataDump.Format.CSV : DataDump.Format.ASCII);
+            final boolean splitMeasures = Configs.Visuals.MATERIAL_LIST_WRITE_SPLIT_MEASURES.getBooleanValue();
+
+            DataDump dump;
+            if (csv)
+            {
+                dump = new DataDump(splitMeasures ? 13 : 4, DataDump.Format.CSV);
+            }
+            else
+            {
+                dump = new DataDump(4, DataDump.Format.ASCII);
+            }
+
             int multiplier = materialList.getMultiplier();
 
             ArrayList<MaterialListEntry> list = new ArrayList<>();
@@ -320,19 +332,110 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                 int total = entry.getCountTotal() * multiplier;
                 int missing = multiplier > 1 ? total : entry.getCountMissing();
                 int available = entry.getCountAvailable();
-                dump.addData(entry.getStack().getName().getString(), String.valueOf(total), String.valueOf(missing), String.valueOf(available));
+                int maxStackSize = entry.getStack().getMaxCount();
+                if (splitMeasures)
+                {
+                    if (csv)
+                    {
+                        final int boxSize = 27 * maxStackSize;
+                        final int totalBoxCount = total / boxSize;
+                        final int totalStacks = total % boxSize;
+                        final int totalRemainder = total % maxStackSize;
+                        final int missingBoxCount = missing / boxSize;
+                        final int missingStacks = missing % boxSize;
+                        final int missingRemainder = missing % maxStackSize;
+                        final int availableBoxCount = available / boxSize;
+                        final int availableStacks = available % boxSize;
+                        final int availableRemainder = available % maxStackSize;
+
+                        dump.addData(entry.getStack().getName().getString(),
+                                String.valueOf(total), String.valueOf(totalBoxCount), String.valueOf(totalStacks), String.valueOf(totalRemainder),
+                                String.valueOf(missing), String.valueOf(missingBoxCount), String.valueOf(missingStacks), String.valueOf(missingRemainder),
+                                String.valueOf(available), String.valueOf(availableBoxCount), String.valueOf(availableStacks), String.valueOf(availableRemainder));
+                    }
+                    else
+                    {
+                        dump.addData(entry.getStack().getName().getString(),
+                                getFormattedCountString(total, maxStackSize),
+                                getFormattedCountString(missing, maxStackSize),
+                                getFormattedCountString(available, maxStackSize));
+                    }
+                }
+                else
+                {
+                    dump.addData(entry.getStack().getName().getString(), String.valueOf(total), String.valueOf(missing), String.valueOf(available));
+                }
             }
 
             String titleTotal = multiplier > 1 ? String.format("Total (x%d)", multiplier) : "Total";
-            dump.addTitle("Item", titleTotal, "Missing", "Available");
+            if (splitMeasures && csv)
+            {
+                dump.addTitle("Item",
+                        titleTotal, "Total - SB", "Total - Stacks", "Total - Units",
+                        "Missing", "Missing - SB", "Missing - Stacks", "Missing - Units",
+                        "Available", "Available - SB", "Available - Stacks", "Available - Units");
+            }
+            else
+            {
+                dump.addTitle("Item", titleTotal, "Missing", "Available");
+            }
             dump.addHeader(materialList.getTitle());
-            dump.setColumnProperties(1, DataDump.Alignment.RIGHT, true); // total
-            dump.setColumnProperties(2, DataDump.Alignment.RIGHT, true); // missing
-            dump.setColumnProperties(3, DataDump.Alignment.RIGHT, true); // available
+            int columnId = 1;
+            dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, !csv); // total
+            if (splitMeasures && csv)
+            {
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // total - SB
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // total - Stacks
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // total - Units
+            }
+            dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, !csv); // missing
+            if (splitMeasures && csv)
+            {
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // missing - SB
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // missing - Stacks
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // missing - Units
+            }
+            dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, !csv); // available
+            if (splitMeasures && csv)
+            {
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // available - SB
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // available - Stacks
+                dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // available - Units
+            }
             dump.setSort(false);
             dump.setUseColumnSeparator(true);
 
             return dump;
+        }
+
+        private String getFormattedCountString(int total, int maxStackSize)
+        {
+            int stacks = total / maxStackSize;
+            int remainder = total % maxStackSize;
+            String strCount;
+
+            if (total > maxStackSize && maxStackSize > 1)
+            {
+                if (stacks >= 27)
+                {
+                    String shulkerBoxAbbr = StringUtils.translate("litematica.gui.label.material_list.abbr.shulker_box");
+                    strCount = String.format("%d %s + %2d x %2d + %2d = %d", stacks / 27, shulkerBoxAbbr, stacks % 27, maxStackSize, remainder, total);
+                }
+                else if (remainder > 0)
+                {
+                    strCount = String.format("%2d x %2d + %2d = %d", stacks, maxStackSize, remainder, total);
+                }
+                else
+                {
+                    strCount = String.format("%2d x %2d = %d", stacks, maxStackSize, total);
+                }
+            }
+            else
+            {
+                strCount = String.format("%d", total);
+            }
+
+            return strCount;
         }
 
         public enum Type

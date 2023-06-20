@@ -334,7 +334,11 @@ public class WidgetMaterialListEntry extends WidgetListEntrySortable<MaterialLis
         {
             if (maxStackSize > 1)
             {
-                if (remainder > 0)
+                if (stacks >= 27)
+                {
+                    strCount = String.format("%d = %d %s + %d x %d + %d = %.2f %s", total, stacks / 27, this.shulkerBoxAbbr, stacks % 27, maxStackSize, remainder, boxCount, this.shulkerBoxAbbr);
+                }
+                else if (remainder > 0)
                 {
                     strCount = String.format("%d = %d x %d + %d = %.2f %s", total, stacks, maxStackSize, remainder, boxCount, this.shulkerBoxAbbr);
                 }

@@ -23,6 +23,7 @@ import net.minecraft.block.NoteBlock;
 import net.minecraft.block.PaneBlock;
 import net.minecraft.block.RedstoneWireBlock;
 import net.minecraft.block.RepeaterBlock;
+import net.minecraft.block.SignBlock;
 import net.minecraft.block.SkullBlock;
 import net.minecraft.block.SnowyBlock;
 import net.minecraft.block.StainedGlassPaneBlock;
@@ -241,6 +242,7 @@ public class SchematicConverter
         this.fixersPerBlock.put(NoteBlock.class,                    SchematicConversionFixers.FIXER_NOTE_BLOCK);
         this.fixersPerBlock.put(SkullBlock.class,                   SchematicConversionFixers.FIXER_SKULL);
         this.fixersPerBlock.put(WallSkullBlock.class,               SchematicConversionFixers.FIXER_SKULL_WALL);
+        this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
     }
 
     private void addPostUpdateBlocksSchematica()
@@ -274,6 +276,7 @@ public class SchematicConverter
         this.fixersPerBlock.put(NoteBlock.class,                    SchematicConversionFixers.FIXER_NOTE_BLOCK);
         this.fixersPerBlock.put(SkullBlock.class,                   SchematicConversionFixers.FIXER_SKULL);
         this.fixersPerBlock.put(WallSkullBlock.class,               SchematicConversionFixers.FIXER_SKULL_WALL);
+        this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
     }
 
     public static class BlockReaderLitematicaContainer implements IBlockReaderWithData

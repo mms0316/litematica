@@ -81,7 +81,6 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
         long currentTime = System.currentTimeMillis();
         List<MaterialListEntry> list;
         MatrixStack matrixStack = drawContext.getMatrices();
-        matrixStack = new MatrixStack();
 
         if (currentTime - this.lastUpdateTime > 2000)
         {
@@ -159,17 +158,16 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
         {
             matrixStack.push();
             matrixStack.scale((float) scale, (float) scale, (float) scale);
-
-            matrixStack.push();
-            matrixStack.scale((float) scale, (float) scale, (float) scale);
-
             RenderSystem.applyModelViewMatrix();
         }
 
         if (useBackground)
         {
-            RenderUtils.drawRect(posX - bgMargin, posY - bgMargin,
-                                 maxLineLength + bgMargin * 2, contentHeight + bgMargin, bgColor);
+            int x1 = posX - bgMargin;
+            int y1 = posY - bgMargin;
+            int x2 = x1 + maxLineLength + bgMargin * 2;
+            int y2 = y1 + contentHeight + bgMargin;
+            drawContext.fill(x1, y1, x2, y2, bgColor);
         }
 
         int x = posX;
@@ -181,12 +179,6 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
         {
             drawContext.drawItem(list.get(i).getStack(), x, y);
             y += lineHeight;
-        }
-
-        if (scale != 1d)
-        {
-            matrixStack.pop();
-            RenderSystem.applyModelViewMatrix();
         }
 
         String title = GuiBase.TXT_BOLD + StringUtils.translate("litematica.gui.button.material_list") + GuiBase.TXT_RST;

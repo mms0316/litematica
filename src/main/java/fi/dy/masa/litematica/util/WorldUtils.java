@@ -394,7 +394,7 @@ public class WorldUtils
         return false;
     }
 
-    public static void insertSignTextFromSchematic(SignBlockEntity beClient, SignText screenTextArr)
+    public static void insertSignTextFromSchematic(SignBlockEntity beClient, String[] screenTextArr, boolean front)
     {
         WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
 
@@ -404,18 +404,31 @@ public class WorldUtils
 
             if (beSchem instanceof SignBlockEntity)
             {
-                SignText frontTextSchematic = ((IMixinSignBlockEntity) beSchem).litematica_getFrontText();
-                SignText backTextSchematic = ((IMixinSignBlockEntity) beSchem).litematica_getBackText();
-
-                if (frontTextSchematic != null)
+                if (front)
                 {
-                    beClient.setText(frontTextSchematic, true);
+                    SignText frontTextSchematic = ((IMixinSignBlockEntity) beSchem).litematica_getFrontText();
+                    if (frontTextSchematic != null)
+                    {
+                        for (int i = 0; i < screenTextArr.length; ++i)
+                        {
+                            screenTextArr[i] = frontTextSchematic.getMessage(i, false).getString();
+                        }
+                        beClient.setText(frontTextSchematic, true);
+                    }
+                }
+                else
+                {
+                    SignText backTextSchematic = ((IMixinSignBlockEntity) beSchem).litematica_getBackText();
+                    if (backTextSchematic != null)
+                    {
+                        for (int i = 0; i < screenTextArr.length; ++i)
+                        {
+                            screenTextArr[i] = backTextSchematic.getMessage(i, false).getString();
+                        }
+                        beClient.setText(backTextSchematic, false);
+                    }
                 }
 
-                if (backTextSchematic != null)
-                {
-                    beClient.setText(backTextSchematic, false);
-                }
             }
         }
     }

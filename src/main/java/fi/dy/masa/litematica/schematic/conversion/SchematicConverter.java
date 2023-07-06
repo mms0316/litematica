@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
+
 import net.minecraft.block.BannerBlock;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.Block;
@@ -35,12 +36,14 @@ import net.minecraft.block.TripwireBlock;
 import net.minecraft.block.VineBlock;
 import net.minecraft.block.WallBannerBlock;
 import net.minecraft.block.WallBlock;
+import net.minecraft.block.WallSignBlock;
 import net.minecraft.block.WallSkullBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
+
 import fi.dy.masa.litematica.schematic.container.LitematicaBlockStateContainer;
 import fi.dy.masa.litematica.schematic.conversion.SchematicConversionFixers.IStateFixer;
 import fi.dy.masa.malilib.gui.Message.MessageType;
@@ -240,7 +243,9 @@ public class SchematicConverter
         this.fixersPerBlock.put(BedBlock.class,                     SchematicConversionFixers.FIXER_BED);
         this.fixersPerBlock.put(FlowerPotBlock.class,               SchematicConversionFixers.FIXER_FLOWER_POT);
         this.fixersPerBlock.put(NoteBlock.class,                    SchematicConversionFixers.FIXER_NOTE_BLOCK);
+        this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(SkullBlock.class,                   SchematicConversionFixers.FIXER_SKULL);
+        this.fixersPerBlock.put(WallSignBlock.class,                SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(WallSkullBlock.class,               SchematicConversionFixers.FIXER_SKULL_WALL);
         this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
     }
@@ -274,7 +279,9 @@ public class SchematicConverter
         this.fixersPerBlock.put(BedBlock.class,                     SchematicConversionFixers.FIXER_BED);
         this.fixersPerBlock.put(FlowerPotBlock.class,               SchematicConversionFixers.FIXER_FLOWER_POT);
         this.fixersPerBlock.put(NoteBlock.class,                    SchematicConversionFixers.FIXER_NOTE_BLOCK);
+        this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(SkullBlock.class,                   SchematicConversionFixers.FIXER_SKULL);
+        this.fixersPerBlock.put(WallSignBlock.class,                SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(WallSkullBlock.class,               SchematicConversionFixers.FIXER_SKULL_WALL);
         this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
     }

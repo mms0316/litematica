@@ -355,6 +355,35 @@ public class SchematicConversionFixers
         return state;
     };
 
+    public static final IStateFixer FIXER_SIGN = (reader, state, pos) -> {
+        NbtCompound tag = reader.getBlockEntityData(pos);
+
+        if (tag != null && tag.contains("Text1", Constants.NBT.TAG_STRING))
+        {
+            NbtList textList = new NbtList();
+            textList.add(tag.get("Text1"));
+            textList.add(tag.get("Text2"));
+            textList.add(tag.get("Text3"));
+            textList.add(tag.get("Text4"));
+
+            NbtCompound frontTextTag = new NbtCompound();
+            frontTextTag.put("messages", textList);
+            frontTextTag.putString("color", tag.getString("Color"));
+            frontTextTag.putByte("has_glowing_text", tag.getByte("GlowingText"));
+
+            tag.put("front_text", frontTextTag);
+
+            tag.remove("Color");
+            tag.remove("GlowingText");
+            tag.remove("Text1");
+            tag.remove("Text2");
+            tag.remove("Text3");
+            tag.remove("Text4");
+        }
+
+        return state;
+    };
+
     public static final IStateFixer FIXER_SKULL = (reader, state, pos) -> {
         NbtCompound tag = reader.getBlockEntityData(pos);
 
@@ -446,35 +475,6 @@ public class SchematicConversionFixers
 
                 state = state.with(WallSkullBlock.FACING, facing);
             }
-        }
-
-        return state;
-    };
-
-    public static final IStateFixer FIXER_SIGN = (reader, state, pos) -> {
-        NbtCompound tag = reader.getBlockEntityData(pos);
-
-        if (tag != null && tag.contains("Text1", Constants.NBT.TAG_STRING))
-        {
-            NbtList messagesConverted = new NbtList();
-            messagesConverted.add(tag.get("Text1"));
-            messagesConverted.add(tag.get("Text2"));
-            messagesConverted.add(tag.get("Text3"));
-            messagesConverted.add(tag.get("Text4"));
-
-            NbtCompound frontTextTag = new NbtCompound();
-            frontTextTag.put("messages", messagesConverted);
-            frontTextTag.putString("color", tag.getString("Color"));
-            frontTextTag.putByte("has_glowing_text", tag.getByte("GlowingText"));
-
-            tag.put("front_text", frontTextTag);
-
-            tag.remove("Color");
-            tag.remove("GlowingText");
-            tag.remove("Text1");
-            tag.remove("Text2");
-            tag.remove("Text3");
-            tag.remove("Text4");
         }
 
         return state;

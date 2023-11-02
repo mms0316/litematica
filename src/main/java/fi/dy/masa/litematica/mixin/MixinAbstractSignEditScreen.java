@@ -20,7 +20,6 @@ public class MixinAbstractSignEditScreen
     @Shadow @Final private SignBlockEntity blockEntity;
 
     @Shadow @Final private String[] messages;
-
     @Shadow @Final private boolean front;
 
     @Inject(method = "init", at = @At("HEAD"))

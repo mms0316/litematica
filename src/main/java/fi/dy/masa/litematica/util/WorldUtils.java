@@ -404,31 +404,17 @@ public class WorldUtils
 
             if (beSchem instanceof SignBlockEntity)
             {
-                if (front)
-                {
-                    SignText frontTextSchematic = ((IMixinSignBlockEntity) beSchem).litematica_getFrontText();
-                    if (frontTextSchematic != null)
-                    {
-                        for (int i = 0; i < screenTextArr.length; ++i)
-                        {
-                            screenTextArr[i] = frontTextSchematic.getMessage(i, false).getString();
-                        }
-                        beClient.setText(frontTextSchematic, true);
-                    }
-                }
-                else
-                {
-                    SignText backTextSchematic = ((IMixinSignBlockEntity) beSchem).litematica_getBackText();
-                    if (backTextSchematic != null)
-                    {
-                        for (int i = 0; i < screenTextArr.length; ++i)
-                        {
-                            screenTextArr[i] = backTextSchematic.getMessage(i, false).getString();
-                        }
-                        beClient.setText(backTextSchematic, false);
-                    }
-                }
+                IMixinSignBlockEntity beMixinSchem = (IMixinSignBlockEntity) beSchem;
+                SignText textSchematic = front ? beMixinSchem.litematica_getFrontText() : beMixinSchem.litematica_getBackText();
 
+                if (textSchematic != null)
+                {
+                    for (int i = 0; i < screenTextArr.length; ++i)
+                    {
+                        screenTextArr[i] = textSchematic.getMessage(i, false).getString();
+                    }
+                    beClient.setText(textSchematic, front);
+                }
             }
         }
     }

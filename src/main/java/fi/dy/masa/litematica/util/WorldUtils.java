@@ -885,7 +885,7 @@ public class WorldUtils
                 Properties.VERTICAL_DIRECTION,
                 Properties.ROTATION, //banners
                 Properties.HANGING, //lanterns
-                Properties.WALL_MOUNT_LOCATION, //lever
+                Properties.BLOCK_FACE, //lever
                 Properties.ATTACHMENT, //bell (double-check for single-wall / double-wall)
                 //Properties.HORIZONTAL_AXIS, //Nether portals, though they aren't directly placeable
                 //Properties.ORIENTATION, //jigsaw blocks

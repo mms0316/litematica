@@ -75,6 +75,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       HIGHLIGHT_BLOCK_IN_INV      = new ConfigBoolean("highlightBlockInInventory", false, "When enabled, highlights the item (including Shulker Boxes containing it)\nof the looked at block in the schematic");
         public static final ConfigBoolean       ITEM_USE_PACKET_CHECK_BYPASS= new ConfigBoolean("itemUsePacketCheckBypass", true, "Bypass the new distance/coordinate check that was added in 1.18.2.\n\nThat check breaks the \"accurate placement protocol\" and causes\nany blocks placed with a rotation (or other property) request to just become ghost blocks.\n\nThere is basically no need to ever disable this.\nThe check didn't even exist ever before 1.18.2.");
         public static final ConfigBoolean       LAYER_MODE_DYNAMIC          = new ConfigBoolean("layerModeFollowsPlayer", false, "If true, then the render layer follows the player.\nNote: This currently collapses Layer Range type ranges unfortunately");
+        public static final ConfigInteger       LAYER_MOVE_AMOUNT           = new ConfigInteger("layerMoveAmount", 1, 1, 128, "The amount of layers to move when using\nlayerNext or layerPrevious hotkeys.");
         public static final ConfigBoolean       LOAD_ENTIRE_SCHEMATICS      = new ConfigBoolean("loadEntireSchematics", false, "If true, then the entire schematic is always loaded at once.\nIf false, then only the part that is within the client's view distance is loaded.");
         public static final ConfigBoolean       PASTE_ALWAYS_USE_FILL       = new ConfigBoolean("pasteAlwaysUseFill", false, "This forces using the fill command (instead of setblock) even for single blocks");
         public static final ConfigBoolean       PASTE_IGNORE_BE_ENTIRELY    = new ConfigBoolean("pasteIgnoreBlockEntitiesEntirely", false, "If enabled, then block entities ae not pasted at all\nvia the command-based pasting in multiplayer.\nThis allows you to easier paste in two passes if you\nwant to use the NBT-restore option for inventories etc. in the second pass,\nwhich usually requires a lot slower pasting speed/command rate.");
@@ -162,6 +163,7 @@ public class Configs implements IConfigHandler
                 CUSTOM_SCHEMATIC_BASE_DIRECTORY,
                 EASY_PLACE_SWAP_INTERVAL,
                 EASY_PLACE_USE_INTERVAL,
+                LAYER_MOVE_AMOUNT,
                 PICK_BLOCKABLE_SLOTS,
                 TOOL_ITEM,
 

@@ -411,12 +411,12 @@ public class KeyCallbacks
             }
             else if (key == Hotkeys.LAYER_NEXT.getKeybind())
             {
-                DataManager.getRenderLayerRange().moveLayer(1);
+                DataManager.getRenderLayerRange().moveLayer(Configs.Generic.LAYER_MOVE_AMOUNT.getIntegerValue());
                 return true;
             }
             else if (key == Hotkeys.LAYER_PREVIOUS.getKeybind())
             {
-                DataManager.getRenderLayerRange().moveLayer(-1);
+                DataManager.getRenderLayerRange().moveLayer(- Configs.Generic.LAYER_MOVE_AMOUNT.getIntegerValue());
                 return true;
             }
             else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())

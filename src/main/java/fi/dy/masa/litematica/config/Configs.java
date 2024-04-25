@@ -262,6 +262,7 @@ public class Configs implements IConfigHandler
         public static final ConfigInteger       INFO_HUD_OFFSET_Y                   = new ConfigInteger("infoHudOffsetY", 1, 0, 32000, "The Y offset of the Info HUD from the screen edge");
         public static final ConfigDouble        INFO_HUD_SCALE                      = new ConfigDouble( "infoHudScale", 1, 0.1, 4, "Scale factor for the generic Info HUD text");
         public static final ConfigBoolean       INFO_OVERLAYS_TARGET_FLUIDS         = new ConfigBoolean("infoOverlaysTargetFluids", false, "When enabled, the Block Info Overlay and Block Info Lines\nwill be able to ray trace to fluid blocks instead of going through them");
+        public static final ConfigBoolean       MATERIAL_LIST_CONTAINER_OVERLAY_ENABLED = new ConfigBoolean("materialListContainerOverlayEnabled", true, "If enabled, shows Material List container overlays");
         public static final ConfigInteger       MATERIAL_LIST_HUD_MAX_LINES         = new ConfigInteger("materialListHudMaxLines", 10, 1, 128, "The maximum number of items to show on\nthe Material List Info HUD at once");
         public static final ConfigDouble        MATERIAL_LIST_HUD_SCALE             = new ConfigDouble( "materialListHudScale", 1, 0.1, 4, "Scale factor for the Material List Info HUD");
         public static final ConfigBoolean       STATUS_INFO_HUD                     = new ConfigBoolean("statusInfoHud", false, "Enable a status info HUD renderer,\nwhich renders a few bits of status info, such as\nthe current layer mode and renderers enabled state");
@@ -278,6 +279,7 @@ public class Configs implements IConfigHandler
                 BLOCK_INFO_LINES_ENABLED,
                 BLOCK_INFO_OVERLAY_ENABLED,
                 INFO_OVERLAYS_TARGET_FLUIDS,
+                MATERIAL_LIST_CONTAINER_OVERLAY_ENABLED,
                 STATUS_INFO_HUD,
                 STATUS_INFO_HUD_AUTO,
                 VERIFIER_OVERLAY_ENABLED,

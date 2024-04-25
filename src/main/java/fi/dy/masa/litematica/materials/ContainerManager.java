@@ -106,6 +106,7 @@ public class ContainerManager {
     public void renderMatchingMaterials(MaterialListBase materialList, Matrix4f projMatrix) {
         if (materialList == null) return;
         if (containerList.isEmpty()) return;
+        if (!Configs.InfoOverlays.MATERIAL_LIST_CONTAINER_OVERLAY_ENABLED.getBooleanValue()) return;
 
         var missingMaterials = materialList.getMaterialsMissingOnly(false);
         if (missingMaterials == null || missingMaterials.isEmpty()) return;
@@ -191,6 +192,15 @@ public class ContainerManager {
                 InfoUtils.printActionbarMessage("Unregistered from " + blockPos.toShortString());
             else
                 InfoUtils.printActionbarMessage("Nothing to be unregistered");
+        }
+    }
+
+    public void unregisterContainerAll(MinecraftClient mc) {
+        if (containerList.isEmpty())
+            InfoUtils.printActionbarMessage("Nothing to be unregistered");
+        else {
+            containerList.clear();
+            InfoUtils.printActionbarMessage("Unregistered all containers");
         }
     }
 

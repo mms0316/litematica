@@ -71,6 +71,7 @@ public class KeyCallbacks
         Hotkeys.LAYER_SET_HERE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER_ALL.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_REFRESH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
@@ -432,6 +433,11 @@ public class KeyCallbacks
             else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind())
             {
                 DataManager.getContainerManager().unregisterContainer(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER_ALL.getKeybind())
+            {
+                DataManager.getContainerManager().unregisterContainerAll(mc);
                 return true;
             }
             else if (key == Hotkeys.MATERIAL_LIST_FETCH.getKeybind())

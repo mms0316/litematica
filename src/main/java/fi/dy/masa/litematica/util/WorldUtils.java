@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.AbstractBannerBlock;
 import net.minecraft.block.AbstractSignBlock;
 import net.minecraft.block.AbstractSkullBlock;
+import net.minecraft.block.AbstractTorchBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -21,7 +22,6 @@ import net.minecraft.block.EnderChestBlock;
 import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.SlabBlock;
-import net.minecraft.block.TorchBlock;
 import net.minecraft.block.WallBannerBlock;
 import net.minecraft.block.WallRedstoneTorchBlock;
 import net.minecraft.block.WallSignBlock;
@@ -920,7 +920,7 @@ public class WorldUtils
     private static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
     {
         var block = stateSchematic.getBlock();
-        if (block instanceof TorchBlock) //Torch, Soul Torch, Redstone Torch
+        if (block instanceof AbstractTorchBlock) //Torch, Soul Torch, Redstone Torch
         {
             boolean isOnWall = block instanceof WallTorchBlock || block instanceof WallRedstoneTorchBlock;
             return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);

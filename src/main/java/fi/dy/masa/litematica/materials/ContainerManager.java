@@ -236,7 +236,7 @@ public class ContainerManager {
             var countMissing = entry.getCountMissing() - entry.getCountAvailable();
             if (countMissing <= 0) continue;
 
-            for (var idx = 0; idx <= screenMaxSlot; idx++) {
+            for (var idx = screenMaxSlot; idx >= 0; idx--) {
                 var containerSlot = screenSlots.get(idx);
                 var repeatIteration = false;
 
@@ -301,7 +301,7 @@ public class ContainerManager {
                     break;
 
                 if (repeatIteration)
-                    idx--;
+                    idx++;
             }
         }
     }

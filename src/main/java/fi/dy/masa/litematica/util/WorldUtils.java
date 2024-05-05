@@ -39,6 +39,7 @@ import net.minecraft.client.world.ClientChunkManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BucketItem;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
@@ -629,6 +630,14 @@ public class WorldUtils
                             hitPos = hit;
                             sideOrig = sideVanilla;
                         }
+                        else
+                        {
+                            if (stack.getItem() instanceof BucketItem)
+                            {
+                                //Bucket can't be placed floating
+                                return ActionResult.FAIL;
+                            }
+                        }
                     }
                 }
 
@@ -636,6 +645,14 @@ public class WorldUtils
                 {
                     Litematica.logger.info("sideIn: " + sideOrig + " hitPosIn: " + hitPos);
                 }
+
+
+                if (stack.getItem() instanceof BucketItem)
+                {
+                    mc.interactionManager.interactItem(mc.player, hand);
+                    return ActionResult.SUCCESS;
+                }
+
 
                 EasyPlaceProtocol protocol = PlacementHandler.getEffectiveProtocolVersion();
 

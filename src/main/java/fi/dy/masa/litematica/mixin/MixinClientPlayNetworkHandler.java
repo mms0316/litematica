@@ -14,7 +14,6 @@ import net.minecraft.util.math.BlockPos;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.network.CarpetHelloPacketHandler;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
 
@@ -79,7 +78,7 @@ public abstract class MixinClientPlayNetworkHandler
     @Inject(method = "onCustomPayload", at = @At("HEAD"))
     private void litematica_onCustomPayload(CustomPayload payload, CallbackInfo ci)
     {
-        if (CarpetHelloPacketHandler.HELLO_CHANNEL.equals(payload.id()))
+        if (payload.getId().id().equals(DataManager.CARPET_HELLO))
         {
             DataManager.setIsCarpetServer(true);
         }

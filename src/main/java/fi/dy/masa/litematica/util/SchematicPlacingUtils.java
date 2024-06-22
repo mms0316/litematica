@@ -248,7 +248,7 @@ public class SchematicPlacingUtils
 
                             try
                             {
-                                te.readNbt(teNBT);
+                                te.read(teNBT, world.getRegistryManager());
 
                                 if (ignoreInventories && te instanceof Inventory)
                                 {

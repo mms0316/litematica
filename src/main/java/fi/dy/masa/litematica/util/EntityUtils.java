@@ -1,10 +1,10 @@
 package fi.dy.masa.litematica.util;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -21,11 +21,12 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
+import fi.dy.masa.malilib.util.Constants;
+import fi.dy.masa.malilib.util.InventoryUtils;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
-import fi.dy.masa.malilib.util.Constants;
 
 public class EntityUtils
 {
@@ -44,8 +45,6 @@ public class EntityUtils
 
     public static boolean hasToolItemInHand(LivingEntity entity, Hand hand)
     {
-        // If the configured tool item has NBT data, then the NBT is compared, otherwise it's ignored
-
         ItemStack toolItem = DataManager.getToolItem();
 
         if (toolItem.isEmpty())
@@ -55,12 +54,7 @@ public class EntityUtils
 
         ItemStack stackHand = entity.getStackInHand(hand);
 
-        if (ItemStack.areItemsEqual(toolItem, stackHand))
-        {
-            return toolItem.hasNbt() == false || ItemUtils.areTagsEqualIgnoreDamage(toolItem, stackHand);
-        }
-
-        return false;
+        return InventoryUtils.areStacksEqualIgnoreNbt(toolItem, stackHand);
     }
 
     /**
@@ -76,7 +70,7 @@ public class EntityUtils
         final var mainHandStack = player.getMainHandStack();
         final Identifier stackId = Registries.ITEM.getId(stack.getItem());
 
-        if (ItemStack.areItemsEqual(mainHandStack, stack) ||
+        if (InventoryUtils.areStacksEqualIgnoreNbt(mainHandStack, stack)) ||
                 fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
                     Registries.ITEM.getId(mainHandStack.getItem()), stackId))
         {
@@ -86,7 +80,7 @@ public class EntityUtils
         final var offHandStack = player.getOffHandStack();
 
         if (mainHandStack.isEmpty() && (
-                ItemStack.areItemsEqual(offHandStack, stack) ||
+                nventoryUtils.areStacksEqualIgnoreNbt(offHandStack, stack) ||
                 fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
                     Registries.ITEM.getId(offHandStack.getItem()), stackId)))
         {
@@ -98,7 +92,7 @@ public class EntityUtils
 
     public static boolean areStacksEqualIgnoreDurability(ItemStack stack1, ItemStack stack2)
     {
-        return ItemStack.areItemsEqual(stack1, stack2) && ItemStack.canCombine(stack1, stack2);
+        return InventoryUtils.areStacksEqualIgnoreDurability(stack1, stack2);
     }
 
     public static Direction getHorizontalLookingDirection(Entity entity)

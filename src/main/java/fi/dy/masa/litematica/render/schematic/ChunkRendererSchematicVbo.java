@@ -1,15 +1,9 @@
 package fi.dy.masa.litematica.render.schematic;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.annotation.Nullable;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.systems.VertexSorter;
@@ -20,12 +14,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.util.math.MatrixStack;
@@ -274,7 +263,9 @@ public class ChunkRendererSchematicVbo
                 float z = (float) cameraPos.z - this.position.getZ();
                 Set<RenderLayer> usedLayers = new HashSet<>();
                 BufferBuilderCache buffers = task.getBufferCache();
-                MatrixStack matrices = new MatrixStack();
+                MatrixStack matrixStack = new MatrixStack();
+                // TODO --> Do we need to change this to a Matrix4f in the future,
+                //  when Matrix4f doesn't break things here or do we need to call RenderSystem again?
                 int bottomY = this.position.getY();
 
                 for (IntBoundingBox box : this.boxes)
@@ -295,12 +286,12 @@ public class ChunkRendererSchematicVbo
                         // Fluid models and the overlay use the VertexConsumer#vertex(x, y, z) method.
                         // Fluid rendering and the overlay do not use the MatrixStack.
                         // Block models use the VertexConsumer#quad() method, and they use the MatrixStack.
-                        matrices.push();
-                        matrices.translate(posMutable.getX() & 0xF, posMutable.getY() - bottomY, posMutable.getZ() & 0xF);
+                        matrixStack.push();
+                        matrixStack.translate(posMutable.getX() & 0xF, posMutable.getY() - bottomY, posMutable.getZ() & 0xF);
 
-                        this.renderBlocksAndOverlay(posMutable, data, tileEntities, usedLayers, matrices, buffers);
+                        this.renderBlocksAndOverlay(posMutable, data, tileEntities, usedLayers, matrixStack, buffers);
 
-                        matrices.pop();
+                        matrixStack.pop();
                     }
                 }
 
@@ -354,7 +345,7 @@ public class ChunkRendererSchematicVbo
     }
 
     protected void renderBlocksAndOverlay(BlockPos pos, ChunkRenderDataSchematic data, Set<BlockEntity> tileEntities,
-            Set<RenderLayer> usedLayers, MatrixStack matrices, BufferBuilderCache buffers)
+            Set<RenderLayer> usedLayers, MatrixStack matrixStack, BufferBuilderCache buffers)
     {
         BlockState stateSchematic = this.schematicWorldView.getBlockState(pos);
         BlockState stateClient    = this.clientWorldView.getBlockState(pos);
@@ -410,7 +401,7 @@ public class ChunkRendererSchematicVbo
                     this.preRenderBlocks(bufferSchematic, layer);
                 }
 
-                if (this.worldRenderer.renderBlock(this.schematicWorldView, stateSchematic, pos, matrices, bufferSchematic))
+                if (this.worldRenderer.renderBlock(this.schematicWorldView, stateSchematic, pos, matrixStack, bufferSchematic))
                 {
                     usedLayers.add(layer);
                 }
@@ -658,6 +649,7 @@ public class ChunkRendererSchematicVbo
     protected OverlayType getOverlayType(BlockState stateSchematic, BlockState stateClient)
     {
         return InventoryUtils.getOverlayType(stateSchematic, stateClient);
+            // TODO --> Maybe someday Mojang will add something to replace isLiquid(), and isSolid(), someday?
     }
 
     @Nullable

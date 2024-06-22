@@ -258,11 +258,11 @@ public class SchematicConversionFixers
     public static final IStateFixer FIXER_FLOWER_POT = (reader, state, pos) -> {
         NbtCompound tag = reader.getBlockEntityData(pos);
 
-        if (tag != null)
+        if (tag != null && tag.contains("Item", 8))
         {
             String itemName = tag.getString("Item");
 
-            if (itemName.length() > 0)
+            if (itemName.length() > 0 && tag.contains("Data"))
             {
                 int meta = tag.getInt("Data");
 
@@ -382,7 +382,7 @@ public class SchematicConversionFixers
     public static final IStateFixer FIXER_SKULL = (reader, state, pos) -> {
         NbtCompound tag = reader.getBlockEntityData(pos);
 
-        if (tag != null)
+        if (tag != null && tag.contains("SkullType"))
         {
             int id = MathHelper.clamp(tag.getByte("SkullType"), 0, 5);
 

@@ -70,7 +70,7 @@ public class EntityUtils
         final var mainHandStack = player.getMainHandStack();
         final Identifier stackId = Registries.ITEM.getId(stack.getItem());
 
-        if (InventoryUtils.areStacksEqualIgnoreNbt(mainHandStack, stack)) ||
+        if (InventoryUtils.areStacksEqualIgnoreNbt(mainHandStack, stack) ||
                 fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
                     Registries.ITEM.getId(mainHandStack.getItem()), stackId))
         {
@@ -80,7 +80,7 @@ public class EntityUtils
         final var offHandStack = player.getOffHandStack();
 
         if (mainHandStack.isEmpty() && (
-                nventoryUtils.areStacksEqualIgnoreNbt(offHandStack, stack) ||
+                InventoryUtils.areStacksEqualIgnoreNbt(offHandStack, stack) ||
                 fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
                     Registries.ITEM.getId(offHandStack.getItem()), stackId)))
         {

@@ -241,7 +241,7 @@ public class ContainerManager {
                 var repeatIteration = false;
 
                 var containerStack = containerSlot.getStack();
-                if (!ItemStack.canCombine(containerStack, stackMissing)) continue;
+                if (!ItemStack.areItemsAndComponentsEqual(containerStack, stackMissing)) continue;
 
                 Litematica.debugLog("Fetching " + countMissing + " from " + containerStack.getName());
 
@@ -342,7 +342,7 @@ public class ContainerManager {
                     continue;
                 }
 
-                if (ItemStack.canCombine(match, slotStack)) {
+                if (ItemStack.areItemsAndComponentsEqual(match, slotStack)) {
                     if (partialSlot == -1 || slotStackCount < partialSlotCount) {
                         partialSlot = destSlot;
                         partialSlotCount = slotStack.getCount();

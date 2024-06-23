@@ -436,7 +436,7 @@ public class InventoryUtils
 
                 ItemStack stackSlot = inventory.getStack(slotNum >= 36 ? slotNum - 36 : slotNum);
 
-                if (ItemStack.canCombine(stackHand, stackSlot))
+                if (ItemStack.areItemsAndComponentsEqual(stackHand, stackSlot))
                 {
                     if (hand == Hand.OFF_HAND)
                     {
@@ -608,7 +608,7 @@ public class InventoryUtils
                     continue;
                 }
 
-                if (ItemStack.canCombine(match, slotStack)) {
+                if (ItemStack.areItemsAndComponentsEqual(match, slotStack)) {
                     if (partialSlot == -1 || slotStackCount < partialSlotCount) {
                         partialSlot = destSlot;
                         partialSlotCount = slotStack.getCount();

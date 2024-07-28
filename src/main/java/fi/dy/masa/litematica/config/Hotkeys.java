@@ -11,6 +11,7 @@ public class Hotkeys
     public static final ConfigHotkey CLONE_SELECTION                    = new ConfigHotkey("cloneSelection",                    "",     "Quickly clone the current area selection.\nThis basically just creates an in-memory-only schematic,\nand then creates a placement of that schematic and selects it,\nand also switches the tool mode to the Paste mode.");
     public static final ConfigHotkey DELETE_SELECTION_BOX               = new ConfigHotkey("deleteSelectionBox",                "",     "Delete the currently selected box");
     public static final ConfigHotkey EASY_PLACE_ACTIVATION              = new ConfigHotkey("easyPlaceUseKey",                   "BUTTON_2", KeybindSettings.PRESS_ALLOWEXTRA, "When the easyPlaceMode is enabled, this key is used for placing the blocks");
+    public static final ConfigHotkey EASY_PLACE_FIRST_TOGGLE            = new ConfigHotkey("easyPlaceFirstToggle",              "",     "Allows quickly toggling on/off Easy Place closest/furthest block placing");
     public static final ConfigHotkey EASY_PLACE_TOGGLE                  = new ConfigHotkey("easyPlaceToggle",                   "",     "Allows quickly toggling on/off the Easy Place mode");
     public static final ConfigHotkey EXECUTE_OPERATION                  = new ConfigHotkey("executeOperation",                  "",     "Execute the currently selected tool operation with the\ncurrent selection or placement in the Fill, Replace,\nPaste Schematic etc. modes");
     public static final ConfigHotkey INVERT_GHOST_BLOCK_RENDER_STATE    = new ConfigHotkey("invertGhostBlockRenderState",       "",     "Inverts the schematic/ghost block rendering status\nwhile this keybind is held down");
@@ -93,6 +94,7 @@ public class Hotkeys
             CLONE_SELECTION,
             DELETE_SELECTION_BOX,
             EASY_PLACE_ACTIVATION,
+            EASY_PLACE_FIRST_TOGGLE,
             EASY_PLACE_TOGGLE,
             EXECUTE_OPERATION,
             INVERT_GHOST_BLOCK_RENDER_STATE,

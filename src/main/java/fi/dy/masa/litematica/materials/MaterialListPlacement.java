@@ -53,6 +53,5 @@ public class MaterialListPlacement extends MaterialListBase
         boolean ignoreState = Configs.Generic.MATERIAL_LIST_IGNORE_STATE.getBooleanValue();
         TaskCountBlocksPlacement task = new TaskCountBlocksPlacement(this.placement, this, ignoreState);
         TaskScheduler.getInstanceClient().scheduleTask(task, 20);
-        InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
     }
 }

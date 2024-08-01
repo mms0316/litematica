@@ -247,6 +247,7 @@ public class SchematicConverter
         this.fixersPerBlock.put(SkullBlock.class,                   SchematicConversionFixers.FIXER_SKULL);
         this.fixersPerBlock.put(WallSignBlock.class,                SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(WallSkullBlock.class,               SchematicConversionFixers.FIXER_SKULL_WALL);
+        this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
     }
 
     private void addPostUpdateBlocksSchematica()
@@ -282,6 +283,7 @@ public class SchematicConverter
         this.fixersPerBlock.put(SkullBlock.class,                   SchematicConversionFixers.FIXER_SKULL);
         this.fixersPerBlock.put(WallSignBlock.class,                SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(WallSkullBlock.class,               SchematicConversionFixers.FIXER_SKULL_WALL);
+        this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
     }
 
     public static class BlockReaderLitematicaContainer implements IBlockReaderWithData

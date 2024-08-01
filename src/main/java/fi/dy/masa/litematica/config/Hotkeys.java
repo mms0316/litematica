@@ -11,6 +11,7 @@ public class Hotkeys
     public static final ConfigHotkey CLONE_SELECTION                    = new ConfigHotkey("cloneSelection",                    "",     "litematica.config.hotkeys.comment.cloneSelection").translatedName("litematica.config.hotkeys.name.cloneSelection");
     public static final ConfigHotkey DELETE_SELECTION_BOX               = new ConfigHotkey("deleteSelectionBox",                "",     "litematica.config.hotkeys.comment.deleteSelectionBox").translatedName("litematica.config.hotkeys.name.deleteSelectionBox");
     public static final ConfigHotkey EASY_PLACE_ACTIVATION              = new ConfigHotkey("easyPlaceUseKey",                   "BUTTON_2", KeybindSettings.PRESS_ALLOWEXTRA, "litematica.config.hotkeys.comment.easyPlaceUseKey").translatedName("litematica.config.hotkeys.name.easyPlaceUseKey");
+    public static final ConfigHotkey EASY_PLACE_FIRST_TOGGLE            = new ConfigHotkey("easyPlaceFirstToggle",              "",     "Allows quickly toggling on/off Easy Place closest/furthest block placing");
     public static final ConfigHotkey EASY_PLACE_TOGGLE                  = new ConfigHotkey("easyPlaceToggle",                   "",     "litematica.config.hotkeys.comment.easyPlaceToggle").translatedName("litematica.config.hotkeys.name.easyPlaceToggle");
     public static final ConfigHotkey EXECUTE_OPERATION                  = new ConfigHotkey("executeOperation",                  "",     "litematica.config.hotkeys.comment.executeOperation").translatedName("litematica.config.hotkeys.name.executeOperation");
     public static final ConfigHotkey INVERT_GHOST_BLOCK_RENDER_STATE    = new ConfigHotkey("invertGhostBlockRenderState",       "",     "litematica.config.hotkeys.comment.invertGhostBlockRenderState").translatedName("litematica.config.hotkeys.name.invertGhostBlockRenderState");
@@ -20,6 +21,11 @@ public class Hotkeys
     public static final ConfigHotkey LAYER_NEXT                         = new ConfigHotkey("layerNext",                         "PAGE_UP",      "litematica.config.hotkeys.comment.layerNext").translatedName("litematica.config.hotkeys.name.layerNext");
     public static final ConfigHotkey LAYER_PREVIOUS                     = new ConfigHotkey("layerPrevious",                     "PAGE_DOWN",    "litematica.config.hotkeys.comment.layerPrevious").translatedName("litematica.config.hotkeys.name.layerPrevious");
     public static final ConfigHotkey LAYER_SET_HERE                     = new ConfigHotkey("layerSetHere",                      "",     "litematica.config.hotkeys.comment.layerSetHere").translatedName("litematica.config.hotkeys.name.layerSetHere");
+    public static final ConfigHotkey MATERIAL_LIST_CONTAINER_REGISTER   = new ConfigHotkey("materialListContainerRegister",     "", KeybindSettings.MODIFIER_GUI, "Register materials inside an opened container to be used for Material List");
+    public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER = new ConfigHotkey("materialListContainerUnregister",   "", "Unregister container used for Material List");
+    public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER_ALL = new ConfigHotkey("materialListContainerUnregisterAll", "", "Unregister all containers used for Material List");
+    public static final ConfigHotkey MATERIAL_LIST_FETCH                = new ConfigHotkey("materialListFetch",                 "", KeybindSettings.MODIFIER_GUI, "Fetch materials required by the active Material List from opened container");
+    public static final ConfigHotkey MATERIAL_LIST_REFRESH              = new ConfigHotkey("materialListRefresh",               "",     "Refresh active Material List");
     public static final ConfigHotkey NUDGE_SELECTION_NEGATIVE           = new ConfigHotkey("nudgeSelectionNegative",            "",     "litematica.config.hotkeys.comment.nudgeSelectionNegative").translatedName("litematica.config.hotkeys.name.nudgeSelectionNegative");
     public static final ConfigHotkey NUDGE_SELECTION_POSITIVE           = new ConfigHotkey("nudgeSelectionPositive",            "",     "litematica.config.hotkeys.comment.nudgeSelectionPositive").translatedName("litematica.config.hotkeys.name.nudgeSelectionPositive");
     public static final ConfigHotkey MOVE_ENTIRE_SELECTION              = new ConfigHotkey("moveEntireSelection",               "",     "litematica.config.hotkeys.comment.moveEntireSelection").translatedName("litematica.config.hotkeys.name.moveEntireSelection");
@@ -60,6 +66,7 @@ public class Hotkeys
     public static final ConfigHotkey SELECTION_MODE_CYCLE               = new ConfigHotkey("selectionModeCycle",                "LEFT_CONTROL,M", "litematica.config.hotkeys.comment.selectionModeCycle").translatedName("litematica.config.hotkeys.name.selectionModeCycle");
     public static final ConfigHotkey SELECTION_SHRINK_HOTKEY            = new ConfigHotkey("selectionShrink",                   "",     "litematica.config.hotkeys.comment.selectionShrink").translatedName("litematica.config.hotkeys.name.selectionShrink");
     public static final ConfigHotkey SET_AREA_ORIGIN                    = new ConfigHotkey("setAreaOrigin",                     "",     "litematica.config.hotkeys.comment.setAreaOrigin").translatedName("litematica.config.hotkeys.name.setAreaOrigin");
+    public static final ConfigHotkey SET_SCHEMATIC_ORIGIN               = new ConfigHotkey("setSchematicOrigin",                "",     "Set the active schematic placement\n to the player's position");
     public static final ConfigHotkey SET_SELECTION_BOX_POSITION_1       = new ConfigHotkey("setSelectionBoxPosition1",          "",     "litematica.config.hotkeys.comment.setSelectionBoxPosition1").translatedName("litematica.config.hotkeys.name.setSelectionBoxPosition1");
     public static final ConfigHotkey SET_SELECTION_BOX_POSITION_2       = new ConfigHotkey("setSelectionBoxPosition2",          "",     "litematica.config.hotkeys.comment.setSelectionBoxPosition2").translatedName("litematica.config.hotkeys.name.setSelectionBoxPosition2");
     public static final ConfigHotkey TOGGLE_ALL_RENDERING               = new ConfigHotkey("toggleAllRendering",                "M,R",  "litematica.config.hotkeys.comment.toggleAllRendering", "litematica.config.hotkeys.prettyName.toggleAllRendering").translatedName("litematica.config.hotkeys.name.toggleAllRendering");
@@ -88,6 +95,7 @@ public class Hotkeys
             CLONE_SELECTION,
             DELETE_SELECTION_BOX,
             EASY_PLACE_ACTIVATION,
+            EASY_PLACE_FIRST_TOGGLE,
             EASY_PLACE_TOGGLE,
             EXECUTE_OPERATION,
             INVERT_GHOST_BLOCK_RENDER_STATE,
@@ -97,6 +105,11 @@ public class Hotkeys
             LAYER_NEXT,
             LAYER_PREVIOUS,
             LAYER_SET_HERE,
+            MATERIAL_LIST_CONTAINER_REGISTER,
+            MATERIAL_LIST_CONTAINER_UNREGISTER,
+            MATERIAL_LIST_CONTAINER_UNREGISTER_ALL,
+            MATERIAL_LIST_FETCH,
+            MATERIAL_LIST_REFRESH,
             NUDGE_SELECTION_NEGATIVE,
             NUDGE_SELECTION_POSITIVE,
             MOVE_ENTIRE_SELECTION,
@@ -137,6 +150,7 @@ public class Hotkeys
             SELECTION_MODE_CYCLE,
             SELECTION_SHRINK_HOTKEY,
             SET_AREA_ORIGIN,
+            SET_SCHEMATIC_ORIGIN,
             SET_SELECTION_BOX_POSITION_1,
             SET_SELECTION_BOX_POSITION_2,
             TOGGLE_ALL_RENDERING,

@@ -35,6 +35,5 @@ public class MaterialListAreaAnalyzer extends MaterialListBase
     {
         TaskCountBlocksArea task = new TaskCountBlocksArea(this.selection, this);
         TaskScheduler.getInstanceClient().scheduleTask(task, 20);
-        InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
     }
 }

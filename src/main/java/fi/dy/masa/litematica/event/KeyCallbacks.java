@@ -2,6 +2,10 @@ package fi.dy.masa.litematica.event;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.screen.ShulkerBoxScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
@@ -67,6 +71,11 @@ public class KeyCallbacks
         Hotkeys.LAYER_NEXT.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_PREVIOUS.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_SET_HERE.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER_ALL.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_REFRESH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind().setCallback(callbackHotkeys);
@@ -97,10 +106,12 @@ public class KeyCallbacks
         Hotkeys.UNLOAD_CURRENT_SCHEMATIC.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.ADD_SELECTION_BOX.getKeybind().setCallback(callbackMessage);
         Hotkeys.DELETE_SELECTION_BOX.getKeybind().setCallback(callbackMessage);
+        Hotkeys.EASY_PLACE_FIRST_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.EASY_PLACE_FIRST));
         Hotkeys.EASY_PLACE_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.EASY_PLACE_MODE));
         Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind().setCallback(callbackMessage);
         Hotkeys.SELECTION_MODE_CYCLE.getKeybind().setCallback(callbackMessage);
         Hotkeys.SET_AREA_ORIGIN.getKeybind().setCallback(callbackMessage);
+        Hotkeys.SET_SCHEMATIC_ORIGIN.getKeybind().setCallback(callbackMessage);
         Hotkeys.SCHEMATIC_PLACEMENT_ROTATION.getKeybind().setCallback(callbackMessage);
         Hotkeys.SCHEMATIC_PLACEMENT_MIRROR.getKeybind().setCallback(callbackMessage);
         Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind().setCallback(callbackMessage);
@@ -405,18 +416,47 @@ public class KeyCallbacks
             }
             else if (key == Hotkeys.LAYER_NEXT.getKeybind())
             {
-                DataManager.getRenderLayerRange().moveLayer(1);
+                DataManager.getRenderLayerRange().moveLayer(Configs.Generic.LAYER_MOVE_AMOUNT.getIntegerValue());
                 return true;
             }
             else if (key == Hotkeys.LAYER_PREVIOUS.getKeybind())
             {
-                DataManager.getRenderLayerRange().moveLayer(-1);
+                DataManager.getRenderLayerRange().moveLayer(- Configs.Generic.LAYER_MOVE_AMOUNT.getIntegerValue());
                 return true;
             }
             else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())
             {
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(fi.dy.masa.malilib.util.EntityUtils.getCameraEntity());
                 return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind())
+            {
+                DataManager.getContainerManager().registerContainer(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind())
+            {
+                DataManager.getContainerManager().unregisterContainer(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER_ALL.getKeybind())
+            {
+                DataManager.getContainerManager().unregisterContainerAll(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_FETCH.getKeybind())
+            {
+                DataManager.getContainerManager().fetchMaterials(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_REFRESH.getKeybind())
+            {
+                var materialList = DataManager.getMaterialList();
+                if (materialList != null)
+                {
+                    materialList.reCreateMaterialList();
+                    return true;
+                }
             }
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())
             {
@@ -679,6 +719,18 @@ public class KeyCallbacks
                         area.setExplicitOrigin(pos);
                         String posStr = String.format("x: %d, y: %d, z: %d", pos.getX(), pos.getY(), pos.getZ());
                         InfoUtils.printActionbarMessage("litematica.message.set_area_origin", posStr);
+                        return true;
+                    }
+                }
+            }
+            else if (key == Hotkeys.SET_SCHEMATIC_ORIGIN.getKeybind())
+            {
+                if (mc.player != null)
+                {
+                    var project = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
+                    if (project != null)
+                    {
+                        project.setOrigin(fi.dy.masa.malilib.util.PositionUtils.getEntityBlockPos(mc.player), null);
                         return true;
                     }
                 }

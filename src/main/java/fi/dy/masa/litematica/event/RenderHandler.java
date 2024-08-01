@@ -35,6 +35,9 @@ public class RenderHandler implements IRenderer
             {
                 OverlayRenderer.getInstance().renderSchematicRebuildTargetingOverlay(matrix4f);
             }
+
+            var containerManager = DataManager.getContainerManager();
+            containerManager.renderMatchingMaterials(DataManager.getMaterialList(), projMatrix);
         }
     }
 

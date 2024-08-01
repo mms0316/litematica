@@ -19,6 +19,7 @@ import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.Reference;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.gui.GuiConfigs.ConfigGuiTab;
+import fi.dy.masa.litematica.materials.ContainerManager;
 import fi.dy.masa.litematica.materials.MaterialListBase;
 import fi.dy.masa.litematica.materials.MaterialListHudRenderer;
 import fi.dy.masa.litematica.render.infohud.InfoHud;
@@ -57,6 +58,7 @@ public class DataManager implements IDirectoryCache
     private AreaSelectionSimple areaSimple = new AreaSelectionSimple(true);
     @Nullable
     private MaterialListBase materialList;
+    private final ContainerManager containerManager = new ContainerManager();
 
     private DataManager()
     {
@@ -189,6 +191,11 @@ public class DataManager implements IDirectoryCache
     public static SchematicProjectsManager getSchematicProjectsManager()
     {
         return getInstance().schematicProjectsManager;
+    }
+
+    public static ContainerManager getContainerManager()
+    {
+        return getInstance().containerManager;
     }
 
     @Nullable
@@ -428,6 +435,11 @@ public class DataManager implements IDirectoryCache
         {
             this.toolModeDataFromJson(obj.get("tool_mode_data").getAsJsonObject());
         }
+
+        if (JsonUtils.hasObject(obj, "container_manager"))
+        {
+            this.containerManager.loadFromJson(obj.get("container_manager").getAsJsonObject());
+        }
     }
 
     private JsonObject toJson()
@@ -441,6 +453,7 @@ public class DataManager implements IDirectoryCache
         obj.add("render_range", this.renderRange.toJson());
         obj.add("area_simple", this.areaSimple.toJson());
         obj.add("tool_mode_data", this.toolModeDataToJson());
+        obj.add("container_manager", this.containerManager.toJson());
 
         return obj;
     }

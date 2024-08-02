@@ -665,41 +665,53 @@ public class WorldUtils
                     pos = placementData.pos;
                     side = placementData.side;
                     hitPos = placementData.hitVec;
-                }
 
-                if (protocol == EasyPlaceProtocol.V3)
-                {
-                    hitPos = applyPlacementProtocolV3(pos, stateSchematic, hitPos);
-                }
-                else if (protocol == EasyPlaceProtocol.V2)
-                {
-                    // Carpet Accurate Block Placement protocol support, plus slab support
-                    hitPos = applyCarpetProtocolHitVec(pos, stateSchematic, hitPos);
-                }
-                else if (protocol == EasyPlaceProtocol.SLAB_ONLY)
-                {
-                    // Slab support only
-                    hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
-                }
-                else if (protocol == EasyPlaceProtocol.RESTRICTED)
-                {
-                    //Use vanilla / Paper restrictions
-                    hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
-                    if (stateSchematic.contains(Properties.SLAB_TYPE) == false)
+                    if (protocol == EasyPlaceProtocol.RESTRICTED)
                     {
-                        var changedHitResult = applyRestrictedProtocol(pos, stateSchematic, side, hitPos, mc, hand);
-                        if (changedHitResult == null)
+                        //Check for blocks that have rotation property (Banners, Signs, Skulls)
+                        if (stateSchematic.contains(Properties.ROTATION))
                         {
-                            if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
-                            {
-                                Litematica.logger.info("Can't orientate");
-                            }
-                            return ActionResult.FAIL;
+                            if (!isMatchingStateRestrictedProtocol(pos, stateSchematic, side, hitPos, mc, hand))
+                                return ActionResult.FAIL;
                         }
+                    }
+                }
+                else
+                {
+                    if (protocol == EasyPlaceProtocol.V3)
+                    {
+                        hitPos = applyPlacementProtocolV3(pos, stateSchematic, hitPos);
+                    }
+                    else if (protocol == EasyPlaceProtocol.V2)
+                    {
+                        // Carpet Accurate Block Placement protocol support, plus slab support
+                        hitPos = applyCarpetProtocolHitVec(pos, stateSchematic, hitPos);
+                    }
+                    else if (protocol == EasyPlaceProtocol.SLAB_ONLY)
+                    {
+                        // Slab support only
+                        hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
+                    }
+                    else if (protocol == EasyPlaceProtocol.RESTRICTED)
+                    {
+                        //Use vanilla / Paper restrictions
+                        hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
+                        if (stateSchematic.contains(Properties.SLAB_TYPE) == false)
+                        {
+                            var changedHitResult = applyRestrictedProtocol(pos, stateSchematic, side, hitPos, mc, hand);
+                            if (changedHitResult == null)
+                            {
+                                if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
+                                {
+                                    Litematica.logger.info("Can't orientate");
+                                }
+                                return ActionResult.FAIL;
+                            }
 
-                        pos = changedHitResult.getLeft();
-                        side = changedHitResult.getMiddle();
-                        hitPos = changedHitResult.getRight();
+                            pos = changedHitResult.getLeft();
+                            side = changedHitResult.getMiddle();
+                            hitPos = changedHitResult.getRight();
+                        }
                     }
                 }
 
@@ -1005,122 +1017,11 @@ public class WorldUtils
 
     private static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
     {
-        var block = stateSchematic.getBlock();
-        if (block instanceof AbstractTorchBlock) //Torch, Soul Torch, Redstone Torch
-        {
-            boolean isOnWall = block instanceof WallTorchBlock || block instanceof WallRedstoneTorchBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
-        }
-        else if (block instanceof AbstractBannerBlock)
-        {
-            boolean isOnWall = block instanceof WallBannerBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
-        }
-        else if (block instanceof AbstractSignBlock)
-        {
-            boolean isOnWall = block instanceof WallSignBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
-        }
-        else if (block instanceof AbstractSkullBlock) //Wither Skull, Player Skull
-        {
-            boolean isOnWall = block instanceof WallSkullBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
-        }
-
         return Direction.stream()
                 .filter(direction -> isMatchingStateRestrictedProtocol(pos, stateSchematic, direction, hitVecIn, mc, hand))
                 .findAny()
                 .map(direction -> Triple.of(pos, direction, hitVecIn))
                 .orElse(null);
-    }
-
-    private static Triple<BlockPos, Direction, Vec3d> getWallPlaceableOrientation(BlockPos pos, BlockState stateSchematic, Vec3d hitVecOut, MinecraftClient mc, Hand hand, boolean isOnWall) {
-        Direction sideOut;
-        BlockPos posOrig = pos;
-
-        if (isOnWall)
-        {
-            if (!stateSchematic.contains(Properties.HORIZONTAL_FACING))
-            {
-                //Shouldn't happen, fail instead of crashing just in case
-                return null;
-            }
-
-            sideOut = stateSchematic.get(Properties.HORIZONTAL_FACING);
-            pos = pos.offset(sideOut.getOpposite());
-        }
-        else
-        {
-            sideOut = Direction.UP;
-            pos = pos.down();
-        }
-        BlockState stateFacing = mc.world.getBlockState(pos);
-
-        if (stateFacing == null || stateFacing.isAir())
-            return null;
-
-        //Check for blocks that have rotation property (Banners, Signs, Skulls)
-        if (stateSchematic.contains(Properties.ROTATION))
-        {
-            if (!isMatchingStateRestrictedProtocol(posOrig, stateSchematic, sideOut, hitVecOut, mc, hand))
-                return null;
-        }
-
-        return Triple.of(pos, sideOut, hitVecOut);
-    }
-
-    private static Pair<Direction, Vec3d> getAxisOrientation(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn) {
-        var property = stateSchematic.get(Properties.AXIS);
-        if (property == Direction.Axis.Y)
-        {
-            if (sideIn == Direction.DOWN || sideIn == Direction.UP)
-            {
-                //Side already correct
-                return Pair.of(sideIn, hitVecIn);
-            }
-
-            //Wrong side - check which direction to use
-            return Pair.of(hitVecIn.y - pos.getY() < 0.5 ? Direction.DOWN : Direction.UP, hitVecIn);
-        }
-        else if (property == Direction.Axis.X)
-        {
-            if (sideIn == Direction.WEST || sideIn == Direction.EAST)
-            {
-                //Side already correct
-                return Pair.of(sideIn, hitVecIn);
-            }
-
-            //Wrong side - check which direction to use
-            return Pair.of(hitVecIn.x - pos.getX() < 0.5 ? Direction.WEST : Direction.EAST, hitVecIn);
-        }
-        else if (property == Direction.Axis.Z)
-        {
-            if (sideIn == Direction.NORTH || sideIn == Direction.SOUTH)
-            {
-                //Side already correct
-                return Pair.of(sideIn, hitVecIn);
-            }
-
-            //Wrong side - check which direction to use
-            return Pair.of(hitVecIn.z - pos.getZ() < 0.5 ? Direction.NORTH : Direction.SOUTH, hitVecIn);
-        }
-        return null;
-    }
-    private static Pair<Direction, Vec3d> getSlabOrientation(BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn) {
-        var property = stateSchematic.get(Properties.SLAB_TYPE);
-
-        if (property == SlabType.TOP)
-        {
-            return Pair.of(Direction.DOWN, new Vec3d(hitVecIn.x, hitVecIn.y + 0.9, hitVecIn.z));
-        }
-        else if (property == SlabType.BOTTOM)
-        {
-            return Pair.of(Direction.UP, hitVecIn);
-        }
-        else
-        {
-            return Pair.of(sideIn, hitVecIn);
-        }
     }
 
     public static <T extends Comparable<T>> Vec3d applyPlacementProtocolV3(BlockPos pos, BlockState state, Vec3d hitVecIn)
@@ -1629,9 +1530,10 @@ public class WorldUtils
         {
             try
             {
-                String name = "method_9534"; //onUse
-                Method method = block.getClass().getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
-                Method baseMethod = Block.class.getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
+                //String name = "method_55766"; //AbstractBlock.onUse
+                String name = "onUse"; //AbstractBlock.onUse
+                Method method = block.getClass().getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, BlockHitResult.class);
+                Method baseMethod = Block.class.getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, BlockHitResult.class);
                 val = method.equals(baseMethod) == false;
             }
             catch (Exception e)

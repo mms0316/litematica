@@ -216,7 +216,7 @@ public class InventoryUtils
                     {
                         for (String s : substitutions)
                         {
-                            ItemStack substStack = new ItemStack(Registries.ITEM.get(new Identifier(s)));
+                            ItemStack substStack = new ItemStack(Registries.ITEM.get(Identifier.of(s)));
                             slot = findSlotWithBoxWithItem(mc.player.playerScreenHandler, substStack, false);
                             if (slot != -1)
                             {
@@ -454,7 +454,7 @@ public class InventoryUtils
 
                 ItemStack stackSlot = inventory.getStack(slotNum >= 36 ? slotNum - 36 : slotNum);
 
-                if (ItemStack.canCombine(stackHand, stackSlot))
+                if (fi.dy.masa.malilib.util.InventoryUtils.areStacksEqualIgnoreNbt(stackHand, stackSlot))
                 {
                     if (hand == Hand.OFF_HAND)
                     {
@@ -626,7 +626,7 @@ public class InventoryUtils
                     continue;
                 }
 
-                if (ItemStack.canCombine(match, slotStack)) {
+                if (fi.dy.masa.malilib.util.InventoryUtils.areStacksEqualIgnoreNbt(match, slotStack)) {
                     if (partialSlot == -1 || slotStackCount < partialSlotCount) {
                         partialSlot = destSlot;
                         partialSlotCount = slotStack.getCount();

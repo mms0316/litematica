@@ -7,6 +7,7 @@ import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.malilib.util.InfoUtils;
+import fi.dy.masa.malilib.util.InventoryUtils;
 import fi.dy.masa.malilib.util.JsonUtils;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -241,7 +242,7 @@ public class ContainerManager {
                 var repeatIteration = false;
 
                 var containerStack = containerSlot.getStack();
-                if (!ItemStack.canCombine(containerStack, stackMissing)) continue;
+                if (!InventoryUtils.areStacksEqualIgnoreNbt(containerStack, stackMissing)) continue;
 
                 Litematica.debugLog("Fetching " + countMissing + " from " + containerStack.getName());
 
@@ -342,7 +343,7 @@ public class ContainerManager {
                     continue;
                 }
 
-                if (ItemStack.canCombine(match, slotStack)) {
+                if (InventoryUtils.areStacksEqualIgnoreNbt(match, slotStack)) {
                     if (partialSlot == -1 || slotStackCount < partialSlotCount) {
                         partialSlot = destSlot;
                         partialSlotCount = slotStack.getCount();

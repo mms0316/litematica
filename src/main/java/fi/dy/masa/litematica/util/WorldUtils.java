@@ -452,7 +452,7 @@ public class WorldUtils
 
                     if (type == MessageOutputType.MESSAGE)
                     {
-                        InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, "litematica.message.easy_place_fail");
+                        InfoUtils.showGuiOrInGameMessage(MessageType.WARNING, "litematica.message.easy_place_fail");
                     }
                     else if (type == MessageOutputType.ACTIONBAR)
                     {
@@ -472,7 +472,7 @@ public class WorldUtils
     private static ActionResult doEasyPlaceAction(MinecraftClient mc)
     {
         RayTraceWrapper traceWrapper;
-        double traceMaxRange = mc.interactionManager.getReachDistance();
+        double traceMaxRange = mc.player.getBlockInteractionRange();
 
         final boolean ignoreEnderChest = Configs.Generic.EASY_PLACE_IGNORE_ENDER_CHEST.getBooleanValue();
         final boolean ignoreShulkerBox = Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue();

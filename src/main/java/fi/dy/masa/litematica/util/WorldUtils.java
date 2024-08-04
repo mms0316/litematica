@@ -560,6 +560,11 @@ public class WorldUtils
                 {
                     cacheEasyPlacePosition(pos, hasUseAction);
                     mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, trace);
+                    // swing hand fix, see MinecraftClient#doItemUse
+                    if (Configs.Generic.EASY_PLACE_SWING_HAND.getBooleanValue())
+                    {
+                        mc.player.swingHand(Hand.MAIN_HAND);
+                    }
                     easyPlaceShowFailMessage = false;
                     return ActionResult.FAIL;
                 }
@@ -648,6 +653,11 @@ public class WorldUtils
                 if (stack.getItem() instanceof BucketItem)
                 {
                     mc.interactionManager.interactItem(mc.player, hand);
+                    // swing hand fix, see MinecraftClient#doItemUse
+                    if (Configs.Generic.EASY_PLACE_SWING_HAND.getBooleanValue())
+                    {
+                        mc.player.swingHand(hand);
+                    }
                     return ActionResult.SUCCESS;
                 }
 

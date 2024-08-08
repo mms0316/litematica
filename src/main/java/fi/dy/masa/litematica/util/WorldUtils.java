@@ -520,7 +520,7 @@ public class WorldUtils
             if (stack.isEmpty() == false)
             {
                 boolean mayPlace = false;
-                
+
                 if (ignoreEnderChest || ignoreShulkerBox)
                 {
                     final Block blockInHand = Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem());
@@ -630,14 +630,6 @@ public class WorldUtils
                             hitPos = hit;
                             sideOrig = sideVanilla;
                         }
-                        else
-                        {
-                            if (stack.getItem() instanceof BucketItem)
-                            {
-                                //Bucket can't be placed floating
-                                return ActionResult.FAIL;
-                            }
-                        }
                     }
                 }
 
@@ -649,10 +641,11 @@ public class WorldUtils
 
                 if (stack.getItem() instanceof BucketItem)
                 {
-                    mc.interactionManager.interactItem(mc.player, hand);
-                    return ActionResult.SUCCESS;
+                    ActionResult result = AddonUtils.checkEasyPlaceFluidBucket(mc);
+                    if (result == ActionResult.SUCCESS)
+                        mc.interactionManager.interactItem(mc.player, hand);
+                    return result;
                 }
-
 
                 EasyPlaceProtocol protocol = PlacementHandler.getEffectiveProtocolVersion();
 
@@ -1207,6 +1200,14 @@ public class WorldUtils
         if (stack.isEmpty())
         {
             return false;
+        }
+
+        // Check for placing fluid on fluid
+        if (stack.getItem() instanceof BucketItem)
+        {
+            ActionResult result = AddonUtils.checkEasyPlaceFluidBucket(mc);
+            if (result != ActionResult.SUCCESS)
+                return true;
         }
 
         if (trace != null && trace.getType() == HitResult.Type.BLOCK)

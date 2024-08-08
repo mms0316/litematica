@@ -45,7 +45,7 @@ import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.render.RenderUtils;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacementManager.PlacementPart;
-import fi.dy.masa.litematica.util.InventoryUtils;
+import fi.dy.masa.litematica.util.AddonUtils;
 import fi.dy.masa.litematica.util.OverlayType;
 import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.world.WorldSchematic;
@@ -657,7 +657,7 @@ public class ChunkRendererSchematicVbo
 
     protected OverlayType getOverlayType(BlockState stateSchematic, BlockState stateClient)
     {
-        return InventoryUtils.getOverlayType(stateSchematic, stateClient);
+        return AddonUtils.getOverlayType(stateSchematic, stateClient);
     }
 
     @Nullable

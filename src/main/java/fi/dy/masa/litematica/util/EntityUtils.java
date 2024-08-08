@@ -77,7 +77,7 @@ public class EntityUtils
         final Identifier stackId = Registries.ITEM.getId(stack.getItem());
 
         if (ItemStack.areItemsEqual(mainHandStack, stack) ||
-                fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
+                AddonUtils.maySubstitute(
                     Registries.ITEM.getId(mainHandStack.getItem()), stackId))
         {
             return Hand.MAIN_HAND;
@@ -87,7 +87,7 @@ public class EntityUtils
 
         if (mainHandStack.isEmpty() && (
                 ItemStack.areItemsEqual(offHandStack, stack) ||
-                fi.dy.masa.litematica.util.InventoryUtils.maySubstitute(
+                AddonUtils.maySubstitute(
                     Registries.ITEM.getId(offHandStack.getItem()), stackId)))
         {
             return Hand.OFF_HAND;

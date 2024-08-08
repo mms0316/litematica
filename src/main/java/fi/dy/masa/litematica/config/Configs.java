@@ -21,6 +21,7 @@ import fi.dy.masa.malilib.util.MessageOutputType;
 import fi.dy.masa.litematica.Reference;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.selection.CornerSelectionMode;
+import fi.dy.masa.litematica.util.AddonUtils;
 import fi.dy.masa.litematica.util.BlockInfoAlignment;
 import fi.dy.masa.litematica.util.EasyPlaceProtocol;
 import fi.dy.masa.litematica.util.InventoryUtils;
@@ -362,7 +363,7 @@ public class Configs implements IConfigHandler
         DataManager.setToolItem(Generic.TOOL_ITEM.getStringValue());
         InventoryUtils.setPickBlockableSlots(Generic.PICK_BLOCKABLE_SLOTS.getStringValue());
 
-        InventoryUtils.setSubstitutions(Generic.SUBSTITUTIONS.getStrings());
+        AddonUtils.setSubstitutions(Generic.SUBSTITUTIONS.getStrings());
     }
 
     public static void saveToFile()

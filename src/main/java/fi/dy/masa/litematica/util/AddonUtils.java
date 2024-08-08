@@ -1,5 +1,6 @@
 package fi.dy.masa.litematica.util;
 
+import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import net.minecraft.block.Block;
@@ -18,16 +19,20 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
 public class AddonUtils {
     private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
+    private static final HashMap<Block, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
 
     public static ActionResult checkEasyPlaceFluidBucket(MinecraftClient mc) {
         //Re-run traces to stop wasting liquid on liquid, and ignoring easyPlaceFirst config, as interactItem works differently
@@ -310,5 +315,26 @@ public class AddonUtils {
         } else {
             return partialSlot;
         }
+    }
+
+    public static boolean hasUseAction(Block block) {
+        Boolean val = HAS_USE_ACTION_CACHE.get(block);
+
+        if (val == null) {
+            try {
+                //String name = "method_9534"; //onUse
+                String name = "onUse"; //onUse
+                Method method = block.getClass().getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
+                Method baseMethod = Block.class.getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
+                val = !method.equals(baseMethod);
+            } catch (Exception e) {
+                Litematica.logger.warn("WorldUtils: Failed to reflect method Block::onUse", e);
+                val = false;
+            }
+
+            HAS_USE_ACTION_CACHE.put(block, val);
+        }
+
+        return val;
     }
 }

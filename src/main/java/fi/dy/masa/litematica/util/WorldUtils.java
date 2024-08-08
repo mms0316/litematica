@@ -100,7 +100,6 @@ public class WorldUtils
 {
     private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
     private static long easyPlaceNextSwap = 0;
-    private static final HashMap<Block, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
     private static boolean easyPlaceShowFailMessage;
     private static final Property<?>[] CHECKED_PROPERTIES = new Property<?>[] {
             Properties.NOTE,
@@ -543,7 +542,7 @@ public class WorldUtils
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
-                final boolean hasUseAction = hasUseAction(stateSchematic.getBlock());
+                final boolean hasUseAction = AddonUtils.hasUseAction(stateSchematic.getBlock());
 
                 // Abort if there is already a block in the target position
                 ActionResult actionResult = easyPlaceBlockChecksCancel(stateSchematic, stateClient, mc.player, traceVanilla, stack, hasUseAction);
@@ -1435,28 +1434,4 @@ public class WorldUtils
         }
     }
 
-    private static boolean hasUseAction(Block block)
-    {
-        Boolean val = HAS_USE_ACTION_CACHE.get(block);
-
-        if (val == null)
-        {
-            try
-            {
-                String name = "method_9534"; //onUse
-                Method method = block.getClass().getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
-                Method baseMethod = Block.class.getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
-                val = method.equals(baseMethod) == false;
-            }
-            catch (Exception e)
-            {
-                Litematica.logger.warn("WorldUtils: Failed to reflect method Block::onUse", e);
-                val = false;
-            }
-
-            HAS_USE_ACTION_CACHE.put(block, val);
-        }
-
-        return val;
-    }
 }

@@ -993,60 +993,6 @@ public class WorldUtils
         return Triple.of(pos, sideOut, hitVecOut);
     }
 
-    private static Pair<Direction, Vec3d> getAxisOrientation(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn) {
-        var property = stateSchematic.get(Properties.AXIS);
-        if (property == Direction.Axis.Y)
-        {
-            if (sideIn == Direction.DOWN || sideIn == Direction.UP)
-            {
-                //Side already correct
-                return Pair.of(sideIn, hitVecIn);
-            }
-
-            //Wrong side - check which direction to use
-            return Pair.of(hitVecIn.y - pos.getY() < 0.5 ? Direction.DOWN : Direction.UP, hitVecIn);
-        }
-        else if (property == Direction.Axis.X)
-        {
-            if (sideIn == Direction.WEST || sideIn == Direction.EAST)
-            {
-                //Side already correct
-                return Pair.of(sideIn, hitVecIn);
-            }
-
-            //Wrong side - check which direction to use
-            return Pair.of(hitVecIn.x - pos.getX() < 0.5 ? Direction.WEST : Direction.EAST, hitVecIn);
-        }
-        else if (property == Direction.Axis.Z)
-        {
-            if (sideIn == Direction.NORTH || sideIn == Direction.SOUTH)
-            {
-                //Side already correct
-                return Pair.of(sideIn, hitVecIn);
-            }
-
-            //Wrong side - check which direction to use
-            return Pair.of(hitVecIn.z - pos.getZ() < 0.5 ? Direction.NORTH : Direction.SOUTH, hitVecIn);
-        }
-        return null;
-    }
-    private static Pair<Direction, Vec3d> getSlabOrientation(BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn) {
-        var property = stateSchematic.get(Properties.SLAB_TYPE);
-
-        if (property == SlabType.TOP)
-        {
-            return Pair.of(Direction.DOWN, new Vec3d(hitVecIn.x, hitVecIn.y + 0.9, hitVecIn.z));
-        }
-        else if (property == SlabType.BOTTOM)
-        {
-            return Pair.of(Direction.UP, hitVecIn);
-        }
-        else
-        {
-            return Pair.of(sideIn, hitVecIn);
-        }
-    }
-
     public static <T extends Comparable<T>> Vec3d applyPlacementProtocolV3(BlockPos pos, BlockState state, Vec3d hitVecIn)
     {
         Collection<Property<?>> props = state.getBlock().getStateManager().getProperties();

@@ -2,18 +2,12 @@ package fi.dy.masa.litematica.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import javax.annotation.Nullable;
 
-import net.minecraft.block.AbstractBannerBlock;
-import net.minecraft.block.AbstractSignBlock;
-import net.minecraft.block.AbstractSkullBlock;
-import net.minecraft.block.AbstractTorchBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -22,15 +16,9 @@ import net.minecraft.block.EnderChestBlock;
 import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.SlabBlock;
-import net.minecraft.block.WallBannerBlock;
-import net.minecraft.block.WallRedstoneTorchBlock;
-import net.minecraft.block.WallSignBlock;
-import net.minecraft.block.WallSkullBlock;
-import net.minecraft.block.WallTorchBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.entity.SignText;
-import net.minecraft.block.enums.Attachment;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
 import net.minecraft.block.enums.SlabType;
@@ -46,7 +34,6 @@ import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.state.property.DirectionProperty;
-import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePlacementData;
@@ -84,8 +71,6 @@ import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper;
 import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper.HitType;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.litematica.world.WorldSchematic;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import fi.dy.masa.malilib.gui.Message;
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.interfaces.IStringConsumer;
@@ -671,7 +656,7 @@ public class WorldUtils
                     hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
                     if (stateSchematic.contains(Properties.SLAB_TYPE) == false)
                     {
-                        var changedHitResult = applyRestrictedProtocol(pos, stateSchematic, sideOut, hitPos, mc, hand);
+                        var changedHitResult = AddonUtils.applyRestrictedProtocol(pos, stateSchematic, sideOut, hitPos, mc, hand);
                         if (changedHitResult == null)
                         {
                             if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
@@ -869,127 +854,6 @@ public class WorldUtils
     {
         double newY = applySlabOrStairHitVecY(hitVecIn.y, pos, state);
         return newY != hitVecIn.y ? new Vec3d(hitVecIn.x, newY, hitVecIn.z) : hitVecIn;
-    }
-
-    private static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
-    {
-        if (state1 == null || state2 == null)
-        {
-            return false;
-        }
-
-        if (state1 == state2)
-        {
-            return true;
-        }
-
-        var orientationProperties = new Property<?>[] {
-                Properties.FACING, //pistons
-                Properties.BLOCK_HALF, //stairs, trapdoors
-                Properties.HOPPER_FACING,
-                Properties.DOOR_HINGE,
-                Properties.HORIZONTAL_FACING, //small dripleaf
-                Properties.AXIS, //logs
-                Properties.SLAB_TYPE,
-                Properties.VERTICAL_DIRECTION,
-                Properties.ROTATION, //banners
-                Properties.HANGING, //lanterns
-                Properties.BLOCK_FACE, //lever
-                Properties.ATTACHMENT, //bell (double-check for single-wall / double-wall)
-                //Properties.HORIZONTAL_AXIS, //Nether portals, though they aren't directly placeable
-                //Properties.ORIENTATION, //jigsaw blocks
-        };
-
-        for (var property : orientationProperties)
-        {
-            boolean hasProperty1 = state1.contains(property);
-            boolean hasProperty2 = state2.contains(property);
-
-            if (hasProperty1 != hasProperty2)
-                return false;
-            if (!hasProperty1)
-                continue;
-
-            if (state1.get(property) != state2.get(property))
-                return false;
-        }
-
-        //Other properties are considered as matching
-        return true;
-    }
-
-    private static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
-    {
-        final var updatedHitResult = new BlockHitResult(hitVecIn, direction, pos, false);
-        final var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
-        final var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
-        return isMatchingStateRestrictedProtocol(attemptState, stateSchematic);
-    }
-
-    private static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
-    {
-        var block = stateSchematic.getBlock();
-        if (block instanceof AbstractTorchBlock) //Torch, Soul Torch, Redstone Torch
-        {
-            boolean isOnWall = block instanceof WallTorchBlock || block instanceof WallRedstoneTorchBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
-        }
-        else if (block instanceof AbstractBannerBlock)
-        {
-            boolean isOnWall = block instanceof WallBannerBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
-        }
-        else if (block instanceof AbstractSignBlock)
-        {
-            boolean isOnWall = block instanceof WallSignBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
-        }
-        else if (block instanceof AbstractSkullBlock) //Wither Skull, Player Skull
-        {
-            boolean isOnWall = block instanceof WallSkullBlock;
-            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
-        }
-
-        return Direction.stream()
-                .filter(direction -> isMatchingStateRestrictedProtocol(pos, stateSchematic, direction, hitVecIn, mc, hand))
-                .findAny()
-                .map(direction -> Triple.of(pos, direction, hitVecIn))
-                .orElse(null);
-    }
-
-    private static Triple<BlockPos, Direction, Vec3d> getWallPlaceableOrientation(BlockPos pos, BlockState stateSchematic, Vec3d hitVecOut, MinecraftClient mc, Hand hand, boolean isOnWall) {
-        Direction sideOut;
-        BlockPos posOrig = pos;
-
-        if (isOnWall)
-        {
-            if (!stateSchematic.contains(Properties.HORIZONTAL_FACING))
-            {
-                //Shouldn't happen, fail instead of crashing just in case
-                return null;
-            }
-
-            sideOut = stateSchematic.get(Properties.HORIZONTAL_FACING);
-            pos = pos.offset(sideOut.getOpposite());
-        }
-        else
-        {
-            sideOut = Direction.UP;
-            pos = pos.down();
-        }
-        BlockState stateFacing = mc.world.getBlockState(pos);
-
-        if (stateFacing == null || stateFacing.isAir())
-            return null;
-
-        //Check for blocks that have rotation property (Banners, Signs, Skulls)
-        if (stateSchematic.contains(Properties.ROTATION))
-        {
-            if (!isMatchingStateRestrictedProtocol(posOrig, stateSchematic, sideOut, hitVecOut, mc, hand))
-                return null;
-        }
-
-        return Triple.of(pos, sideOut, hitVecOut);
     }
 
     public static <T extends Comparable<T>> Vec3d applyPlacementProtocolV3(BlockPos pos, BlockState state, Vec3d hitVecIn)

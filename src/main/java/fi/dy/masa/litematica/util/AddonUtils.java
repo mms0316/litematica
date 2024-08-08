@@ -3,25 +3,40 @@ package fi.dy.masa.litematica.util;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
+import net.minecraft.block.AbstractBannerBlock;
+import net.minecraft.block.AbstractSignBlock;
+import net.minecraft.block.AbstractSkullBlock;
+import net.minecraft.block.AbstractTorchBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidBlock;
+import net.minecraft.block.WallBannerBlock;
+import net.minecraft.block.WallRedstoneTorchBlock;
+import net.minecraft.block.WallSignBlock;
+import net.minecraft.block.WallSkullBlock;
+import net.minecraft.block.WallTorchBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.state.property.Properties;
+import net.minecraft.state.property.Property;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -33,6 +48,127 @@ import java.util.List;
 public class AddonUtils {
     private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
     private static final HashMap<Block, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
+
+    private static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
+    {
+        if (state1 == null || state2 == null)
+        {
+            return false;
+        }
+
+        if (state1 == state2)
+        {
+            return true;
+        }
+
+        var orientationProperties = new Property<?>[] {
+                Properties.FACING, //pistons
+                Properties.BLOCK_HALF, //stairs, trapdoors
+                Properties.HOPPER_FACING,
+                Properties.DOOR_HINGE,
+                Properties.HORIZONTAL_FACING, //small dripleaf
+                Properties.AXIS, //logs
+                Properties.SLAB_TYPE,
+                Properties.VERTICAL_DIRECTION,
+                Properties.ROTATION, //banners
+                Properties.HANGING, //lanterns
+                Properties.BLOCK_FACE, //lever
+                Properties.ATTACHMENT, //bell (double-check for single-wall / double-wall)
+                //Properties.HORIZONTAL_AXIS, //Nether portals, though they aren't directly placeable
+                //Properties.ORIENTATION, //jigsaw blocks
+        };
+
+        for (var property : orientationProperties)
+        {
+            boolean hasProperty1 = state1.contains(property);
+            boolean hasProperty2 = state2.contains(property);
+
+            if (hasProperty1 != hasProperty2)
+                return false;
+            if (!hasProperty1)
+                continue;
+
+            if (state1.get(property) != state2.get(property))
+                return false;
+        }
+
+        //Other properties are considered as matching
+        return true;
+    }
+
+    private static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    {
+        final var updatedHitResult = new BlockHitResult(hitVecIn, direction, pos, false);
+        final var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
+        final var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
+        return isMatchingStateRestrictedProtocol(attemptState, stateSchematic);
+    }
+
+    public static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    {
+        var block = stateSchematic.getBlock();
+        if (block instanceof AbstractTorchBlock) //Torch, Soul Torch, Redstone Torch
+        {
+            boolean isOnWall = block instanceof WallTorchBlock || block instanceof WallRedstoneTorchBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractBannerBlock)
+        {
+            boolean isOnWall = block instanceof WallBannerBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractSignBlock)
+        {
+            boolean isOnWall = block instanceof WallSignBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractSkullBlock) //Wither Skull, Player Skull
+        {
+            boolean isOnWall = block instanceof WallSkullBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+
+        return Direction.stream()
+                .filter(direction -> isMatchingStateRestrictedProtocol(pos, stateSchematic, direction, hitVecIn, mc, hand))
+                .findAny()
+                .map(direction -> Triple.of(pos, direction, hitVecIn))
+                .orElse(null);
+    }
+
+    private static Triple<BlockPos, Direction, Vec3d> getWallPlaceableOrientation(BlockPos pos, BlockState stateSchematic, Vec3d hitVecOut, MinecraftClient mc, Hand hand, boolean isOnWall) {
+        Direction sideOut;
+        BlockPos posOrig = pos;
+
+        if (isOnWall)
+        {
+            if (!stateSchematic.contains(Properties.HORIZONTAL_FACING))
+            {
+                //Shouldn't happen, fail instead of crashing just in case
+                return null;
+            }
+
+            sideOut = stateSchematic.get(Properties.HORIZONTAL_FACING);
+            pos = pos.offset(sideOut.getOpposite());
+        }
+        else
+        {
+            sideOut = Direction.UP;
+            pos = pos.down();
+        }
+        BlockState stateFacing = mc.world.getBlockState(pos);
+
+        if (stateFacing == null || stateFacing.isAir())
+            return null;
+
+        //Check for blocks that have rotation property (Banners, Signs, Skulls)
+        if (stateSchematic.contains(Properties.ROTATION))
+        {
+            if (!isMatchingStateRestrictedProtocol(posOrig, stateSchematic, sideOut, hitVecOut, mc, hand))
+                return null;
+        }
+
+        return Triple.of(pos, sideOut, hitVecOut);
+    }
 
     public static ActionResult checkEasyPlaceFluidBucket(MinecraftClient mc) {
         //Re-run traces to stop wasting liquid on liquid, and ignoring easyPlaceFirst config, as interactItem works differently

@@ -458,8 +458,7 @@ public class AddonUtils {
 
         if (val == null) {
             try {
-                //String name = "method_9534"; //onUse
-                String name = "onUse"; //onUse
+                String name = "method_9534"; //onUse
                 Method method = block.getClass().getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
                 Method baseMethod = Block.class.getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
                 val = !method.equals(baseMethod);

@@ -4,17 +4,14 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectInputFilter;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.entity.SignText;
-import net.minecraft.block.enums.Attachment;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
 import net.minecraft.block.enums.SlabType;
@@ -30,7 +27,6 @@ import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.state.property.DirectionProperty;
-import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePlacementData;
@@ -68,14 +64,11 @@ import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper;
 import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper.HitType;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.litematica.world.WorldSchematic;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
 public class WorldUtils
 {
     private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
     private static long easyPlaceNextSwap = 0;
-    private static final HashMap<Block, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
     private static boolean easyPlaceShowFailMessage;
     private static final Property<?>[] CHECKED_PROPERTIES = new Property<?>[] {
             Properties.NOTE,
@@ -525,7 +518,7 @@ public class WorldUtils
             if (stack.isEmpty() == false)
             {
                 boolean mayPlace = false;
-                
+
                 if (ignoreEnderChest || ignoreShulkerBox)
                 {
                     final Block blockInHand = Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem());
@@ -548,7 +541,7 @@ public class WorldUtils
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
-                final boolean hasUseAction = hasUseAction(stateSchematic.getBlock());
+                final boolean hasUseAction = AddonUtils.hasUseAction(stateSchematic.getBlock());
 
                 // Abort if there is already a block in the target position
                 ActionResult actionResult = easyPlaceBlockChecksCancel(stateSchematic, stateClient, mc.player, traceVanilla, stack, hasUseAction);
@@ -638,31 +631,25 @@ public class WorldUtils
                                 hitPos = hit;
                                 sideOrig = sideVanilla;
                             }
-                            else
-                            {
-                                if (stack.getItem() instanceof BucketItem)
-                                {
-                                    //Bucket can't be placed floating
-                                    return ActionResult.FAIL;
-                                }
-                            }
                         }
                     }
                 }
 
                 if (stack.getItem() instanceof BucketItem)
                 {
-                    mc.interactionManager.interactItem(mc.player, hand);
+                    ActionResult result = AddonUtils.checkEasyPlaceFluidBucket(mc);
+                    if (result == ActionResult.SUCCESS)
+                        mc.interactionManager.interactItem(mc.player, hand);
+                    return result;
+
                     // swing hand fix, see MinecraftClient#doItemUse
                     if (Configs.Generic.EASY_PLACE_SWING_HAND.getBooleanValue())
                     {
                         mc.player.swingHand(hand);
                     }
-                    return ActionResult.SUCCESS;
                 }
 
                 Direction side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
-
                 // Support for special cases
                 PlacementProtocolData placementData = applyPlacementProtocolAll(pos, stateSchematic, hitPos);
                 if (placementData.mustFail)
@@ -708,7 +695,7 @@ public class WorldUtils
                         hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
                         if (stateSchematic.contains(Properties.SLAB_TYPE) == false)
                         {
-                            var changedHitResult = applyRestrictedProtocol(pos, stateSchematic, side, hitPos, mc, hand);
+                            var changedHitResult = AddonUtils.applyRestrictedProtocol(pos, stateSchematic, sideOut, hitPos, mc, hand);
                             if (changedHitResult == null)
                             {
                                 if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
@@ -970,70 +957,6 @@ public class WorldUtils
         return newY != hitVecIn.y ? new Vec3d(hitVecIn.x, newY, hitVecIn.z) : hitVecIn;
     }
 
-    private static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
-    {
-        if (state1 == null || state2 == null)
-        {
-            return false;
-        }
-
-        if (state1 == state2)
-        {
-            return true;
-        }
-
-        var orientationProperties = new Property<?>[] {
-                Properties.FACING, //pistons
-                Properties.BLOCK_HALF, //stairs, trapdoors
-                Properties.HOPPER_FACING,
-                Properties.DOOR_HINGE,
-                Properties.HORIZONTAL_FACING, //small dripleaf
-                Properties.AXIS, //logs
-                Properties.SLAB_TYPE,
-                Properties.VERTICAL_DIRECTION,
-                Properties.ROTATION, //banners
-                Properties.HANGING, //lanterns
-                Properties.BLOCK_FACE, //lever
-                Properties.ATTACHMENT, //bell (double-check for single-wall / double-wall)
-                //Properties.HORIZONTAL_AXIS, //Nether portals, though they aren't directly placeable
-                //Properties.ORIENTATION, //jigsaw blocks
-        };
-
-        for (var property : orientationProperties)
-        {
-            boolean hasProperty1 = state1.contains(property);
-            boolean hasProperty2 = state2.contains(property);
-
-            if (hasProperty1 != hasProperty2)
-                return false;
-            if (!hasProperty1)
-                continue;
-
-            if (state1.get(property) != state2.get(property))
-                return false;
-        }
-
-        //Other properties are considered as matching
-        return true;
-    }
-
-    private static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
-    {
-        final var updatedHitResult = new BlockHitResult(hitVecIn, direction, pos, false);
-        final var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
-        final var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
-        return isMatchingStateRestrictedProtocol(attemptState, stateSchematic);
-    }
-
-    private static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
-    {
-        return Direction.stream()
-                .filter(direction -> isMatchingStateRestrictedProtocol(pos, stateSchematic, direction, hitVecIn, mc, hand))
-                .findAny()
-                .map(direction -> Triple.of(pos, direction, hitVecIn))
-                .orElse(null);
-    }
-
     public static <T extends Comparable<T>> Vec3d applyPlacementProtocolV3(BlockPos pos, BlockState state, Vec3d hitVecIn)
     {
         Collection<Property<?>> props = state.getBlock().getStateManager().getProperties();
@@ -1193,6 +1116,14 @@ public class WorldUtils
         if (stack.isEmpty())
         {
             return false;
+        }
+
+        // Check for placing fluid on fluid
+        if (stack.getItem() instanceof BucketItem)
+        {
+            ActionResult result = AddonUtils.checkEasyPlaceFluidBucket(mc);
+            if (result != ActionResult.SUCCESS)
+                return true;
         }
 
         if (trace != null && trace.getType() == HitResult.Type.BLOCK)
@@ -1532,29 +1463,4 @@ public class WorldUtils
         }
     }
 
-    private static boolean hasUseAction(Block block)
-    {
-        Boolean val = HAS_USE_ACTION_CACHE.get(block);
-
-        if (val == null)
-        {
-            try
-            {
-                //String name = "method_55766"; //AbstractBlock.onUse
-                String name = "onUse"; //AbstractBlock.onUse
-                Method method = block.getClass().getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, BlockHitResult.class);
-                Method baseMethod = Block.class.getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, BlockHitResult.class);
-                val = method.equals(baseMethod) == false;
-            }
-            catch (Exception e)
-            {
-                Litematica.logger.warn("WorldUtils: Failed to reflect method Block::onUse", e);
-                val = false;
-            }
-
-            HAS_USE_ACTION_CACHE.put(block, val);
-        }
-
-        return val;
-    }
 }

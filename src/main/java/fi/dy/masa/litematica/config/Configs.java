@@ -371,7 +371,7 @@ public class Configs implements IConfigHandler
         DataManager.setToolItem(Generic.TOOL_ITEM.getStringValue());
         InventoryUtils.setPickBlockableSlots(Generic.PICK_BLOCKABLE_SLOTS.getStringValue());
 
-        InventoryUtils.setSubstitutions(Generic.SUBSTITUTIONS.getStrings());
+        AddonUtils.setSubstitutions(Generic.SUBSTITUTIONS.getStrings());
     }
 
     public static void saveToFile()

@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-import fi.dy.masa.litematica.util.InventoryUtils;
+import fi.dy.masa.litematica.util.AddonUtils;
 import fi.dy.masa.litematica.util.OverlayType;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
@@ -946,7 +946,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     {
         BlockPos pos = new BlockPos(x, y, z);
 
-        OverlayType overlayType = InventoryUtils.getOverlayType(stateSchematic, stateClient);
+        OverlayType overlayType = AddonUtils.getOverlayType(stateSchematic, stateClient);
 
         if (overlayType == OverlayType.NONE)
         {

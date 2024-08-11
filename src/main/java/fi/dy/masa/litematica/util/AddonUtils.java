@@ -3,7 +3,10 @@ package fi.dy.masa.litematica.util;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
+import fi.dy.masa.malilib.util.InventoryUtils;
+
 import net.minecraft.block.AbstractBannerBlock;
+import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.AbstractSignBlock;
 import net.minecraft.block.AbstractSkullBlock;
 import net.minecraft.block.AbstractTorchBlock;
@@ -38,7 +41,6 @@ import net.minecraft.world.World;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Triple;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,9 +49,9 @@ import java.util.List;
 
 public class AddonUtils {
     private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
-    private static final HashMap<Block, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
+    private static final HashMap<AbstractBlock, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
 
-    private static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
+    public static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
     {
         if (state1 == null || state2 == null)
         {
@@ -96,7 +98,7 @@ public class AddonUtils {
         return true;
     }
 
-    private static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    public static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
     {
         final var updatedHitResult = new BlockHitResult(hitVecIn, direction, pos, false);
         final var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
@@ -173,7 +175,7 @@ public class AddonUtils {
     public static ActionResult checkEasyPlaceFluidBucket(MinecraftClient mc) {
         //Re-run traces to stop wasting liquid on liquid, and ignoring easyPlaceFirst config, as interactItem works differently
 
-        final double traceMaxRange = mc.interactionManager.getReachDistance();
+        final double traceMaxRange = mc.player.getBlockInteractionRange();
         final World world = SchematicWorldHandler.getSchematicWorld();
 
         //Raytrace first non-liquid block
@@ -261,7 +263,7 @@ public class AddonUtils {
 
                 ItemStack stackSlot = inventory.getStack(slotNum >= 36 ? slotNum - 36 : slotNum);
 
-                if (ItemStack.canCombine(stackHand, stackSlot))
+                if (InventoryUtils.areStacksEqualIgnoreNbt(stackHand, stackSlot))
                 {
                     if (hand == Hand.OFF_HAND)
                     {
@@ -433,7 +435,7 @@ public class AddonUtils {
                     continue;
                 }
 
-                if (ItemStack.canCombine(match, slotStack)) {
+                if (InventoryUtils.areStacksEqualIgnoreNbt(match, slotStack)) {
                     if (partialSlot == -1 || slotStackCount < partialSlotCount) {
                         partialSlot = destSlot;
                         partialSlotCount = slotStack.getCount();

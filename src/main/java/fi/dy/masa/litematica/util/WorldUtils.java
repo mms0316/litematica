@@ -639,14 +639,15 @@ public class WorldUtils
                 {
                     ActionResult result = AddonUtils.checkEasyPlaceFluidBucket(mc);
                     if (result == ActionResult.SUCCESS)
-                        mc.interactionManager.interactItem(mc.player, hand);
-                    return result;
-
-                    // swing hand fix, see MinecraftClient#doItemUse
-                    if (Configs.Generic.EASY_PLACE_SWING_HAND.getBooleanValue())
                     {
-                        mc.player.swingHand(hand);
+                        mc.interactionManager.interactItem(mc.player, hand);
+                        // swing hand fix, see MinecraftClient#doItemUse
+                        if (result.shouldSwingHand() && Configs.Generic.EASY_PLACE_SWING_HAND.getBooleanValue())
+                        {
+                            mc.player.swingHand(hand);
+                        }
                     }
+                    return result;
                 }
 
                 Direction side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
@@ -668,7 +669,7 @@ public class WorldUtils
                         //Check for blocks that have rotation property (Banners, Signs, Skulls)
                         if (stateSchematic.contains(Properties.ROTATION))
                         {
-                            if (!isMatchingStateRestrictedProtocol(pos, stateSchematic, side, hitPos, mc, hand))
+                            if (!AddonUtils.isMatchingStateRestrictedProtocol(pos, stateSchematic, side, hitPos, mc, hand))
                                 return ActionResult.FAIL;
                         }
                     }
@@ -695,7 +696,7 @@ public class WorldUtils
                         hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
                         if (stateSchematic.contains(Properties.SLAB_TYPE) == false)
                         {
-                            var changedHitResult = AddonUtils.applyRestrictedProtocol(pos, stateSchematic, sideOut, hitPos, mc, hand);
+                            var changedHitResult = AddonUtils.applyRestrictedProtocol(pos, stateSchematic, side, hitPos, mc, hand);
                             if (changedHitResult == null)
                             {
                                 if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())

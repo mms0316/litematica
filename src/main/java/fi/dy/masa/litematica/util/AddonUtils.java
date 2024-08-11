@@ -455,18 +455,21 @@ public class AddonUtils {
         }
     }
 
-    public static boolean hasUseAction(Block block) {
+    public static boolean hasUseAction(AbstractBlock block) {
         Boolean val = HAS_USE_ACTION_CACHE.get(block);
 
         if (val == null) {
+            val = false;
             try {
-                String name = "method_9534"; //onUse
-                Method method = block.getClass().getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
-                Method baseMethod = Block.class.getMethod(name, BlockState.class, World.class, BlockPos.class, PlayerEntity.class, Hand.class, BlockHitResult.class);
-                val = !method.equals(baseMethod);
+                var methods = block.getClass().getDeclaredMethods();
+                for (var method : methods) {
+                    if (method.getName().equals("method_55766")) {
+                        val = !(method.getDeclaringClass().equals(AbstractBlock.class));
+                        break;
+                    }
+                }
             } catch (Exception e) {
-                Litematica.logger.warn("WorldUtils: Failed to reflect method Block::onUse", e);
-                val = false;
+                Litematica.logger.warn("AddonUtils: Failed to reflect method AbstractBlock::onUse", e);
             }
 
             HAS_USE_ACTION_CACHE.put(block, val);

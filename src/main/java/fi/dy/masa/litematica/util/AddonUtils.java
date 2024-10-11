@@ -13,6 +13,7 @@ import net.minecraft.block.AbstractTorchBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidBlock;
+import net.minecraft.block.MultifaceGrowthBlock;
 import net.minecraft.block.WallBannerBlock;
 import net.minecraft.block.WallRedstoneTorchBlock;
 import net.minecraft.block.WallSignBlock;
@@ -128,6 +129,24 @@ public class AddonUtils {
         {
             boolean isOnWall = block instanceof WallSkullBlock;
             return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+        else if (block instanceof MultifaceGrowthBlock) //Sculk Vein, Glow Lichen
+        {
+            final var clientState = mc.world.getBlockState(pos);
+            final boolean isSameClass = clientState.getBlock().getClass().equals(block.getClass());
+
+            Direction direction = sideIn.getOpposite();
+            if (isSameClass && MultifaceGrowthBlock.hasDirection(clientState, direction))
+                // This direction is already placed.
+                return null;
+
+            final var posSupport = pos.offset(direction);
+
+            // Check if supporting block exists
+            if (!MultifaceGrowthBlock.canGrowOn(mc.world, direction, pos, mc.world.getBlockState(posSupport)))
+                return null;
+
+            return Triple.of(posSupport, sideIn, hitVecIn);
         }
 
         return Direction.stream()

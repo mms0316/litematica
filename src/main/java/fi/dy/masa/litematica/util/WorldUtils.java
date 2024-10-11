@@ -1184,6 +1184,18 @@ public class WorldUtils
                     return true;
             }
 
+            // Sculk Vein and Glow Lichen
+            if (schematicBlock instanceof MultifaceGrowthBlock)
+            {
+                final var property =  MultifaceGrowthBlock.getProperty(blockHitResult.getSide().getOpposite());
+                if (!stateSchematic.get(property))
+                    return true;
+
+                if (stateClient.getBlock().getClass().equals(schematicBlock.getClass()) && stateClient.get(property))
+                    // Already placed, so restrict it. Otherwise, block would grow to random direction
+                    return true;
+            }
+
             // Orientation is wrong
             BlockState attemptState = schematicBlock.getPlacementState(ctx);
             return !isMatchingStatePlacementRestriction (attemptState, stateSchematic);

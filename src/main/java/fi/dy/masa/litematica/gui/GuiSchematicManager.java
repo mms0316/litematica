@@ -474,6 +474,7 @@ public class GuiSchematicManager extends GuiSchematicBrowserBase implements ISel
     public enum ExportType implements IConfigOptionListEntry
     {
         SCHEMATIC   ("Schematic"),
+        V6_LITEMATIC("V6 (1.20.4) Litematic"),
         VANILLA     ("Vanilla Structure");
 
         private final String displayName;

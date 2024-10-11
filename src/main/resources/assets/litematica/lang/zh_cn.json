@@ -64,7 +64,9 @@
     "litematica.config.generic.name.signTextPaste": "告示牌文本",
     "litematica.config.generic.name.toolItem": "工具",
     "litematica.config.generic.name.toolItemEnabled": "启用工具项目",
+    "litematica.config.generic.name.toolItemComponents": "toolItemComponents",
     "litematica.config.generic.name.unhideSchematicVCS": "不隐藏原琛�版本控制系�,
+
     "litematica.config.visuals.name.enableAreaSelectionBoxesRendering": "选区边桐�用刍�",
     "litematica.config.visuals.name.enablePlacementBoxesRendering": "投影边桐�用刍�",
     "litematica.config.visuals.name.enableRendering": "开启全部渲�,
@@ -98,6 +100,7 @@
     "litematica.config.visuals.name.schematicOverlayTypeWrongBlock": "原理图透觔�误",
     "litematica.config.visuals.name.schematicOverlayTypeWrongState": "原理图透觔��,
     "litematica.config.visuals.name.schematicVerifierUseBlockModels": "原理图验证图�,
+
     "litematica.config.info_overlays.name.blockInfoLinesAlignment": "方块提示位置",
     "litematica.config.info_overlays.name.blockInfoOverlayAlignment": "方块信息位置",
     "litematica.config.info_overlays.name.infoHudAlignment": "材料 HUD 位置",
@@ -124,6 +127,7 @@
     "litematica.config.info_overlays.name.verifierErrorHilightMaxPositions": "验诔�误方块上限",
     "litematica.config.info_overlays.name.verifierOverlayEnabled": "原理图验证渲�,
     "litematica.config.info_overlays.name.warnDisabledRendering": "关闭告警信息",
+
     "litematica.config.colors.name.areaSelectionBoxSideColor": "选区边桢�色",
     "litematica.config.colors.name.hightlightBlockInInventoryColor": "高亮显示颜色",
     "litematica.config.colors.name.materialListHudItemCountsColor": "材料数量颜色",
@@ -134,6 +138,7 @@
     "litematica.config.colors.name.schematicOverlayColorMissing": "缺失方块颜色",
     "litematica.config.colors.name.schematicOverlayColorWrongBlock": "错误方块颜色",
     "litematica.config.colors.name.schematicOverlayColorWrongState": "错误方向颜色",
+
     "litematica.config.hotkeys.name.addSelectionBox": "添�选区",
     "litematica.config.hotkeys.name.cloneSelection": "克隆选区",
     "litematica.config.hotkeys.name.deleteSelectionBox": "�除选区",
@@ -176,7 +181,7 @@
     "litematica.config.hotkeys.name.schematicEditReplaceBlock": "替换其他方�,
     "litematica.config.hotkeys.name.schematicEditReplaceDirection": "同方块线性替换",
     "litematica.config.hotkeys.name.schematicPlacementRotation": "原理图放置旋转",
-    "litematica.config.hotkeys.name.schematicPlacementMirror":"原理图放置镜像",
+    "litematica.config.hotkeys.name.schematicPlacementMirror": "原理图放置镜像",
     "litematica.config.hotkeys.name.schematicVersionCycleModifier": "投影版本选择",
     "litematica.config.hotkeys.name.schematicVersionCycleNext": "下一个投影版本",
     "litematica.config.hotkeys.name.schematicVersionCyclePrevious": "上一个投影版本",
@@ -209,6 +214,7 @@
     "litematica.config.hotkeys.name.toolSelectModifierBlock1": "主方块选择",
     "litematica.config.hotkeys.name.toolSelectModifierBlock2": "副方块选择",
     "litematica.config.hotkeys.name.unloadCurrentSchematic": "卸载投影",
+
     "litematica.config.generic.comment.easyPlaceProtocolVersion": "要使用皀�精确放置协议”类型�n- auto �在单人游戏中使用 v3�在多人游戏中默认份�用Slabs only�\n除非服务器发送�有“carpet:hello”数据匚� Carpet 模综�在这种情况下，该服务器上使用 v2�n- Version 3�仔� Litematica 本身�在单人游戏中�� Servux 支持�n- Version 2�与��Carpet 模块的服务器兼容\nkyrising �DeadlyMC �QuickCarpet�\n�FabricCarpet 之外的 CarpetExtra�n并且在这两种情况下，�需要在服务器上启用“accurateBlockPlacement”Carpet 觉�n- Slabs only�仿�复顶部半�。�Paper 服务器兼容�n- 旚不修改坐�,
     "litematica.config.generic.comment.pasteNbtRestoreBehavior": "需要用何种方法尝试恢复方�NBT 数据\n- Place & Data Modify�会把带 NBT 皖�块放在玩家陿�后 \n  用 data modify 挻�转换这些用 setblock 放皖��\n- Place & Clone�会尝试放置带 NBT 方块在玩家陿�然�\n  用 clone 挻�复制到最终位置 \n- Teleport & Place�会尝�tp 到陿�位置然后直接在 \n  正确皽�置放下带 NBT 方�\n请注�Teleport & Place 方法现在不太好用甚�完�用不亀\n建议皖�法是 Place & Data Modify�然而要让这种方法生�\n得降低粘贴命令限制到 1/tick 并尲�贴间隔增加到  \n1-4 个 tick 或耰��皻�么东西 \n�此�只应当用这种方法粘贴需要迁移数据皇�要方块�\n例如，做二�含库存�容皎�琛�\n然后在替换�被设置为 None 皗�候粘贴原理图�,
     "litematica.config.generic.comment.pasteReplaceBehavior": "在粘贴原理图工具模式中替换现有块皖��,
@@ -274,7 +280,9 @@
     "litematica.config.generic.comment.signTextPaste": "该功�能在原理图皦��层显示投影中告示牌的冮�\n§d这�就不用背亍�~",
     "litematica.config.generic.comment.toolItem": "作为用于选择皷�具�虽然默认是木棍\n�§3佘�其实�想拿末影龙头也是可以�hh§r,
     "litematica.config.generic.comment.toolItemEnabled": "如果启用该选项�那么�可以使用工具进行操作\n如果�关亚�话，那宰�是一根朴�皜�棍\n§6如果�没有改默认工具皯�——ZMDF§r",
+    "litematica.config.generic.comment.toolItemComponents": "A Data Components-aware version of toolItem.\nSet to \"empty\" to disable.\nThe syntax accepted is the same as the \"/give\" command.",
     "litematica.config.generic.comment.unhideSchematicVCS": "取消隐�Schematic VCS�版本控制系统）菜单按钮�\n并启用热键�VCS 功�。（这之前被称为原理图项目。）\n\n一般来说��不应该使用这个功�\n除非�真的知道官�如何工作的�n宜�一定程度上改变二�域选择、放置和粘贴皷�作方式，\n特别是在粘贴时还存在一个区域删除操作�n\n基本上，这个功�是为更新、修改原理图而设计皼�\n�许�更容易地为同一版本原理图创建多个版本/快照�\n也可以通��除当前版本�\n然后粘贴下一个版本来在不同版本之间刍��,
+
     "litematica.config.visuals.comment.enableAreaSelectionBoxesRendering": "该选项可以刍�是否显示选区皾��,
     "litematica.config.visuals.comment.enablePlacementBoxesRendering": "该选项可以刍�是否显示投影区域的边�,
     "litematica.config.visuals.comment.enableRendering": "主渲染�换选项�该选项可刍�所有渲染是否开启",
@@ -308,6 +316,7 @@
     "litematica.config.visuals.comment.schematicOverlayTypeWrongBlock": "当开启于�琛�透觐���闭该选项尸��显示错误皖��,
     "litematica.config.visuals.comment.schematicOverlayTypeWrongState": "当开启于�琛�透觐���闭该选项尸��显示错位的方�,
     "litematica.config.visuals.comment.schematicVerifierUseBlockModels": "当�使用原理图验证的时候，如果�开启亯�选项�\n那么原琛�验证界面当中�只会存在断�，而并非方块贴图",
+
     "litematica.config.info_overlays.comment.blockInfoLinesAlignment": "方块信息弹窗的显示位置",
     "litematica.config.info_overlays.comment.blockInfoOverlayAlignment": "方块信息在屏幕位置谕�皀�项",
     "litematica.config.info_overlays.comment.infoHudAlignment": "材料信息位置皰��\n��实和材料有��HUD 显示都是这玩意�,
@@ -334,6 +343,7 @@
     "litematica.config.info_overlays.comment.verifierErrorHilightMaxPositions": "在打开原理图验证程序对当前放置进行验证后�\n点击验证当中出现问题的方块，\n错误皖�块在透觊�态下的最大数量显示",
     "litematica.config.info_overlays.comment.verifierOverlayEnabled": "启用原理图验证渲�,
     "litematica.config.info_overlays.comment.warnDisabledRendering": "当加载一个新皤�意图或�建一个新皽�置时�\n是否应该显示关于该层的一些警告消�",
+
     "litematica.config.colors.comment.areaSelectionBoxSideColor": "选区未被选中时边桚�颜色",
     "litematica.config.colors.comment.hightlightBlockInInventoryColor": "在物品�中高亮显示目栖�块的颜色",
     "litematica.config.colors.comment.materialListHudItemCountsColor": "材料列表开启 HUD 后的游戏�材料数量的颜色",
@@ -344,6 +354,7 @@
     "litematica.config.colors.comment.schematicOverlayColorMissing": "缺失方块在投影冘�示皢�色",
     "litematica.config.colors.comment.schematicOverlayColorWrongBlock": "错误方块在投影冘�示皢�色",
     "litematica.config.colors.comment.schematicOverlayColorWrongState": "方块方向错误在投影冘�示皢�色",
+
     "litematica.config.hotkeys.comment.addSelectionBox": "在当前位置添�一个新皀�区�位置 1,
     "litematica.config.hotkeys.comment.cloneSelection": "快速�隽�前选定的区域，基本上是创建亸�个储存中皤�意图\n然后在当前位置创建一个示意图并选择宼�并尷�具模式�换为粘贴�,
     "litematica.config.hotkeys.comment.deleteSelectionBox": "�除当前选区",
@@ -419,11 +430,13 @@
     "litematica.config.hotkeys.comment.toolSelectModifierBlock1": "按住该键时按下§6区域选择§f\n选择要在某些工具模式中使用皸�要块类型\n�§4适用于替换填六�功能§r,
     "litematica.config.hotkeys.comment.toolSelectModifierBlock2": "按住该键时按下§6区域选择§f\n选择要在某些工具模式中使用皾��块类型\n�§4适用于替换填六�功能§r,
     "litematica.config.hotkeys.comment.unloadCurrentSchematic": "卸载当前锁定帱�皎�琛��从而也删除从中创建皉�有帱�",
+
     "litematica.config.generic.prettyName.pickBlockEnabled": "方块抓取启用",
     "litematica.config.generic.prettyName.easyPlaceMode": "简单放置模�,
     "litematica.config.generic.prettyName.placementRestriction": "放置位置限制",
     "litematica.config.generic.prettyName.signTextPaste": "告示牌文本",
     "litematica.config.generic.prettyName.toolItemEnabled": "启用工具项目",
+
     "litematica.config.visuals.prettyName.enableAreaSelectionBoxesRendering": "选区边桐�用刍�",
     "litematica.config.visuals.prettyName.enablePlacementBoxesRendering": "投影边桐�用刍�",
     "litematica.config.visuals.prettyName.enableRendering": "开启全部渲�,
@@ -434,9 +447,12 @@
     "litematica.config.visuals.prettyName.schematicOverlayEnableOutlines": "渲染桺�",
     "litematica.config.visuals.prettyName.schematicOverlayEnableResorting": "启用原理图覛�重新排�,
     "litematica.config.visuals.prettyName.schematicOverlayEnableSides": "渲染块面",
+
     "litematica.config.info_overlays.prettyName.blockInfoOverlayEnabled": "方块提示启用",
     "litematica.config.info_overlays.prettyName.verifierOverlayEnabled": "原理图验证渲�,
+
     "litematica.config.hotkeys.prettyName.toggleAllRendering": "全部渲�,
+
     "litematica.error.area_selection.copy_failed": "�法复制选区",
     "litematica.error.area_selection.create_failed": "�法�建一个名为�s”的新选区斻��因为斻�已存在",
     "litematica.error.area_selection.failed_to_load": "�法加载选区",
@@ -444,37 +460,48 @@
     "litematica.error.area_selection.no_placement_selected": "没有选中放置皊�影,
     "litematica.error.area_selection.rename.already_exists": "错误�已经存在一个斻�名为�s”的区�,
     "litematica.error.area_selection.rename.invalid_safe_file_name": "生�皖�件名为�s”的安�斻���,
+
     "litematica.error.duplicate_schematic_placement": "错误�尝试添�一个已经存在皊�影放置",
     "litematica.error.generic.creative_mode_only": "这个行为仜�创�模式中可用",
     "litematica.error.generic.failed_to_delete_file": "�法删除斻��s�,
     "litematica.error.generic.failed_to_sort_list_of_ignored_states": "�法对忽略状态�表进行排�,
     "litematica.error.generic.schematic_world_not_loaded": "原理图世界未被�载",
+
     "litematica.error.area_editor.create_sub_region.exists": "名为'%s' 子区域已经存在",
     "litematica.error.area_editor.no_selection": "�活动区域的选择",
     "litematica.error.area_editor.open_gui.no_selection": "当前夺�选择模式：Normal�佽�前未选择任何区�,
     "litematica.error.area_editor.rename_sub_region.exists": "重命名子区域失败\n已存在子区域名字为 '%s'",
     "litematica.error.area_editor.switch_mode.no_selection": "�法�换到选择模式：Normal�因为当前没有选择区�\n请在区域选择浏览器中选择一个区域�创建一个新皀�择",
+
+    "litematica.error.schematic_conversion.litematic_to_litematica.failed_to_downgrade_litematic": "Failed to downgrade the Litematica Schematic",
     "litematica.error.schematic_conversion.litematic_to_litematica.failed_to_read_litematic": "無法載� Litematica 原理�,
     "litematica.error.schematic_conversion.schematic_to_litematica.failed_to_create_schematic": "创建litematica原理图失败",
     "litematica.error.schematic_conversion.schematic_to_litematica.failed_to_read_schematic": "�载原理图失败",
     "litematica.error.schematic_conversion.structure_to_litematica_failed": "�法尻�构转换为litematica原理图",
+
     "litematica.error.schematic.create.no_selections": "没有选择任何有效的区�,
+
     "litematica.error.schematic_load.cant_read_file": "�法读取原琛�斻� '%s' (不存在或权限问�",
     "litematica.error.schematic_load.no_schematic_selected": "未选择原理图斻�",
     "litematica.error.schematic_load.no_schematic_version_information": "该原理图没有版本信息�无法安��载",
     "litematica.error.schematic_load.unsupported_schematic_version": "不支持的或尝�版本皎�琛� '%d'",
     "litematica.error.schematic_load.unsupported_type": "未知或不支持的斻�类�'%s'",
+
     "litematica.error.schematic_manager.schematic_export.unsupported_type": "只能以其他�式导出Litematica原理图",
     "litematica.error.schematic_manager.schematic_import.unsupported_type": "所选的原理图类型不支持导入",
+
     "litematica.error.schematic_placements.remove_fail_locked": "位置已锁定\n- 按住SHIFT键强制�除",
+
     "litematica.error.schematic_save.directory_doesnt_exist": "没有这�皛�� '%s'",
     "litematica.error.schematic_save.file_already_exists": "斻�'%s' 已经存在",
     "litematica.error.schematic_save.invalid_directory": "�效目�'%s'",
     "litematica.error.schematic_save.invalid_schematic_name": "�效的原理图名称 '%s'",
     "litematica.error.schematic_save.schematic_creation_failed": "创建原理图失败",
+
     "litematica.error.schematic_read_from_file_failed.cant_read": "�法从文件 '%s'中读取原琛�",
     "litematica.error.schematic_read_from_file_failed.exception": "从文件 '%s'中读取原琛�时出现异常",
     "litematica.error.schematic_read_from_file_failed.no_file": "�法从文件中读取原琛�: 没有可用皖�件 (in-memory schematic?)",
+
     "litematica.error.schematic_projects.empty_selection": "空白区域选择个子区域�,
     "litematica.error.schematic_projects.failed_to_load_project": "�载项目失败",
     "litematica.error.schematic_projects.failed_to_load_schematic": "�载当前版本皎�琛�失败",
@@ -486,16 +513,20 @@
     "litematica.error.schematic_projects.null_player": "player为空",
     "litematica.error.schematic_projects.project_already_exists": "项目'%s' 已经存在",
     "litematica.error.schematic_projects.save_already_in_progress": "正在保�,
+
     "litematica.error.schematic_write_to_file_failed.directory_creation_failed": "未能创建原理图目�'%s'",
     "litematica.error.schematic_write_to_file_failed.exception": "未能導�琛�写�斻� '%s' (exception)",
     "litematica.error.schematic_write_to_file_failed.exists": "未能尻�构写�斻� '%s', 斻�已存在",
     "litematica.error.structure_write_to_file_failed.exception": "未能尻�构写�斻� '%s' (exception)",
     "litematica.error.structure_write_to_file_failed.exists": "未能尻�构写�斻� '%s', 斻�已存在",
+
     "litematica.hotkeys.category.generic_hotkeys": "通用热键",
+
     "litematica.info.schematic_load.schematic_loaded": "原理图 '%s' 成功�载到冭�中",
     "litematica.info.schematic_manager.preview.right_click_to_cancel": "右键单�该按钮可取消挂起皢��操�,
     "litematica.info.schematic_manager.preview.set_preview_by_taking_a_screenshot": "使用普通屏幕截图键设置颧n或耏�键单�“设置颧�”按钮取消设置颧,
     "litematica.info.schematic_manager.preview.success": "已成功设置颧�图�,
+
     "litematica.gui.button.area_editor.analyze_area": "刞�区�,
     "litematica.gui.button.area_editor.change_corner_mode": "角点模式�s",
     "litematica.gui.button.area_editor.change_selection_mode": "选择模式�s",
@@ -504,11 +535,13 @@
     "litematica.gui.button.area_editor.origin_enabled": "手动来源�s",
     "litematica.gui.button.area_editor.set_box_name": "set",
     "litematica.gui.button.area_editor.set_selection_name": "set",
+
     "litematica.gui.button.area_selection_mode": "区域选择模式�s",
     "litematica.gui.button.area_selections.create_directory": "创建目�,
     "litematica.gui.button.area_selections.create_new_selection": "新选择",
     "litematica.gui.button.area_selections.create_selection_from_placement": "从位置",
     "litematica.gui.button.area_selections.unselect": "取消选择",
+
     "litematica.gui.button.change_menu.area_editor": "选区编辑器",
     "litematica.gui.button.change_menu.configuration_menu": "配置菜单",
     "litematica.gui.button.change_menu.load_schematics_to_memory": "�载原理图",
@@ -519,12 +552,14 @@
     "litematica.gui.button.change_menu.show_schematic_placements": "原理图编�,
     "litematica.gui.button.change_menu.task_manager": "任务管琙�",
     "litematica.gui.button.change_menu.to_main_menu": "投影菜单",
+
     "litematica.gui.button.config_gui.colors": "颜色",
     "litematica.gui.button.config_gui.generic": "通用",
     "litematica.gui.button.config_gui.hotkeys": "热键",
     "litematica.gui.button.config_gui.info_overlays": "信息覛�",
     "litematica.gui.button.config_gui.render_layers": "渲染�,
     "litematica.gui.button.config_gui.visuals": "觧,
+
     "litematica.gui.button.hover.area_editor.shift_for_in_memory": "按住shift创建一个仜�冭�中皎�琛�",
     "litematica.gui.button.hover.area_selections.unselect": "取消选择当前区域选择",
     "litematica.gui.button.hover.material_list.clear_cache": "渙�材料缓存\n通常这不应该需要做的\n这可以用来代替�除'material_cache.nbt'\n斻��以防缓存含有一些错误皕�据�\n如一些不应存在皉�品储存，如活塞头",
@@ -539,6 +574,7 @@
     "litematica.gui.button.hover.schematic_projects.move_origin_to_player": "尡�目原点移动到玩家当前位置\n这还会移动区域选择和放置",
     "litematica.gui.button.hover.schematic_projects.place_to_world_warning": "§6警告：这尜�一个之前放置或耿�存的\n§6一个版本皌�域里�删除/覛�当前世界里的方块\n§6�基本上是最后一次看到皀�有效区域选择”�,
     "litematica.gui.button.hover.schematic_projects.save_new_version": "尖�皎�琛�/版本保存到当前项目",
+
     "litematica.gui.button.material_list": "材料列表",
     "litematica.gui.button.material_list.clear_cache": "渙�缓�,
     "litematica.gui.button.material_list.clear_ignored": "渙�忽略",
@@ -548,19 +584,25 @@
     "litematica.gui.button.material_list.refresh_list": "刷新",
     "litematica.gui.button.material_list.toggle_info_hud": "信息 HUD: %s",
     "litematica.gui.button.material_list.write_to_file": "写�斻�",
+
     "litematica.gui.button.placement_sub.placement_configuration": "放置配置",
     "litematica.gui.button.placement_sub.reset_sub_region_placement": "重置子区�,
     "litematica.gui.button.placement_sub.slice_type": "刉�: %s",
+
     "litematica.gui.button.schematic_manager.export_as": "导出为 :",
+
     "litematica.gui.button.schematic_placement.abbr.rendering": "R",
+
     "litematica.gui.button.schematic_placement.ignore_entities": "忽略实� %s",
     "litematica.gui.button.schematic_placement.region_enabled": "区� %s",
     "litematica.gui.button.schematic_placement.reset_sub_region_placements": "重置所有子区�,
     "litematica.gui.button.schematic_placement.toggle_all_off": "全部 §c关闭§r",
     "litematica.gui.button.schematic_placement.toggle_all_on": "全部 §a开§r",
+
     "litematica.gui.button.schematic_placement.hover.enclosing_box": "尗�桑�现: %s",
     "litematica.gui.button.schematic_placement.hover.lock": "锁定位置可防止移动\n以其他方式更改�意外地)",
     "litematica.gui.button.schematic_placement.hover.rendering": "呈现: %s\n请注意，这有点奀�\n并且不会阻止实体呈现.\n通常�您应该完�禁用\n完�放置",
+
     "litematica.gui.button.schematic_placements.configure": "配置",
     "litematica.gui.button.schematic_placements.disable": "禁用",
     "litematica.gui.button.schematic_placements.locked": "已锁� %s",
@@ -568,6 +610,7 @@
     "litematica.gui.button.schematic_placements.remove": "�除",
     "litematica.gui.button.schematic_placements.rendering_enabled": "渲� %s",
     "litematica.gui.button.schematic_placements.select": "选择",
+
     "litematica.gui.button.schematic_projects.close_project": "关闭当前项目",
     "litematica.gui.button.schematic_projects.create_project": "创建项目",
     "litematica.gui.button.schematic_projects.delete_area": "�除区�,
@@ -578,6 +621,7 @@
     "litematica.gui.button.schematic_projects.open_project_browser": "项目浏览器",
     "litematica.gui.button.schematic_projects.place_to_world": "在世界上放置",
     "litematica.gui.button.schematic_projects.save_version": "保存版本",
+
     "litematica.gui.button.schematic_verifier.ignore": "忽略",
     "litematica.gui.button.schematic_verifier.range_type": "茛�: %s",
     "litematica.gui.button.schematic_verifier.reset_ignored": "重置被忽略",
@@ -586,6 +630,7 @@
     "litematica.gui.button.schematic_verifier.start": "开始验�,
     "litematica.gui.button.schematic_verifier.stop": "停止验�,
     "litematica.gui.button.schematic_verifier.toggle_info_hud": "信息HUD: %s",
+
     "litematica.gui.button.cancel": "取�,
     "litematica.gui.button.configure": "配置",
     "litematica.gui.button.copy": "复制",
@@ -612,6 +657,7 @@
     "litematica.gui.button.tool_mode": "工具模� %s",
     "litematica.gui.button.unload": "卸载",
     "litematica.gui.button.unlocked": "解�,
+
     "litematica.gui.label.area_editor.box_name": "子区域桐�称",
     "litematica.gui.label.area_editor.selection_name": "选择名称",
     "litematica.gui.label.area_editor.corner_1": "�",
@@ -621,20 +667,26 @@
     "litematica.gui.label.area_editor.pos1": "�",
     "litematica.gui.label.area_editor.pos2": "�",
     "litematica.gui.label.area_editor.sub_regions": "子区�(%s)",
+
     "litematica.gui.label.area_selection_manager.current_selection": "所选区� %s",
+
     "litematica.gui.label.area_selection_box_count": "桕�: %d",
     "litematica.gui.label.area_selection_origin": "原点: %s",
     "litematica.gui.label.area_selection.mode.normal": "正常",
     "litematica.gui.label.area_selection.mode.simple": "简�,
+
     "litematica.gui.label.block_info.state_client": "客户端世界皖�块信息",
     "litematica.gui.label.block_info.state_schematic": "原理图世界皖�块信息",
+
     "litematica.gui.label.block_info_list_type.all": "ALL",
     "litematica.gui.label.block_info_list_type.render_layers": "渲染�,
+
     "litematica.gui.label.easy_place_protocol.auto": "自动",
     "litematica.gui.label.easy_place_protocol.none": "关闭",
     "litematica.gui.label.easy_place_protocol.slabs_only": "仏�阶",
     "litematica.gui.label.easy_place_protocol.v2": "版本 2",
     "litematica.gui.label.easy_place_protocol.v3": "版本 3",
+
     "litematica.gui.label.data_fixer_mode.always": "總是",
     "litematica.gui.label.data_fixer_mode.below_1205": "僽�於 1.20.5",
     "litematica.gui.label.data_fixer_mode.below_120X": "僽�於 1.20.x",
@@ -644,12 +696,15 @@
     "litematica.gui.label.data_fixer_mode.below_113X": "僽�於 1.13.x",
     "litematica.gui.label.data_fixer_mode.below_112X": "僽�於 1.12.x",
     "litematica.gui.label.data_fixer_mode.never": "絕�,
+
     "litematica.gui.label.loaded_schematic.modified_on": "§6Modified on %s§r",
+
     "litematica.gui.label.material_list.abbr.shulker_box": "SB",
     "litematica.gui.label.material_list.title.available": "可用",
     "litematica.gui.label.material_list.title.item": "项目",
     "litematica.gui.label.material_list.title.missing": "缺�,
     "litematica.gui.label.material_list.title.total": "总计",
+
     "litematica.gui.label.material_list.multiplier": "倍数:",
     "litematica.gui.label.material_list.name": "名称",
     "litematica.gui.label.material_list.progress": "进度: %s",
@@ -657,20 +712,27 @@
     "litematica.gui.label.material_list.progress.mismatch": "不匹配的 %s",
     "litematica.gui.label.material_list.progress.missing": "缺�%s",
     "litematica.gui.label.material_list.total": "总计: %s 个物�,
+
     "litematica.gui.label.origin.auto": "自动",
     "litematica.gui.label.origin.manual": "手动",
+
     "litematica.gui.label.paste_nbt_behavior.none": "�",
     "litematica.gui.label.paste_nbt_behavior.place_data_modify": "放置 & /data modify",
     "litematica.gui.label.paste_nbt_behavior.place_clone": "放置 & /clone",
+
     "litematica.gui.label.placement_sub.region_name": "区域名: %s",
     "litematica.gui.label.placement_sub.region_position": "区域位置",
     "litematica.gui.label.placement_sub.region_size": "区域大� %s",
+
     "litematica.gui.label.placement_settings.placement_origin": "放置原点",
+
     "litematica.gui.label.render_layers.hotkey": "热键",
     "litematica.gui.label.render_layers.hover.hotkey": "下一个/上一个图层热键尽�响此边界\n如果两�被选中�那么热键尢�影响\n在最接近玩家皾��,
+
     "litematica.gui.label.replace_behavior.all": "所�,
     "litematica.gui.label.replace_behavior.none": "�",
     "litematica.gui.label.replace_behavior.with_non_air": "非空�,
+
     "litematica.gui.label.schematic_info.schematic_author": "原理图作� §f%s§r",
     "litematica.gui.label.schematic_info.description": "说�",
     "litematica.gui.label.schematic_info.enclosing_size": "桤��",
@@ -682,8 +744,10 @@
     "litematica.gui.label.schematic_info.total_blocks": "方块总数: §f%d§r",
     "litematica.gui.label.schematic_info.total_blocks_and_volume": "方�体积: §f%d§r/§f%d§r",
     "litematica.gui.label.schematic_info.total_volume": "总体积: §f%d§r 个方�,
+
     "litematica.gui.label.schematic_load.checkbox.create_placement": "创建放置",
     "litematica.gui.label.schematic_load.hoverinfo.create_placement": "立即创建新位置并选择该位置",
+
     "litematica.gui.label.schematic_placement.enclosing_size": "桰�寸: %s",
     "litematica.gui.label.schematic_placement.hoverinfo.hold_shift_to_create_as_disabled": "按住shift以在创建时禁用放置",
     "litematica.gui.label.schematic_placement.in_memory": "仙�冭,
@@ -693,14 +757,17 @@
     "litematica.gui.label.schematic_placement.schematic_name": "原理图: %s",
     "litematica.gui.label.schematic_placement.sub_region_count": "子区� %s",
     "litematica.gui.label.schematic_placement.sub_regions": "子区�(%s):",
+
     "litematica.gui.label.schematic_projects.currently_open_project": "当前打开皡�目: %s",
     "litematica.gui.label.schematic_projects.origin": "来�",
     "litematica.gui.label.schematic_projects.project": "项目:",
     "litematica.gui.label.schematic_projects.version": "版本: %s (of %s)",
     "litematica.gui.label.schematic_projects.version_entry": "请参� %d - %s",
     "litematica.gui.label.schematic_projects.version_name": "版本�",
+
     "litematica.gui.label.schematic_save.checkbox.ignore_entities": "忽略实�,
     "litematica.gui.label.schematic_save.hoverinfo.hold_shift_to_overwrite": "按住shift覛�现有文件",
+
     "litematica.gui.label.schematic_verifier.count": "数�,
     "litematica.gui.label.schematic_verifier.expected": "颜�",
     "litematica.gui.label.schematic_verifier.found": "找到",
@@ -714,6 +781,7 @@
     "litematica.gui.label.schematic_verifier.status.done_correct_total": "§a正确: %s§r, 总共: %s",
     "litematica.gui.label.schematic_verifier.status.verifying": "不可见的区� %s / %s",
     "litematica.gui.label.schematic_verifier.verifier": "原理图验证程�,
+
     "litematica.gui.label.task.title.remaining_chunks": "%s, 剩余区�(%s)",
     "litematica.gui.label.task_name.area_analyzer": "区域�析器",
     "litematica.gui.label.task_name.delete": "�除任务",
@@ -722,9 +790,11 @@
     "litematica.gui.label.task_name.paste": "粘贴原理图",
     "litematica.gui.label.task_name.save_schematic": "保存原琛�",
     "litematica.gui.label.task_name.verifier": "验证程�,
+
     "litematica.gui.message.confirm_file_deletion": "是否要删除斻� '%s'",
     "litematica.gui.message.schematic_projects.confirm_delete_area": "是否�除“上次受影响”的区域？\n这專�除这个工程管琙�上次放置在世界上的��耸�次保存为一个版本斻�皌�域中任何方块实体\n�基本上是“最后一次看到受影响的区域”，这�如果�要循环版本�宰�不会留下以前版本皖�块�,
     "litematica.gui.message.schematic_projects.confirm_place_to_world": "�想把这个版本放到世界�\n这專�除项目管琙�最后放置到世界皌�域�皻�何方块和实�或最后保存为版本. (基本�\\\"最后见迏�影响的区域\\\", 这�,如果�要循环版本,宸�会留下以前版本皖��)",
+
     "litematica.gui.title.area_editor_normal": "区域编辑器�普�多桨�式�,
     "litematica.gui.title.area_editor_normal_schematic_projects": "区域编辑器 (§6§l图形项目区域§r)",
     "litematica.gui.title.area_editor_simple": "区域编辑器 (简单模�",
@@ -767,6 +837,7 @@
     "litematica.gui.title.schematic_verifier": "验�'%s' 原理图",
     "litematica.gui.title.schematic_verifier_errors": "原理图验诔�误",
     "litematica.gui.title.task_manager": "任务管琙�",
+
     "litematica.hud.area_selection.box_count": "桕�: %s",
     "litematica.hud.area_selection.dimensions_position": "尺寸: %s - p1: %s, p2: %s",
     "litematica.hud.area_selection.mode.corners": "角点",
@@ -776,9 +847,11 @@
     "litematica.hud.area_selection.selected_area_simple": "区�[§6简单模式§r]: %s",
     "litematica.hud.area_selection.selected_sub_region": "子区� %s",
     "litematica.hud.area_selection.selection_corners_mode": "角点模� %s",
+
     "litematica.hud.delete.target_mode": "�除目栨�� %s",
     "litematica.hud.delete.target_mode.area": "当前区�,
     "litematica.hud.delete.target_mode.placement": "当前放置",
+
     "litematica.hud.misc.easy_place_mode_enabled": "简单放置模�§aON§r",
     "litematica.hud.misc.none_brackets": "<none>",
     "litematica.hud.misc.placement_restriction_mode_enabled": "限制放置模�§a开启§r",
@@ -787,6 +860,7 @@
     "litematica.hud.misc.renderer_status": "渲染器: A: %s S: %s B: %s O: %s SEL: %s",
     "litematica.hud.misc.schematic_paste.data_restore_mode": "数据粘贴模� §b%s",
     "litematica.hud.misc.schematic_paste.replace_mode": "替换模� %s",
+
     "litematica.hud.schematic_placement.hover_info.lock_coordinate": "锁定此坐�\n这�许改变�他坐标\n不影响锁定的",
     "litematica.hud.schematic_placement.hover_info.placement_locked": "此位置已锁定，如果不�解锼���法修改",
     "litematica.hud.schematic_placement.hover_info.placement_modified": "此位置已修改",
@@ -797,7 +871,9 @@
     "litematica.hud.schematic_placement.sub_region_modified": "修改",
     "litematica.hud.schematic_placement.sub_region_origin": "区域原点: %s",
     "litematica.hud.schematic_placement.sub_regions_modified": "修改区�,
+
     "litematica.hud.selected_mode": "模�,
+
     "litematica.hud.schematic_projects.current_version_date": "数据: %s",
     "litematica.hud.schematic_projects.current_version": "版本: %s/%s - 名� %s",
     "litematica.hud.schematic_projects.no_project_open": "<没有项目打开>",
@@ -805,12 +881,16 @@
     "litematica.hud.schematic_projects.origin": "项目来� %s",
     "litematica.hud.schematic_projects.project_name": "项目: %s",
     "litematica.hud.schematic_projects_mode": "§6原理图项目模式§r",
+
     "litematica.info.material_list": "- 材料渍�热键尉�开上次查看的材料渍�,\n   如果有一个存储\n- 要�换到其他材料�表,请打开一个\n   放置配置GUI中的GUI按钮或原琛�浏览器\n- 存储/上次查看的列表也会被忘记\n 如果选择皎�琛�放置已更改\n- 如果还没有最后查看的材料渍�,\n 然后使用选定的放置,如果有的�,
+
     "litematica.label.alignment.center": "中�,
     "litematica.label.alignment.top_center": "顶部中�,
+
     "litematica.label.none_lower": "none",
     "litematica.label.no": "no",
     "litematica.label.yes": "yes",
+
     "litematica.message.error.area_deletion_aborted": "区域删除中断或中止",
     "litematica.message.error.empty_area_selection": "空白区域选择�无桼,
     "litematica.message.error.invalid_schematic_name": "�效的原理图名称 '%s'",
@@ -825,6 +905,7 @@
     "litematica.message.error.schematic_save_no_area_selected": "§c原理图保存失败�未选择任何区域§r",
     "litematica.message.warn.pickblock.no_suitable_slot_found": "没有可用皧�位来放置方�\n检查 Generic -> §epickBlockableSlots§r 配置项.\n这也取决�§epickBlockAvoid*§6 配置, 只要某个槽位中有�有耐乺�皉�哼�投影尸�会选取宔�来放置方�,
     "litematica.message.warn.pickblock.no_valid_slots_configured": "Generic -> §epickBlockableSlots§6 中�置��",
+
     "litematica.message.added_selection_box": "添�亸�个新皀�择桜� %s",
     "litematica.message.area_clear_fail": "§c渙�区域失败§r",
     "litematica.message.area_cleared": "已渙�区�,
@@ -849,6 +930,7 @@
     "litematica.message.removed_area_origin": "�除亱�示�手动区域原点",
     "litematica.message.removed_selection_box": "已�除选择�%s",
     "litematica.message.scheduled_task_added": "添�皮�划任务...",
+    "litematica.message.litematic_downgrade_exported_as": "Schematic export downgraded as '%s'\n§6NOTE: This is an experimental feature; data loss may occur.§r",
     "litematica.message.schematic_exported_as": "原理图导出为 '%s'",
     "litematica.message.schematic_pasted": "在世界上粘贴原理图",
     "litematica.message.schematic_pasted_using_fill_and_setblock": "使用§b%s§r fill 和§b%s§r setblock 命令粘贴示意图",
@@ -865,9 +947,11 @@
     "litematica.message.toggled": "已刍� %s %s",
     "litematica.message.value.on": "NO",
     "litematica.message.value.off": "OFF",
+
     "litematica.message.schematic_projects.project_created": "已创建项目 '%s'",
     "litematica.message.schematic_projects.project_loaded": "已�载项目 '%s'",
     "litematica.message.schematic_projects.version_saved": "新版本 (#%s) 保存为 '%s'",
+
     "litematica.message.warn.area_selection.browser_open_in_simple_mode": "注意：您当前夺�简单区域选择模�,
     "litematica.message.warn.layer_mode_currently_at": "注意：�当前夜� '%s' 显示层模�,
     "litematica.message.warn.main_rendering_disabled": "警告：主渲染当前已禁用\n查看觧�效�-> %s, 或考�键 -> %s ['%s']",
@@ -875,12 +959,16 @@
     "litematica.message.warn.schematic_rebuild_placement_not_selected": "目前未选择目栱�示位置�“�部替换”热键什�用于您单�皔�置皽�前选定子区域��此�要仛�换一个子区域中皝��请选择该子区域�要替换整个原理图�所有太阳区域），请选择整个位置而不是其子区域�这些块也仜�当前“渲染层”设置限制皌�域�被替换�,
     "litematica.message.warn.schematic_rendering_disabled": "警告：当前禁用于�琛�渲染\n查看觧�效�-> %s, 或考�键 -> %s ['%s']",
     "litematica.message.warn.schematic_verifier.overlay_disabled": "警告：验证程序重�渲染当前已禁用请参�信息 -> %s (或考�键 -> %s ['%s'])",
+
     "litematica.message.warning.invalid_number": "输��效的数�'%s'",
     "litematica.message.warning.schematic_projects_hidden": "警告：原琛�版本控制系统当前夺�隐藏状态�一般来说��不应该使用宼�除非�真的知道官�如何工作的并改变亸��mod 行为。如果您想使用宼�请启用选项 Generic -> unhideSchematicVCS",
+
     "litematica.warning.area_editor.area_rendering_disabled": "注意：区域选择桑�现当前被禁用\n查看觧�效�-> %s, 或考�键 -> %s ['%s']",
+
     "litematica.tool_hud.block_1": "方� %s",
     "litematica.tool_hud.block_2": "替换: %s",
     "litematica.tool_hud.facing": "朝向: %s",
+
     "litematica.tool_mode.name.area_selection": "区域选择",
     "litematica.tool_mode.name.delete": "�除",
     "litematica.tool_mode.name.fill": "填�,

@@ -100,6 +100,14 @@ public class GuiSchematicSaveExported extends GuiSchematicSaveBase
                                 this.gui.getListWidget().refreshEntries();
                             }
                         }
+                        else if (this.gui.exportType == ExportType.V6_LITEMATIC)
+                        {
+                            if (WorldUtils.convertLitematicaSchematicToV6LitematicaSchematic(inDir, inFile, dir, fileName, ignoreEntities, override, this.gui))
+                            {
+                                this.gui.addMessage(MessageType.SUCCESS, "litematica.message.litematic_downgrade_exported_as", fileName);
+                                this.gui.getListWidget().refreshEntries();
+                            }
+                        }
                         else if (this.gui.exportType == ExportType.VANILLA)
                         {
                             if (WorldUtils.convertLitematicaSchematicToVanillaStructure(inDir, inFile, dir, fileName, ignoreEntities, override, this.gui))

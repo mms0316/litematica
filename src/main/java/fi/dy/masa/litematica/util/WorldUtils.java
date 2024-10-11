@@ -1,13 +1,13 @@
 package fi.dy.masa.litematica.util;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.ObjectInputFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import javax.annotation.Nullable;
+
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
@@ -39,6 +39,7 @@ import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
+
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.interfaces.IStringConsumer;
@@ -74,6 +75,11 @@ public class WorldUtils
             Properties.NOTE,
             Properties.DELAY
     };
+
+    public static double getValidBlockRange(MinecraftClient mc)
+    {
+        return Configs.Generic.EASY_PLACE_VANILLA_REACH.getBooleanValue() ? mc.player.getBlockInteractionRange() : mc.player.getBlockInteractionRange() + 1.0;
+    }
 
     public static boolean shouldPreventBlockUpdates(World world)
     {
@@ -228,6 +234,31 @@ public class WorldUtils
         return false;
     }
 
+    public static boolean convertLitematicaSchematicToV6LitematicaSchematic(
+            File inputDir, String inputFileName, File outputDir, String outputFileName, boolean ignoreEntities, boolean override, IStringConsumer feedback)
+    {
+        LitematicaSchematic v7LitematicaSchematic = LitematicaSchematic.createFromFile(inputDir, inputFileName, FileType.LITEMATICA_SCHEMATIC);
+
+        if (v7LitematicaSchematic == null)
+        {
+            feedback.setString("litematica.error.schematic_conversion.litematica_to_schematic.failed_to_read_schematic");
+            return false;
+        }
+
+        LitematicaSchematic v6LitematicaSchematic = LitematicaSchematic.createEmptySchematicFromExisting(v7LitematicaSchematic, MinecraftClient.getInstance().player.getName().getString());
+        v6LitematicaSchematic.downgradeV7toV6Schematic(v7LitematicaSchematic);
+
+        if (v6LitematicaSchematic.writeToFile(outputDir, outputFileName, override, true))
+        {
+            return true;
+        }
+        else
+        {
+            feedback.setString("litematica.error.schematic_conversion.litematica_to_schematic.failed_to_downgrade_litematic");
+            return false;
+        }
+    }
+
     public static boolean convertLitematicaSchematicToVanillaStructure(
             File inputDir, String inputFileName, File outputDir, String outputFileName, boolean ignoreEntities, boolean override, IStringConsumer feedback)
     {
@@ -329,7 +360,7 @@ public class WorldUtils
     {
         BlockState state = Blocks.AIR.getDefaultState();
         Entity entity = fi.dy.masa.malilib.util.EntityUtils.getCameraEntity();
-        RayTraceWrapper wrapper = RayTraceUtils.getGenericTrace(mc.world, entity, 6);
+        RayTraceWrapper wrapper = RayTraceUtils.getGenericTrace(mc.world, entity, getValidBlockRange(mc));
 
         if (wrapper != null)
         {
@@ -372,11 +403,11 @@ public class WorldUtils
 
         if (closest)
         {
-            pos = RayTraceUtils.getSchematicWorldTraceIfClosest(mc.world, mc.player, 6);
+            pos = RayTraceUtils.getSchematicWorldTraceIfClosest(mc.world, mc.player, getValidBlockRange(mc));
         }
         else
         {
-            pos = RayTraceUtils.getFurthestSchematicWorldBlockBeforeVanilla(mc.world, mc.player, 6, true);
+            pos = RayTraceUtils.getFurthestSchematicWorldBlockBeforeVanilla(mc.world, mc.player, getValidBlockRange(mc), true);
         }
 
         if (pos != null)
@@ -465,7 +496,7 @@ public class WorldUtils
     private static ActionResult doEasyPlaceAction(MinecraftClient mc)
     {
         RayTraceWrapper traceWrapper;
-        double traceMaxRange = mc.player.getBlockInteractionRange();
+        double traceMaxRange = getValidBlockRange(mc);
 
         final boolean ignoreEnderChest = Configs.Generic.EASY_PLACE_IGNORE_ENDER_CHEST.getBooleanValue();
         final boolean ignoreShulkerBox = Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue();

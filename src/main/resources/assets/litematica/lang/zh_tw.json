@@ -64,6 +64,7 @@
     "litematica.config.generic.name.signTextPaste": "貼上告示牌文字",
     "litematica.config.generic.name.toolItem": "工具",
     "litematica.config.generic.name.toolItemEnabled": "啟用工具項目",
+    "litematica.config.generic.name.toolItemComponents": "toolItemComponents",
     "litematica.config.generic.name.unhideSchematicVCS": "不隱藏原理圖版本控制系統",
 
     "litematica.config.visuals.name.enableAreaSelectionBoxesRendering": "顯示選區邊框",
@@ -179,6 +180,8 @@
     "litematica.config.hotkeys.name.schematicEditReplaceAll": "替換同類方塊",
     "litematica.config.hotkeys.name.schematicEditReplaceBlock": "替換其他方塊",
     "litematica.config.hotkeys.name.schematicEditReplaceDirection": "同方塊線性替換",
+    "litematica.config.hotkeys.name.schematicPlacementRotation": "schematicPlacementRotation",
+    "litematica.config.hotkeys.name.schematicPlacementMirror": "schematicPlacementMirror",
     "litematica.config.hotkeys.name.schematicVersionCycleModifier": "投影版本選擇",
     "litematica.config.hotkeys.name.schematicVersionCycleNext": "下一個投影版本",
     "litematica.config.hotkeys.name.schematicVersionCyclePrevious": "上一個投影版本",
@@ -277,6 +280,7 @@
     "litematica.config.generic.comment.signTextPaste": "該功能能在原理圖的覆蓋層顯示投影中告示牌的内容\n§d這樣就不用背了捏~",
     "litematica.config.generic.comment.toolItem": "作為用於選擇的工具，雖然默認是木棍\n（§3但是其實你想拿末影龍頭也是可以的hhh§r）",
     "litematica.config.generic.comment.toolItemEnabled": "如果啟用該選項，那麼你可以使用工具進行操作\n如果你關了的话，那它就是一根樸素的木棍\n§6如果你沒有改默認工具的话——ZMDF§r",
+    "litematica.config.generic.comment.toolItemComponents": "A Data Components-aware version of toolItem.\nSet to \"empty\" to disable.\nThe syntax accepted is the same as the \"/give\" command.",
     "litematica.config.generic.comment.unhideSchematicVCS": "取消隐藏 Schematic VCS（版本控制系統）選單按钮，\n並啟用快速鍵和 VCS 功能。（這之前被稱為原理圖項目。）\n\n一般来說，你不應該使用這個功能，\n除非你真的知道它是如何工作的。\n它在一定程度上改變了選區、放置和貼上的工作方式，\n特别是在貼上時還存在一個區域删除操作。\n\n基本上，這個功能是為更新、修改原理圖而設計的，\n它允許你更容易地為同一版本原理圖創建多個版本/快照，\n也可以通過先删除當前版本，\n然後貼上下一個版本来在不同版本之間切換。",
     
     "litematica.config.visuals.comment.enableAreaSelectionBoxesRendering": "該選項可以切換是否顯示選區的邊框",
@@ -392,6 +396,8 @@
     "litematica.config.hotkeys.comment.schematicEditReplaceAll": "在重建原理圖的模式當中\n按住該鍵可使用手中方塊替換原理圖内的相同方塊",
     "litematica.config.hotkeys.comment.schematicEditReplaceBlock": "在重建原理圖的模式當中\n按住該鍵可使用手中方塊替換原理圖内的相同類型方塊\n然而這個類型很模糊",
     "litematica.config.hotkeys.comment.schematicEditReplaceDirection": "在重建原理圖的模式當中\n按住該鍵可使用手中方塊替換原理圖内指定方向的相同方塊",
+    "litematica.config.hotkeys.comment.schematicPlacementRotation": "The schematic is rotated 90 degrees clockwise when pressed",
+    "litematica.config.hotkeys.comment.schematicPlacementMirror": "The Schematic is mirror flipped when pressed",
     "litematica.config.hotkeys.comment.schematicVersionCycleModifier": "按住該鍵滚動滚輪可以選擇投影的版本",
     "litematica.config.hotkeys.comment.schematicVersionCycleNext": "在版本控制工具模式下，循环到上一個投影版本的快速鍵",
     "litematica.config.hotkeys.comment.schematicVersionCyclePrevious": "在版本控制工具模式下循環到下一個原理圖版本的快速鍵",
@@ -464,9 +470,10 @@
     "litematica.error.area_editor.create_sub_region.exists": "名為'%s'的子區域已存在",
     "litematica.error.area_editor.no_selection": "無活動選區",
     "litematica.error.area_editor.open_gui.no_selection": "當前處於選擇模式：Normal，但未選擇任何區域",
-    "litematica.error.area_editor.rename_sub_region.exists": "重命名子區域失敗:\\n名稱為 '%s'的子區域已存在",
-    "litematica.error.area_editor.switch_mode.no_selection": "無法切換到選擇模式：Normal，因為當前沒有選擇區域.\\n請在選區瀏覽器中選擇一個區域或創建新的選擇",
+    "litematica.error.area_editor.rename_sub_region.exists": "重命名子區域失敗:\n名稱為 '%s'的子區域已存在",
+    "litematica.error.area_editor.switch_mode.no_selection": "無法切換到選擇模式：Normal，因為當前沒有選擇區域.\n請在選區瀏覽器中選擇一個區域或創建新的選擇",
 
+    "litematica.error.schematic_conversion.litematic_to_litematica.failed_to_downgrade_litematic": "Failed to downgrade the Litematica Schematic",
     "litematica.error.schematic_conversion.litematic_to_litematica.failed_to_read_litematic": "載入Litematica原理圖失敗",
     "litematica.error.schematic_conversion.schematic_to_litematica.failed_to_create_schematic": "創建Litematica原理圖失敗",
     "litematica.error.schematic_conversion.schematic_to_litematica.failed_to_read_schematic": "載入原理圖失敗",
@@ -483,7 +490,7 @@
     "litematica.error.schematic_manager.schematic_export.unsupported_type": "只有Litematica原理圖可匯出為其他格式！",
     "litematica.error.schematic_manager.schematic_import.unsupported_type": "不支持匯入所選的原理圖類型！",
 
-    "litematica.error.schematic_placements.remove_fail_locked": "該放置位置已鎖定！\\n- 按住Shift強制刪除",
+    "litematica.error.schematic_placements.remove_fail_locked": "該放置位置已鎖定！\n- 按住Shift強制刪除",
 
     "litematica.error.schematic_save.directory_doesnt_exist": "目錄不存在: '%s'",
     "litematica.error.schematic_save.file_already_exists": "檔案'%s' 已存在",
@@ -516,8 +523,8 @@
     "litematica.hotkeys.category.generic_hotkeys": "通用快速鍵",
 
     "litematica.info.schematic_load.schematic_loaded": "原理圖 '%s' '已成功載入到記憶體",
-    "litematica.info.schematic_manager.preview.right_click_to_cancel": "右鍵點擊按鈕以取消待處理的預覽操作\\nCtrl+Alt+Shift+點擊 以目錄中現有'thumb.png'圖片設置為縮圖",
-    "litematica.info.schematic_manager.preview.set_preview_by_taking_a_screenshot": "使用一般截圖鍵設置預覽\\n或右鍵點擊“設置預覽”按鈕以取消設置預覽",
+    "litematica.info.schematic_manager.preview.right_click_to_cancel": "右鍵點擊按鈕以取消待處理的預覽操作\nCtrl+Alt+Shift+點擊 以目錄中現有'thumb.png'圖片設置為縮圖",
+    "litematica.info.schematic_manager.preview.set_preview_by_taking_a_screenshot": "使用一般截圖鍵設置預覽\n或右鍵點擊“設置預覽”按鈕以取消設置預覽",
     "litematica.info.schematic_manager.preview.success": "預覽圖片設置成功",
 
     "litematica.gui.button.area_editor.analyze_area": "分析區域",
@@ -556,15 +563,15 @@
     "litematica.gui.button.hover.area_editor.shift_for_in_memory": "按住Shift以創建僅存在於記憶體中的原理圖",
     "litematica.gui.button.hover.area_selections.unselect": "取消選擇當前選區",
     "litematica.gui.button.hover.material_list.clear_cache": "清除材料快取\n通常不需要這樣做\n這可以用來替代刪除'material_cache.nbt'\n檔案，以防快取中有錯誤數據，\n例如為不應該有物品的方塊存儲了物品，如活塞頭",
-    "litematica.gui.button.hover.material_list.write_hold_shift_for_csv": "按住Shift以寫入CSV檔案,\\n而不是普通的ASCII藝術表格文字檔案",
+    "litematica.gui.button.hover.material_list.write_hold_shift_for_csv": "按住Shift以寫入CSV檔案,\n而不是普通的ASCII藝術表格文字檔案",
     "litematica.gui.button.hover.material_list_shift_to_select_sub_regions": "按住Shift以選擇用於材料清單的子區域",
-    "litematica.gui.button.hover.plus_minus_tip": "左鍵增加\\右鍵減少\\n按Shift和/或Alt以增加步長",
-    "litematica.gui.button.hover.plus_minus_tip_ctrl_alt_shift": "左鍵增加\\右鍵減少\\nShift/Alt/Ctrl以增加步長(乘法)",
+    "litematica.gui.button.hover.plus_minus_tip": "左鍵增加\\右鍵減少\n按Shift和/或Alt以增加步長",
+    "litematica.gui.button.hover.plus_minus_tip_ctrl_alt_shift": "左鍵增加\\右鍵減少\nShift/Alt/Ctrl以增加步長(乘法)",
     "litematica.gui.button.hover.schematic_list.reload_schematic": "從檔案重新載入原理圖\n如果你在原理圖編輯模式中出錯\n這可能會有用幫助",
-    "litematica.gui.button.hover.schematic_projects.area_browser_disabled_currently_in_projects_mode": "當前打開了一個原理圖項目\\n原理圖項目將覆蓋正常選區功能",
+    "litematica.gui.button.hover.schematic_projects.area_browser_disabled_currently_in_projects_mode": "當前打開了一個原理圖項目\n原理圖項目將覆蓋正常選區功能",
     "litematica.gui.button.hover.schematic_projects.delete_area": "§6删除最後放置或保存的區域§r",
     "litematica.gui.button.hover.schematic_projects.menu_warning": "(這在之前被稱為原理圖項目.)\n一般來說,你§6不應該§r使用這個功能,\n除非你真的知道它是如何工作的以及它在做什麼。\n它在某種程度上改變了選區、放置和貼上的工作方式,\n特別是在貼上時還有一個區域刪除操作。\n\n基本上,這個功能是為了§6迭代式、原位§r設計工作而設計的,\n它允許你更容易地創建同一個建築的多個版本/快照,\n並且通過先刪除世界中的內容,\n然後貼上下一個版本來切換版本。",
-    "litematica.gui.button.hover.schematic_projects.move_origin_to_player": "將項目原點移動到玩家當前位置\\n這也會移動選區和放置",
+    "litematica.gui.button.hover.schematic_projects.move_origin_to_player": "將項目原點移動到玩家當前位置\n這也會移動選區和放置",
     "litematica.gui.button.hover.schematic_projects.place_to_world_warning": "§6警告：這將刪除/覆蓋世界中當前的方塊,\n範圍是§6之前從版本放置或作為版本保存的區域，\n§6（基本上是最後一次看到的“有效選區”）",
     "litematica.gui.button.hover.schematic_projects.save_new_version": "將新的原理圖/版本保存到當前項目",
 
@@ -593,8 +600,8 @@
     "litematica.gui.button.schematic_placement.toggle_all_on": "全部 §a開啟§r",
 
     "litematica.gui.button.schematic_placement.hover.enclosing_box": "包圍框渲染: %s",
-    "litematica.gui.button.schematic_placement.hover.lock": "鎖定位置可防止移動\\n以其他方式更改它(意外地)",
-    "litematica.gui.button.schematic_placement.hover.rendering": "渲染: %s\\n注意這個功能有點奇怪\\n不會阻止實體渲染。\\n通常你應該只是禁用\\n完全放置",
+    "litematica.gui.button.schematic_placement.hover.lock": "鎖定位置可防止移動\n以其他方式更改它(意外地)",
+    "litematica.gui.button.schematic_placement.hover.rendering": "渲染: %s\n注意這個功能有點奇怪\n不會阻止實體渲染。\n通常你應該只是禁用\n完全放置",
 
     "litematica.gui.button.schematic_placements.configure": "配置",
     "litematica.gui.button.schematic_placements.disable": "禁用",
@@ -674,11 +681,11 @@
     "litematica.gui.label.block_info_list_type.all": "全部",
     "litematica.gui.label.block_info_list_type.render_layers": "渲染層",
     
-        "litematica.gui.label.easy_place_protocol.auto": "自動",
-        "litematica.gui.label.easy_place_protocol.none": "無",
-        "litematica.gui.label.easy_place_protocol.slabs_only": "僅台階",
-        "litematica.gui.label.easy_place_protocol.v2": "版本 2",
-        "litematica.gui.label.easy_place_protocol.v3": "版本 3",
+    "litematica.gui.label.easy_place_protocol.auto": "自動",
+    "litematica.gui.label.easy_place_protocol.none": "無",
+    "litematica.gui.label.easy_place_protocol.slabs_only": "僅台階",
+    "litematica.gui.label.easy_place_protocol.v2": "版本 2",
+    "litematica.gui.label.easy_place_protocol.v3": "版本 3",
 
     "litematica.gui.label.data_fixer_mode.always": "總是",
     "litematica.gui.label.data_fixer_mode.below_1205": "僅低於 1.20.5",
@@ -720,7 +727,7 @@
     "litematica.gui.label.placement_settings.placement_origin": "放置原點",
 
     "litematica.gui.label.render_layers.hotkey": "快速鍵",
-    "litematica.gui.label.render_layers.hover.hotkey": "下一層/上一層快速鍵將影響此邊界。\\n如果兩者都未選中，則快速鍵將影響\\n距離玩家最近的邊界。",
+    "litematica.gui.label.render_layers.hover.hotkey": "下一層/上一層快速鍵將影響此邊界。\n如果兩者都未選中，則快速鍵將影響\n距離玩家最近的邊界。",
 
     "litematica.gui.label.replace_behavior.all": "全部",
     "litematica.gui.label.replace_behavior.none": "無",
@@ -739,7 +746,7 @@
     "litematica.gui.label.schematic_info.total_volume": "總體積: §f%d§r 個方塊",
 
     "litematica.gui.label.schematic_load.checkbox.create_placement": "創建放置",
-    "litematica.gui.label.schematic_load.hoverinfo.create_placement": "立即創建新位置\\n並選擇該位置",
+    "litematica.gui.label.schematic_load.hoverinfo.create_placement": "立即創建新位置\n並選擇該位置",
 
     "litematica.gui.label.schematic_placement.enclosing_size": "框尺寸: %s",
     "litematica.gui.label.schematic_placement.hoverinfo.hold_shift_to_create_as_disabled": "按住Shift以在創建時禁用放置",
@@ -786,7 +793,7 @@
 
     "litematica.gui.message.confirm_file_deletion": "您確定要刪除檔案 '%s'嗎?",
     "litematica.gui.message.schematic_projects.confirm_delete_area": "您確定要刪除“最後受影響”的區域嗎？\n這將刪除項目管理器最後放置到世界中或最後保存為版本的區域內的所有方塊和實體。\n（基本上是“最後看到的受影響區域”,這樣如果您切換版本,它就不會留下前一個版本的方塊。）",
-    "litematica.gui.message.schematic_projects.confirm_place_to_world": "您確定要將此版本放置到世界中嗎?\\n它將刪除項目管理器最後放置到世界中或最後保存為版本的區域內的所有方塊。(基本上是 \\\"最後看到的受影響區域\\\", 這樣如果您切換版本,它就不會留下前一個版本的方塊。)",
+    "litematica.gui.message.schematic_projects.confirm_place_to_world": "您確定要將此版本放置到世界中嗎?\n它將刪除項目管理器最後放置到世界中或最後保存為版本的區域內的所有方塊。(基本上是 \\\"最後看到的受影響區域\\\", 這樣如果您切換版本,它就不會留下前一個版本的方塊。)",
 
     "litematica.gui.title.area_editor_normal": "區域編輯器（普通/多框模式）",
     "litematica.gui.title.area_editor_normal_schematic_projects": "區域編輯器 (§6§l圖形項目區域§r)",
@@ -854,7 +861,7 @@
     "litematica.hud.misc.schematic_paste.data_restore_mode": "數據恢復模式: §b%s",
     "litematica.hud.misc.schematic_paste.replace_mode": "替換方塊: %s",
 
-    "litematica.hud.schematic_placement.hover_info.lock_coordinate": "鎖定此座標\\n這允許更改其他座標\\n而不影響已鎖定的座標",
+    "litematica.hud.schematic_placement.hover_info.lock_coordinate": "鎖定此座標\n這允許更改其他座標\n而不影響已鎖定的座標",
     "litematica.hud.schematic_placement.hover_info.placement_locked": "此位置已鎖定，無法在解鎖之前進行修改",
     "litematica.hud.schematic_placement.hover_info.placement_modified": "此位置已修改",
     "litematica.hud.schematic_placement.hover_info.placement_sub_region_modified": "此子區域已修改",
@@ -875,7 +882,7 @@
     "litematica.hud.schematic_projects.project_name": "項目: %s",
     "litematica.hud.schematic_projects_mode": "§6原理圖項目模式§r",
 
-    "litematica.info.material_list": "- 如果有存儲的話,材料清單快速鍵將打開最後查看的材料清單\\n- 要切換到不同的材料清單,請通過\\n   放置配置GUI中的GUI按鈕或原理圖瀏覽器開啟一個材質清單\\n- 如果選擇的原理圖放置已更改，存儲/上次查看的清單也會被忘記\\n- 如果還沒有最後查看的材料清單,\\n 則使用所選的放置（如果有的話）",
+    "litematica.info.material_list": "- 如果有存儲的話,材料清單快速鍵將打開最後查看的材料清單\n- 要切換到不同的材料清單,請通過\n   放置配置GUI中的GUI按鈕或原理圖瀏覽器開啟一個材質清單\n- 如果選擇的原理圖放置已更改，存儲/上次查看的清單也會被忘記\n- 如果還沒有最後查看的材料清單,\n 則使用所選的放置（如果有的話）",
 
     "litematica.label.alignment.center": "中心",
     "litematica.label.alignment.top_center": "頂部中心",
@@ -908,7 +915,7 @@
     "litematica.message.easy_place_fail": "輕鬆放置模式阻止了此操作",
     "litematica.message.grabbed_element_for_moving": "抓住要移動的元件",
     "litematica.message.in_memory_schematic_created": "創建了一個記憶體中的原理圖 '%s'",
-    "litematica.message.litematic_saved_as": "成功升級Litematica Schematic數據版本\\n原理圖已保存為 '%s'",
+    "litematica.message.litematic_saved_as": "成功升級Litematica Schematic數據版本\n原理圖已保存為 '%s'",
     "litematica.message.material_list.material_cache_cleared": "材料快取已清除",
     "litematica.message.material_list_written_to_file": "材料清單已寫入檔案 '%s'",
     "litematica.message.moved_area_origin": "將區域原點從 %s 移動到 %s",
@@ -923,6 +930,7 @@
     "litematica.message.removed_area_origin": "删除了放置/手動設置的區域原點",
     "litematica.message.removed_selection_box": "已删除選擇框 %s",
     "litematica.message.scheduled_task_added": "已添加計劃任務...",
+    "litematica.message.litematic_downgrade_exported_as": "Schematic export downgraded as '%s'\n§6NOTE: This is an experimental feature; data loss may occur.§r",
     "litematica.message.schematic_exported_as": "原理圖已匯出為 '%s'",
     "litematica.message.schematic_pasted": "原理圖已貼上到世界",
     "litematica.message.schematic_pasted_using_fill_and_setblock": "使用 §b%s§r 個填充命令和 §b%s§r 個設置方塊命令貼上原理圖",
@@ -946,17 +954,17 @@
 
     "litematica.message.warn.area_selection.browser_open_in_simple_mode": "注意：您當前處於簡單選區模式",
     "litematica.message.warn.layer_mode_currently_at": "注意：你當前處在 '%s' 渲染層模式",
-    "litematica.message.warn.main_rendering_disabled": "警告：主渲染當前已禁用\\n請查看 視覺效果 -> %s, 或快速鍵 -> %s ['%s']",
-    "litematica.message.warn.schematic_blocks_rendering_disabled": "警告：原理圖方塊渲染目前已禁用\\n請查看 視覺效果 -> %s, or 或快速鍵 -> %s ['%s']",
-    "litematica.message.warn.schematic_load_non_litematica": "警告：當您直接加載非Litematica原理圖時，創建的放置將不會持久保存久。\\n此外，如果您需要多次加載原理圖，那麼每次加載時都會發生原理圖類型轉換的卡頓(對於大型原理圖)。\\n\\n因此，建議您通過原理圖管理器選單導入原理圖並以Litematica格式保存，或者更好的做法是，使用MCEdit或Litematica的貼上模式將原始原理圖貼到臨時世界中，然後從中創建一個新的Litematica原理圖，最好在適用的情況下使用多個子區域來緊密捕捉建築。",
+    "litematica.message.warn.main_rendering_disabled": "警告：主渲染當前已禁用\n請查看 視覺效果 -> %s, 或快速鍵 -> %s ['%s']",
+    "litematica.message.warn.schematic_blocks_rendering_disabled": "警告：原理圖方塊渲染目前已禁用\n請查看 視覺效果 -> %s, or 或快速鍵 -> %s ['%s']",
+    "litematica.message.warn.schematic_load_non_litematica": "警告：當您直接加載非Litematica原理圖時，創建的放置將不會持久保存久。\n此外，如果您需要多次加載原理圖，那麼每次加載時都會發生原理圖類型轉換的卡頓(對於大型原理圖)。\n\n因此，建議您通過原理圖管理器選單導入原理圖並以Litematica格式保存，或者更好的做法是，使用MCEdit或Litematica的貼上模式將原始原理圖貼到臨時世界中，然後從中創建一個新的Litematica原理圖，最好在適用的情況下使用多個子區域來緊密捕捉建築。",
     "litematica.message.warn.schematic_rebuild_placement_not_selected": "當前未選擇目標放置位置。 “全部替換”快速鍵僅適用於您單擊放置的當前選定子區域。 因此，若要僅取代一個子區域中的區塊，請選擇該子區域。 若要在整個原理圖（所有陽光區域）中進行替換，請選擇整個放置而不是其中的子區域。 方塊也只會在當前渲染層設置限制的區域內被替換。",
-    "litematica.message.warn.schematic_rendering_disabled": "警告：原理圖渲染目前已禁用\\n請查看 視覺效果 -> %s, 或快速鍵 -> %s ['%s']",
+    "litematica.message.warn.schematic_rendering_disabled": "警告：原理圖渲染目前已禁用\n請查看 視覺效果 -> %s, 或快速鍵 -> %s ['%s']",
     "litematica.message.warn.schematic_verifier.overlay_disabled": "警告：驗證器疊加層渲染目前已禁用! 請查看 信息疊加層 -> %s (或快速鍵 -> %s ['%s'])",
 
     "litematica.message.warning.invalid_number": "無效的數字輸入 '%s'",
     "litematica.message.warning.schematic_projects_hidden": "警告：原理圖版本控制系統目前已隱藏。 通常情況下，您不應使用此功能，除非您真正了解其工作原理並更改了一些模組行為。它是為了進行迭代的、原地的設計工作而設計的,在這種情況下需要在原地切換不同版本的建築(=刪除並替換前一個版本)。如果您想使用它,請啟用選項 通用 -> unhideSchematicVCS",
 
-    "litematica.warning.area_editor.area_rendering_disabled": "注意：選區框渲染目前已禁用\\n請查看 視覺效果 -> %s, 或快速鍵 -> %s ['%s']",
+    "litematica.warning.area_editor.area_rendering_disabled": "注意：選區框渲染目前已禁用\n請查看 視覺效果 -> %s, 或快速鍵 -> %s ['%s']",
 
     "litematica.tool_hud.block_1": "方塊: %s",
     "litematica.tool_hud.block_2": "替換: %s",

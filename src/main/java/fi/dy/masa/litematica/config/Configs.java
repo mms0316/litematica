@@ -4,6 +4,9 @@ import java.io.File;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import net.minecraft.client.MinecraftClient;
+
 import fi.dy.masa.malilib.config.ConfigUtils;
 import fi.dy.masa.malilib.config.HudAlignment;
 import fi.dy.masa.malilib.config.IConfigBase;
@@ -28,8 +31,8 @@ public class Configs implements IConfigHandler
         public static final ConfigOptionList    PASTE_NBT_BEHAVIOR          = new ConfigOptionList("pasteNbtRestoreBehavior", PasteNbtBehavior.NONE, "litematica.config.generic.comment.pasteNbtRestoreBehavior").translatedName("litematica.config.generic.name.pasteNbtRestoreBehavior");
         public static final ConfigOptionList    PASTE_REPLACE_BEHAVIOR      = new ConfigOptionList("pasteReplaceBehavior", ReplaceBehavior.NONE, "litematica.config.generic.comment.pasteReplaceBehavior").translatedName("litematica.config.generic.name.pasteReplaceBehavior");
         public static final ConfigOptionList    PLACEMENT_REPLACE_BEHAVIOR  = new ConfigOptionList("placementReplaceBehavior", ReplaceBehavior.ALL, "litematica.config.generic.comment.placementReplaceBehavior").translatedName("litematica.config.generic.name.placementReplaceBehavior");
-        public static final ConfigOptionList    PLACEMENT_RESTRICTION_WARN  = new ConfigOptionList("placementRestrictionWarn", MessageOutputType.ACTIONBAR, "litematica.generic.config.comment.placementRestrictionWarn").translatedName("litematica.config.generic.name.placementRestrictionWarn");
-        public static final ConfigOptionList    SELECTION_CORNERS_MODE      = new ConfigOptionList("selectionCornersMode", CornerSelectionMode.CORNERS, "litematica.config.generic.comment.cornerSelectionMode").translatedName("litematica.config.generic.name.cornerSelectionMode");
+        public static final ConfigOptionList    PLACEMENT_RESTRICTION_WARN  = new ConfigOptionList("placementRestrictionWarn", MessageOutputType.ACTIONBAR, "litematica.config.generic.comment.placementRestrictionWarn").translatedName("litematica.config.generic.name.placementRestrictionWarn");
+        public static final ConfigOptionList    SELECTION_CORNERS_MODE      = new ConfigOptionList("selectionCornersMode", CornerSelectionMode.CORNERS, "litematica.config.generic.comment.selectionCornersMode").translatedName("litematica.config.generic.name.selectionCornersMode");
         public static final ConfigStringList    SUBSTITUTIONS               = new ConfigStringList("substitutions", ImmutableList.of(), "Materials that may be replaced by others \n(without triggering blocks listing as wrong).\nThese are in the format: block1;block2;...;blockN\nThe blocks string format is the vanilla format, such as:\n- minecraft:dirt;minecraft:grass\n- minecraft:quartz_stairs;minecraft:smooth_quartz_stairs");
 
         public static final ConfigBoolean       CUSTOM_SCHEMATIC_BASE_DIRECTORY_ENABLED = new ConfigBoolean("customSchematicBaseDirectoryEnabled", false, "litematica.config.generic.comment.customSchematicBaseDirectoryEnabled").translatedName("litematica.config.generic.name.customSchematicBaseDirectoryEnabled");
@@ -38,9 +41,9 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       AREAS_PER_WORLD             = new ConfigBoolean("areaSelectionsPerWorld", true, "litematica.config.generic.comment.areaSelectionsPerWorld").translatedName("litematica.config.generic.name.areaSelectionsPerWorld");
         public static final ConfigBoolean       BETTER_RENDER_ORDER         = new ConfigBoolean("betterRenderOrder", true, "litematica.config.generic.comment.betterRenderOrder").translatedName("litematica.config.generic.name.betterRenderOrder");
         public static final ConfigBoolean       CHANGE_SELECTED_CORNER      = new ConfigBoolean("changeSelectedCornerOnMove", true, "litematica.config.generic.comment.changeSelectedCornerOnMove").translatedName("litematica.config.generic.name.changeSelectedCornerOnMove");
-        public static final ConfigBoolean       CLONE_AT_ORIGINAL_POS       = new ConfigBoolean("cloneAtOriginalPosition", false, "litematica.config.generic.comment.cloneAtOriginalPosition").translatedName("litematica.generic.config.name.cloneAtOriginalPosition");
+        public static final ConfigBoolean       CLONE_AT_ORIGINAL_POS       = new ConfigBoolean("cloneAtOriginalPosition", false, "litematica.config.generic.comment.cloneAtOriginalPosition").translatedName("litematica.config.generic.name.cloneAtOriginalPosition");
         public static final ConfigBoolean       COMMAND_DISABLE_FEEDBACK    = new ConfigBoolean("commandDisableFeedback", true, "litematica.config.generic.comment.commandDisableFeedback").translatedName("litematica.config.generic.name.commandDisableFeedback");
-        public static final ConfigInteger       COMMAND_FILL_MAX_VOLUME     = new ConfigInteger("commandFillMaxVolume", 32768, 256, 10000000, "litematica.config.generic.comment.commandFillMaxVolume").translatedName("litematica.config.name.commandFillMaxVolume");
+        public static final ConfigInteger       COMMAND_FILL_MAX_VOLUME     = new ConfigInteger("commandFillMaxVolume", 32768, 256, 10000000, "litematica.config.generic.comment.commandFillMaxVolume").translatedName("litematica.config.generic.name.commandFillMaxVolume");
         public static final ConfigBoolean       COMMAND_FILL_NO_CHUNK_CLAMP = new ConfigBoolean("commandFillNoChunkClamp", false, "litematica.config.generic.comment.commandFillNoChunkClamp").translatedName("litematica.config.generic.name.commandFillNoChunkClamp");
         public static final ConfigInteger       COMMAND_LIMIT               = new ConfigInteger("commandLimitPerTick", 24, 1, 256, "litematica.config.generic.comment.commandLimitPerTick").translatedName("litematica.config.generic.name.commandLimitPerTick");
         public static final ConfigString        COMMAND_NAME_CLONE          = new ConfigString( "commandNameClone", "clone", "litematica.config.generic.comment.commandNameClone").translatedName("litematica.config.generic.name.commandNameClone");
@@ -59,9 +62,10 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       EASY_PLACE_LEAVE_ONE        = new ConfigBoolean("easyPlaceLeaveOne", false, "When enabled, Litematica will not use\nthe last remaining item of a stack.");
         public static final ConfigBoolean       EASY_PLACE_MODE             = new ConfigBoolean("easyPlaceMode", false, "litematica.config.generic.comment.easyPlaceMode", "litematica.config.generic.prettyName.easyPlaceMode").translatedName("litematica.config.generic.name.easyPlaceMode");
         public static final ConfigInteger       EASY_PLACE_USE_INTERVAL     = new ConfigInteger("easyPlaceUseInterval", 20, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter interacting with a block.\nUseful to avoid overshooting Note Blocks when having high ping.");
+        public static final ConfigBoolean       EASY_PLACE_SP_HANDLING      = new ConfigBoolean("easyPlaceSinglePlayerHandling", true, "litematica.config.generic.comment.easyPlaceSinglePlayerHandling").translatedName("litematica.config.generic.name.easyPlaceSinglePlayerHandling");
         public static final ConfigInteger       EASY_PLACE_SWAP_INTERVAL    = new ConfigInteger("easyPlaceSwapInterval", 0, 0, 10000, "litematica.config.generic.comment.easyPlaceSwapInterval").translatedName("litematica.config.generic.name.easyPlaceSwapInterval");
         public static final ConfigBoolean       EASY_PLACE_SWING_HAND       = new ConfigBoolean("easyPlaceSwingHand", true, "litematica.config.generic.comment.easyPlaceSwingHand").translatedName("litematica.config.generic.name.easyPlaceSwingHand");
-        public static final ConfigBoolean       EASY_PLACE_SP_HANDLING      = new ConfigBoolean("easyPlaceSinglePlayerHandling", true, "litematica.config.generic.comment.easyPlaceSinglePlayerHandling").translatedName("litematica.config.generic.name.easyPlaceSinglePlayerHandling");
+        public static final ConfigBoolean       EASY_PLACE_VANILLA_REACH    = new ConfigBoolean("easyPlaceVanillaReach", false, "litematica.config.generic.comment.easyPlaceVanillaReach").translatedName("litematica.config.generic.name.easyPlaceVanillaReach");
         public static final ConfigBoolean       ENTITY_DATA_SYNC            = new ConfigBoolean("entityDataSync", true, "litematica.config.generic.comment.entityDataSync").translatedName("litematica.config.generic.name.entityDataSync");
         public static final ConfigBoolean       ENTITY_DATA_SYNC_BACKUP     = new ConfigBoolean("entityDataSyncBackup", true, "litematica.config.generic.comment.entityDataSyncBackup").translatedName("litematica.config.generic.name.entityDataSyncBackup");
         public static final ConfigBoolean       EXECUTE_REQUIRE_TOOL        = new ConfigBoolean("executeRequireHoldingTool", true, "litematica.config.generic.comment.executeRequireHoldingTool").translatedName("litematica.config.generic.name.executeRequireHoldingTool");
@@ -86,7 +90,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       PASTE_USING_SERVUX          = new ConfigBoolean("pasteUsingServux", true, "litematica.config.generic.comment.pasteUsingServux").translatedName("litematica.config.generic.name.pasteUsingServux");
         public static final ConfigBoolean       PICK_BLOCK_AVOID_DAMAGEABLE = new ConfigBoolean("pickBlockAvoidDamageable", true, "litematica.config.generic.comment.pickBlockAvoidDamageable").translatedName("litematica.config.generic.name.pickBlockAvoidDamageable");
         public static final ConfigBoolean       PICK_BLOCK_AVOID_TOOLS      = new ConfigBoolean("pickBlockAvoidTools", false, "litematica.config.generic.comment.pickBlockAvoidTools").translatedName("litematica.config.generic.name.pickBlockAvoidTools");
-        public static final ConfigBoolean       PICK_BLOCK_ENABLED          = new ConfigBoolean("pickBlockEnabled", true, "litematica.config.generic.comment.pickBlockEnabled", "litematica.config.generic.prettyName.pickBlockEnabled");
+        public static final ConfigBoolean       PICK_BLOCK_ENABLED          = new ConfigBoolean("pickBlockEnabled", true, "litematica.config.generic.comment.pickBlockEnabled", "litematica.config.generic.prettyName.pickBlockEnabled").translatedName("litematica.config.generic.name.pickBlockEnabled");
         public static final ConfigBoolean       PICK_BLOCK_SHULKERS         = new ConfigBoolean("pickBlockShulkers", false, "litematica.config.generic.comment.pickBlockShulkers").translatedName("litematica.config.generic.name.pickBlockShulkers");
         public static final ConfigString        PICK_BLOCKABLE_SLOTS        = new ConfigString( "pickBlockableSlots", "1,2,3,4,5", "litematica.config.generic.comment.pickBlockableSlots").translatedName("litematica.config.generic.name.pickBlockableSlots");
         public static final ConfigBoolean       PLACEMENT_RESTRICTION       = new ConfigBoolean("placementRestriction", false, "litematica.config.generic.comment.placementRestriction", "litematica.config.generic.prettyName.placementRestriction").translatedName("litematica.config.generic.name.placementRestriction");
@@ -97,6 +101,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       SIGN_TEXT_PASTE             = new ConfigBoolean("signTextPaste", true, "litematica.config.generic.comment.signTextPaste", "litematica.config.generic.prettyName.signTextPaste").translatedName("litematica.config.generic.name.signTextPaste");
         public static final ConfigString        TOOL_ITEM                   = new ConfigString( "toolItem", "minecraft:stick", "litematica.config.generic.comment.toolItem").translatedName("litematica.config.generic.name.toolItem");
         public static final ConfigBoolean       TOOL_ITEM_ENABLED           = new ConfigBoolean("toolItemEnabled", true, "litematica.config.generic.comment.toolItemEnabled", "litematica.config.generic.prettyName.toolItemEnabled").translatedName("litematica.config.generic.name.toolItemEnabled");
+        public static final ConfigString        TOOL_ITEM_COMPONENTS        = new ConfigString( "toolItemComponents", "empty", "litematica.config.generic.comment.toolItemComponents").translatedName("litematica.config.generic.name.toolItemComponents");
         public static final ConfigBoolean       UNHIDE_SCHEMATIC_PROJECTS   = new ConfigBoolean("unhideSchematicVCS", false, "litematica.config.generic.comment.unhideSchematicVCS").translatedName("litematica.config.generic.name.unhideSchematicVCS");
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
@@ -120,6 +125,7 @@ public class Configs implements IConfigHandler
                 EASY_PLACE_SP_HANDLING,
                 EASY_PLACE_PROTOCOL,
                 EASY_PLACE_SWING_HAND,
+                EASY_PLACE_VANILLA_REACH,
                 ENTITY_DATA_SYNC,
                 ENTITY_DATA_SYNC_BACKUP,
                 EXECUTE_REQUIRE_TOOL,
@@ -172,9 +178,9 @@ public class Configs implements IConfigHandler
                 EASY_PLACE_USE_INTERVAL,
                 LAYER_MOVE_AMOUNT,
                 PICK_BLOCKABLE_SLOTS,
+                SUBSTITUTIONS,
                 TOOL_ITEM,
-
-                SUBSTITUTIONS
+                TOOL_ITEM_COMPONENTS
         );
     }
 
@@ -277,7 +283,7 @@ public class Configs implements IConfigHandler
         public static final ConfigInteger       MATERIAL_LIST_HUD_MAX_LINES         = new ConfigInteger("materialListHudMaxLines", 10, 1, 128, "litematica.config.info_overlays.comment.materialListHudMaxLines").translatedName("litematica.config.info_overlays.name.materialListHudMaxLines");
         public static final ConfigDouble        MATERIAL_LIST_HUD_SCALE             = new ConfigDouble( "materialListHudScale", 1, 0.1, 4, "litematica.config.info_overlays.comment.materialListHudScale").translatedName("litematica.config.info_overlays.name.materialListHudScale");
         public static final ConfigBoolean       STATUS_INFO_HUD                     = new ConfigBoolean("statusInfoHud", false, "litematica.config.info_overlays.comment.statusInfoHud").translatedName("litematica.config.info_overlays.name.statusInfoHud");
-        public static final ConfigBoolean       STATUS_INFO_HUD_AUTO                = new ConfigBoolean("statusInfoHudAuto", true, "statusInfoHudAuto").translatedName("litematica.config.info_overlays.name.statusInfoHudAuto");
+        public static final ConfigBoolean       STATUS_INFO_HUD_AUTO                = new ConfigBoolean("statusInfoHudAuto", true, "litematica.config.info_overlays.comment.statusInfoHudAuto").translatedName("litematica.config.info_overlays.name.statusInfoHudAuto");
         public static final ConfigInteger       TOOL_HUD_OFFSET_X                   = new ConfigInteger("toolHudOffsetX", 1, 0, 32000, "litematica.config.info_overlays.comment.toolHudOffsetX").translatedName("litematica.config.info_overlays.name.toolHudOffsetX");
         public static final ConfigInteger       TOOL_HUD_OFFSET_Y                   = new ConfigInteger("toolHudOffsetY", 1, 0, 32000, "litematica.config.info_overlays.comment.toolHudOffsetY").translatedName("litematica.config.info_overlays.name.toolHudOffsetY");
         public static final ConfigDouble        TOOL_HUD_SCALE                      = new ConfigDouble( "toolHudScale", 1, 0.1, 4, "litematica.config.info_overlays.comment.toolHudScale").translatedName("litematica.config.info_overlays.name.toolHudScale");
@@ -369,6 +375,10 @@ public class Configs implements IConfigHandler
         }
 
         DataManager.setToolItem(Generic.TOOL_ITEM.getStringValue());
+        if (MinecraftClient.getInstance().world != null)
+        {
+            DataManager.getInstance().setToolItemComponents(Generic.TOOL_ITEM_COMPONENTS.getStringValue(), MinecraftClient.getInstance().world.getRegistryManager());
+        }
         InventoryUtils.setPickBlockableSlots(Generic.PICK_BLOCKABLE_SLOTS.getStringValue());
 
         AddonUtils.setSubstitutions(Generic.SUBSTITUTIONS.getStrings());

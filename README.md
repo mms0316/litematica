@@ -5,7 +5,7 @@ Litematica
 Litematica is a client-side Minecraft mod using Fabric.
 It is more or less a re-creation of or a substitute for [Schematica](https://minecraft.curseforge.com/projects/schematica),
 for players who don't want to have Forge installed.
-For compiled builds (= downloads), see http://minecraft.curseforge.com/projects/litematica
+For compiled builds (= downloads), see https://github.com/mms0316/litematica/releases/
 
 Compiling
 =========
@@ -33,7 +33,7 @@ Features:
     * Sculk Veins, Glow Lichen
 * EasyPlace: Addition of config 'substitutions'
   * This allows e.g. Grass Blocks to substitute for Dirt
-  * This is very rudimental. There are issues with Material List
+  * This is very rudimentary. There are issues with Material List
 * EasyPlace: Addition of configs 'easyPlaceIgnoreEnderChest' and 'easyPlaceIgnoreShulkerBox'
   * Allows placing Ender Chests and Shulker Boxes inside schematic placements
 * EasyPlace: Addition of config 'easyPlaceLeaveOne'
@@ -52,9 +52,6 @@ Features:
 * Render Layers: Addition of config 'layerMoveAmount'
   * Useful for map arts
   * If you have materials in your inventory for multiple layers, you could move that same amount of layers
-* Schematic Verifier: Addition of config 'schematicVerifierCheckChunkReload'
-  * Useful for building with multiple people
-  * Keeps checking for block changes outside render distance
 * Material List: Addition of config 'materialListWriteSplitMeasures'
   * When using "Write to file", adds more columns separating shulker box, stacks and remainer amounts
 * Material List: Addition of config 'materialListContainerOverlayEnabled'
@@ -71,6 +68,9 @@ Features:
   * This is a shortcut for - (minus key) and "Move to player"
 * Schematic Loading: Addition of metadata preview for .schem and .nbt
 * Schematic Loading: Addition of custom embedded image preview for .schem and .nbt
+* Schematic Verifier: Addition of config 'schematicVerifierCheckChunkReload'
+  * Useful for building with multiple people
+  * Keeps checking for block changes outside render distance
 * Schematic Verifier: Addition of cardinal coordinates for entries in Info Hud
 
 Tweaks:

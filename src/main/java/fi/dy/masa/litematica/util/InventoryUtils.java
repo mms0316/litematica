@@ -240,10 +240,12 @@ public class InventoryUtils
                 if (pickBlockResult.slot == -1)
                 {
                     InfoUtils.printActionbarMessage(GuiBase.TXT_RED + "Ran out of " + GuiBase.TXT_RST + stack.getName().getString());
+                    AddonUtils.setLastRanOutItem(stack);
                 }
                 else if (pickBlockResult.pickedShulker)
                 {
                     InfoUtils.printActionbarMessage(GuiBase.TXT_YELLOW + "Refill " + GuiBase.TXT_RST + stack.getName().getString());
+                    AddonUtils.setLastRefillItem(stack);
                 }
 
                 return pickBlockResult;

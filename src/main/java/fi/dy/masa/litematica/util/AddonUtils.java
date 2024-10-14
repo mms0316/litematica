@@ -47,10 +47,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 public class AddonUtils {
     private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
     private static final HashMap<AbstractBlock, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
+
+    private static ItemStack lastRanOutItem;
+    private static ItemStack lastRefillItem;
+    private static long lastRefillTimeCheck;
 
     public static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
     {
@@ -496,4 +501,42 @@ public class AddonUtils {
 
         return val;
     }
+
+    public static void setLastRanOutItem(ItemStack stack) {
+        lastRanOutItem = stack.copy();
+    }
+
+    public static Optional<ItemStack> getLastRanOutItem() {
+        return Optional.ofNullable(lastRanOutItem);
+    }
+
+    public static void setLastRefillItem(ItemStack stack) {
+        lastRefillItem = stack.copy();
+    }
+
+    public static Optional<ItemStack> getLastRefillItem() {
+        return Optional.ofNullable(lastRefillItem);
+    }
+
+
+    public static void checkClearLastItems() {
+        if (lastRanOutItem == null && lastRefillItem == null) return;
+
+        final long now = System.currentTimeMillis();
+        if (now - lastRefillTimeCheck <= 5_000L) return;
+
+        lastRefillTimeCheck = now;
+
+        final var player = MinecraftClient.getInstance().player;
+        if (player == null) return;
+        final var inv = player.getInventory();
+        if (inv == null) return;
+
+        if (lastRanOutItem != null && inv.contains(lastRanOutItem))
+            lastRanOutItem = null;
+
+        if (lastRefillItem != null && inv.contains(lastRefillItem))
+            lastRefillItem = null;
+    }
+
 }

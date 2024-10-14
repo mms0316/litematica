@@ -45,6 +45,7 @@ import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.MismatchRender
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
 import fi.dy.masa.litematica.selection.SelectionManager;
+import fi.dy.masa.litematica.util.AddonUtils;
 import fi.dy.masa.litematica.util.BlockInfoAlignment;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.ItemUtils;
@@ -675,6 +676,7 @@ public class OverlayRenderer
         BlockState stateSchematic = worldSchematic.getBlockState(pos);
         String ul = GuiBase.TXT_UNDERLINE;
 
+        boolean addSep = false;
         if (stateSchematic != stateClient && stateClient.isAir() == false && stateSchematic.isAir() == false && stateSchematic != voidAir)
         {
             this.blockInfoLines.add(ul + "Schematic:");
@@ -683,12 +685,25 @@ public class OverlayRenderer
             this.blockInfoLines.add("");
             this.blockInfoLines.add(ul + "Client:");
             this.addBlockInfoLines(stateClient);
+
+            addSep = true;
         }
         else if (traceWrapper.getHitType() == RayTraceWrapper.HitType.SCHEMATIC_BLOCK)
         {
             this.blockInfoLines.add(ul + "Schematic:");
             this.addBlockInfoLines(stateSchematic);
+
+            addSep = true;
         }
+
+        final var lastRanOutItem = AddonUtils.getLastRanOutItem();
+        if (lastRanOutItem.isPresent()) {
+            if (addSep)
+                this.blockInfoLines.add("");
+
+            this.blockInfoLines.add(ul + "Item to refill:");
+            this.blockInfoLines.add(Registries.ITEM.getId(lastRanOutItem.get().getItem()).toString());
+      }
     }
 
     private void addBlockInfoLines(BlockState state)

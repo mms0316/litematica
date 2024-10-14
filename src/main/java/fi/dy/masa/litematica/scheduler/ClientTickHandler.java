@@ -1,5 +1,6 @@
 package fi.dy.masa.litematica.scheduler;
 
+import fi.dy.masa.litematica.util.AddonUtils;
 import net.minecraft.client.MinecraftClient;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
@@ -31,6 +32,8 @@ public class ClientTickHandler implements IClientTickHandler
 
             DataManager.getSchematicPlacementManager().processQueuedChunks();
             TaskScheduler.getInstanceClient().runTasks();
+
+            AddonUtils.checkClearLastItems();
         }
     }
 }

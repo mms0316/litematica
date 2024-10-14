@@ -520,6 +520,7 @@ public class AddonUtils {
 
 
     public static void checkClearLastItems() {
+        if (!Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue()) return;
         if (lastRanOutItem == null && lastRefillItem == null) return;
 
         final long now = System.currentTimeMillis();

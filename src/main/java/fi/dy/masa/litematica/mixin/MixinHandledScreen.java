@@ -34,13 +34,16 @@ public abstract class MixinHandledScreen extends Screen
     {
         MaterialListHudRenderer.renderLookedAtBlockInInventory((HandledScreen<?>) (Object) this, this.client);
 
-        if (Configs.Generic.HIGHLIGHT_BLOCK_IN_INV.getBooleanValue())
+        if (Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue())
         {
+            final var color = Configs.Colors.HIGHLIGHT_REFILL_IN_INV_COLOR.getColor();
+            final var guiScreen = (HandledScreen<?>) (Object) this;
+
             final var refillItem = AddonUtils.getLastRefillItem();
-            refillItem.ifPresent(itemStack -> MaterialListHudRenderer.highlightSlotsWithItem(itemStack, (HandledScreen<?>) (Object) this, Color4f.fromColor(Colors.YELLOW), this.client));
+            refillItem.ifPresent(itemStack -> MaterialListHudRenderer.highlightSlotsWithItem(itemStack, guiScreen, color, this.client));
 
             final var ranOutItem = AddonUtils.getLastRanOutItem();
-            ranOutItem.ifPresent(itemStack -> MaterialListHudRenderer.highlightSlotsWithItem(itemStack, (HandledScreen<?>) (Object) this, Color4f.fromColor(Colors.YELLOW), this.client));
+            ranOutItem.ifPresent(itemStack -> MaterialListHudRenderer.highlightSlotsWithItem(itemStack, guiScreen, color, this.client));
         }
     }
 }

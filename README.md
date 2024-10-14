@@ -45,9 +45,11 @@ Features:
 * EasyPlace: Addition of hotkey 'easyPlaceFirstToggle'
   * Toggles 'easyPlaceFirst'
 * EasyPlace: Addition of warning "Ran out of X" when using up the last item of a material including shulker boxes
-  * If config 'highlightBlockInInventory' is enabled, lacking item in containers will be highlighted
+  * If new config 'highlightRefillInInventory' is not disabled, lacking item in containers will be highlighted
+  * Color may be controlled by new config 'highlightRefillInInventoryColor'
 * EasyPlace: Addition of warning "Refill X" when using up the last item of a material outside shulker boxes
-  * If config 'highlightBlockInInventory' is enabled, lacking item in containers will be highlighted
+  * If new config 'highlightRefillInInventory' is not disabled, lacking item in containers will be highlighted
+  * Color may be controlled by new config 'highlightRefillInInventoryColor'
   * If config 'blockInfoLinesEnabled' is not disabled, lacking item will be shown as an Info Overlay
 * Render Layers: Addition of config 'layerMoveAmount'
   * Useful for map arts

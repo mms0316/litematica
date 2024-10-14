@@ -38,6 +38,7 @@
     "litematica.config.generic.name.fixRailRotation": "fixRailRotation",
     "litematica.config.generic.name.generateLowercaseNames": "generateLowercaseNames",
     "litematica.config.generic.name.highlightBlockInInventory": "highlightBlockInInventory",
+    "litematica.config.generic.name.highlightRefillInInventory": "highlightRefillInInventory",
     "litematica.config.generic.name.itemUsePacketCheckBypass": "itemUsePacketCheckBypass",
     "litematica.config.generic.name.layerModeFollowsPlayer": "layerModeFollowsPlayer",
     "litematica.config.generic.name.loadEntireSchematics": "loadEntireSchematics",
@@ -130,6 +131,7 @@
 
     "litematica.config.colors.name.areaSelectionBoxSideColor": "areaSelectionBoxSideColor",
     "litematica.config.colors.name.hightlightBlockInInventoryColor": "hightlightBlockInInventoryColor",
+    "litematica.config.colors.name.highlightRefillInInventoryColor": "highlightRefillInInventoryColor",
     "litematica.config.colors.name.materialListHudItemCountsColor": "materialListHudItemCountsColor",
     "litematica.config.colors.name.schematicRebuildBreakPlaceOverlayColor": "schematicRebuildBreakPlaceOverlayColor",
     "litematica.config.colors.name.schematicRebuildBreakExceptPlaceOverlayColor": "schematicRebuildBreakExceptPlaceOverlayColor",

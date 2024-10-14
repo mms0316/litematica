@@ -73,6 +73,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       FIX_RAIL_ROTATION           = new ConfigBoolean("fixRailRotation", true, "litematica.config.generic.comment.fixRailRotation").translatedName("litematica.config.generic.name.fixRailRotation");
         public static final ConfigBoolean       GENERATE_LOWERCASE_NAMES    = new ConfigBoolean("generateLowercaseNames", false, "litematica.config.generic.comment.generateLowercaseNames").translatedName("litematica.config.generic.name.generateLowercaseNames");
         public static final ConfigBoolean       HIGHLIGHT_BLOCK_IN_INV      = new ConfigBoolean("highlightBlockInInventory", false, "litematica.config.generic.comment.highlightBlockInInventory").translatedName("litematica.config.generic.name.highlightBlockInInventory");
+        public static final ConfigBoolean       HIGHLIGHT_REFILL_IN_INV     = new ConfigBoolean("highlightRefillInInventory", true, "litematica.config.generic.comment.highlightRefillInInventory").translatedName("litematica.config.generic.name.highlightRefillInInventory");
         public static final ConfigBoolean       ITEM_USE_PACKET_CHECK_BYPASS= new ConfigBoolean("itemUsePacketCheckBypass", true, "litematica.config.generic.comment.itemUsePacketCheckBypass").translatedName("litematica.config.generic.name.itemUsePacketCheckBypass");
         public static final ConfigBoolean       LAYER_MODE_DYNAMIC          = new ConfigBoolean("layerModeFollowsPlayer", false, "litematica.config.generic.comment.layerModeFollowsPlayer").translatedName("litematica.config.generic.name.layerModeFollowsPlayer");
         public static final ConfigInteger       LAYER_MOVE_AMOUNT           = new ConfigInteger("layerMoveAmount", 1, 1, 128, "The amount of layers to move when using\nlayerNext or layerPrevious hotkeys.");
@@ -133,6 +134,7 @@ public class Configs implements IConfigHandler
                 FIX_RAIL_ROTATION,
                 GENERATE_LOWERCASE_NAMES,
                 HIGHLIGHT_BLOCK_IN_INV,
+                HIGHLIGHT_REFILL_IN_INV,
                 ITEM_USE_PACKET_CHECK_BYPASS,
                 LAYER_MODE_DYNAMIC,
                 //LOAD_ENTIRE_SCHEMATICS,
@@ -329,6 +331,7 @@ public class Configs implements IConfigHandler
     {
         public static final ConfigColor AREA_SELECTION_BOX_SIDE_COLOR       = new ConfigColor("areaSelectionBoxSideColor",          "#30FFFFFF", "litematica.config.colors.comment.areaSelectionBoxSideColor").translatedName("litematica.config.colors.name.areaSelectionBoxSideColor");
         public static final ConfigColor HIGHTLIGHT_BLOCK_IN_INV_COLOR       = new ConfigColor("hightlightBlockInInventoryColor",    "#30FF30FF", "litematica.config.colors.comment.hightlightBlockInInventoryColor").translatedName("litematica.config.colors.name.hightlightBlockInInventoryColor");
+        public static final ConfigColor HIGHLIGHT_REFILL_IN_INV_COLOR       = new ConfigColor("highlightRefillInInventoryColor",    "#30FFFF30", "litematica.config.colors.comment.highlightRefillInInventoryColor").translatedName("litematica.config.colors.name.highlightRefillInInventoryColor");
         public static final ConfigColor MATERIAL_LIST_FETCH_CONTAINER_COLOR = new ConfigColor("materialListFetchContainerColor",    "#FF33B3FF", "The color of the containers overlay for Material List");
         public static final ConfigColor MATERIAL_LIST_HUD_ITEM_COUNTS       = new ConfigColor("materialListHudItemCountsColor",     "#FFFFAA00", "litematica.config.colors.comment.materialListHudItemCountsColor").translatedName("litematica.config.colors.name.materialListHudItemCountsColor");
         public static final ConfigColor REBUILD_BREAK_OVERLAY_COLOR         = new ConfigColor("schematicRebuildBreakPlaceOverlayColor", "#4C33CC33", "litematica.config.colors.comment.schematicRebuildBreakPlaceOverlayColor").translatedName("litematica.config.colors.name.schematicRebuildBreakPlaceOverlayColor");
@@ -342,6 +345,7 @@ public class Configs implements IConfigHandler
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 AREA_SELECTION_BOX_SIDE_COLOR,
                 HIGHTLIGHT_BLOCK_IN_INV_COLOR,
+                HIGHLIGHT_REFILL_IN_INV_COLOR,
                 MATERIAL_LIST_FETCH_CONTAINER_COLOR,
                 MATERIAL_LIST_HUD_ITEM_COUNTS,
                 REBUILD_BREAK_OVERLAY_COLOR,

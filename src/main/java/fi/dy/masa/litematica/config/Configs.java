@@ -61,6 +61,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       EASY_PLACE_IGNORE_SHULKER_BOX = new ConfigBoolean("easyPlaceIgnoreShulkerBox", true, "If enabled, allows placing and interacting with Shulker boxes when on Easy Place mode.");
         public static final ConfigBoolean       EASY_PLACE_LEAVE_ONE        = new ConfigBoolean("easyPlaceLeaveOne", false, "When enabled, Litematica will not use\nthe last remaining item of a stack.");
         public static final ConfigBoolean       EASY_PLACE_MODE             = new ConfigBoolean("easyPlaceMode", false, "litematica.config.generic.comment.easyPlaceMode", "litematica.config.generic.prettyName.easyPlaceMode").translatedName("litematica.config.generic.name.easyPlaceMode");
+        public static final ConfigInteger       EASY_PLACE_PLACE_INTERVAL   = new ConfigInteger("easyPlacePlaceInterval", 400, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter placing a block on a same location.\nUseful to avoid desyncs with the server.");
         public static final ConfigInteger       EASY_PLACE_USE_INTERVAL     = new ConfigInteger("easyPlaceUseInterval", 20, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter interacting with a block.\nUseful to avoid overshooting Note Blocks when having high ping.");
         public static final ConfigBoolean       EASY_PLACE_SP_HANDLING      = new ConfigBoolean("easyPlaceSinglePlayerHandling", true, "litematica.config.generic.comment.easyPlaceSinglePlayerHandling").translatedName("litematica.config.generic.name.easyPlaceSinglePlayerHandling");
         public static final ConfigInteger       EASY_PLACE_SWAP_INTERVAL    = new ConfigInteger("easyPlaceSwapInterval", 0, 0, 10000, "litematica.config.generic.comment.easyPlaceSwapInterval").translatedName("litematica.config.generic.name.easyPlaceSwapInterval");
@@ -176,6 +177,7 @@ public class Configs implements IConfigHandler
                 COMMAND_NAME_SUMMON,
                 COMMAND_TASK_INTERVAL,
                 CUSTOM_SCHEMATIC_BASE_DIRECTORY,
+                EASY_PLACE_PLACE_INTERVAL,
                 EASY_PLACE_SWAP_INTERVAL,
                 EASY_PLACE_USE_INTERVAL,
                 LAYER_MOVE_AMOUNT,

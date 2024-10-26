@@ -39,6 +39,10 @@ Features:
 * EasyPlace: Addition of config 'easyPlaceLeaveOne'
   * Restricts using up all item stacks of a material
   * This helps refilling inventory when combining wth inventory mods
+* EasyPlace: Addition of config 'easyPlacePlaceInterval'
+  * This allows reducing the 2000ms timer that stops block placements on a same previous location
+  * The default value has been changed from 2000ms (official) to 400ms
+  * This is helpful if you try to EasyPlace when you're inside a schematic block and then have to wait those 2s
 * EasyPlace: Addition of config 'easyPlaceUseInterval'
   * Useful when having high ping
   * Restricts right-clicking too fast on existing blocks (Repeaters, Note Blocks, etc.)

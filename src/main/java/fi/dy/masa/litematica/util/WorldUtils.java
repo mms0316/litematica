@@ -1477,7 +1477,7 @@ public class WorldUtils
         }
         else
         {
-            timeout = 2_000_000_000L;
+            timeout = Configs.Generic.EASY_PLACE_PLACE_INTERVAL.getIntegerValue() * 1_000_000L;
         }
 
         EASY_PLACE_POSITIONS.add(new PositionCache(pos, System.nanoTime(), timeout));

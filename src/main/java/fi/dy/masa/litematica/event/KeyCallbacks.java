@@ -378,7 +378,6 @@ public class KeyCallbacks
                     if (schematicPlacement != null)
                     {
                         materialList = schematicPlacement.getMaterialList();
-                        materialList.reCreateMaterialList();
                     }
                     else
                     {

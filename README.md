@@ -93,6 +93,7 @@ Tweaks:
   * Time created / modified when zero
   * Region count when not a .litematic
 * Schematic Verifier: Keeps running even when the verifier checks all chunks
+* Status Info HUD: Shows if easyPlaceFirst is true/false
 
 Fixes:
 * EasyPlace: Allows right-clicking to set block states (e.g. Note Blocks) without needing to turn off EasyPlace

@@ -76,6 +76,7 @@ public class KeyCallbacks
         Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER_ALL.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_REFRESH.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind().setCallback(callbackHotkeys);
@@ -454,6 +455,21 @@ public class KeyCallbacks
                 if (materialList != null)
                 {
                     materialList.reCreateMaterialList();
+                    return true;
+                }
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind())
+            {
+                var materialList = DataManager.getMaterialList();
+                if (materialList != null)
+                {
+                    materialList.toggleInfoHud();
+
+                    // If hotkey is configured to work on GUIs, and Material List GUI is opened,
+                    // also update the Info Hud button, even if the search filter may also be updated
+                    if (mc.currentScreen instanceof GuiMaterialList guiMaterialList)
+                        guiMaterialList.initGui();
+
                     return true;
                 }
             }

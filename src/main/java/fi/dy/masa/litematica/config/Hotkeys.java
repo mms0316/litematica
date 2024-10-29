@@ -26,6 +26,7 @@ public class Hotkeys
     public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER_ALL = new ConfigHotkey("materialListContainerUnregisterAll", "", "Unregister all containers used for Material List");
     public static final ConfigHotkey MATERIAL_LIST_FETCH                = new ConfigHotkey("materialListFetch",                 "", KeybindSettings.MODIFIER_GUI, "Fetch materials required by the active Material List from opened container");
     public static final ConfigHotkey MATERIAL_LIST_REFRESH              = new ConfigHotkey("materialListRefresh",               "",     "Refresh active Material List");
+    public static final ConfigHotkey MATERIAL_LIST_TOGGLE_INFO_HUD      = new ConfigHotkey("materialListToggleInfoHud",         "",     "Toggle Info Hud for active Material List");
     public static final ConfigHotkey NUDGE_SELECTION_NEGATIVE           = new ConfigHotkey("nudgeSelectionNegative",            "",     "litematica.config.hotkeys.comment.nudgeSelectionNegative").translatedName("litematica.config.hotkeys.name.nudgeSelectionNegative");
     public static final ConfigHotkey NUDGE_SELECTION_POSITIVE           = new ConfigHotkey("nudgeSelectionPositive",            "",     "litematica.config.hotkeys.comment.nudgeSelectionPositive").translatedName("litematica.config.hotkeys.name.nudgeSelectionPositive");
     public static final ConfigHotkey MOVE_ENTIRE_SELECTION              = new ConfigHotkey("moveEntireSelection",               "",     "litematica.config.hotkeys.comment.moveEntireSelection").translatedName("litematica.config.hotkeys.name.moveEntireSelection");
@@ -110,6 +111,7 @@ public class Hotkeys
             MATERIAL_LIST_CONTAINER_UNREGISTER_ALL,
             MATERIAL_LIST_FETCH,
             MATERIAL_LIST_REFRESH,
+            MATERIAL_LIST_TOGGLE_INFO_HUD,
             NUDGE_SELECTION_NEGATIVE,
             NUDGE_SELECTION_POSITIVE,
             MOVE_ENTIRE_SELECTION,

@@ -266,18 +266,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                     break;
 
                 case TOGGLE_INFO_HUD:
-                    MaterialListHudRenderer renderer = materialList.getHudRenderer();
-                    renderer.toggleShouldRender();
-
-                    if (materialList.getHudRenderer().getShouldRenderCustom())
-                    {
-                        InfoHud.getInstance().addInfoHudRenderer(renderer, true);
-                    }
-                    else
-                    {
-                        InfoHud.getInstance().removeInfoHudRenderersOfType(renderer.getClass(), true);
-                    }
-
+                    materialList.toggleInfoHud();
                     break;
 
                 case CLEAR_IGNORED:

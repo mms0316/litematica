@@ -68,6 +68,8 @@ Features:
   * When using hotkey with a container opened, all materials matching the Material List are transferred to player's inventory
 * Material List: Addition of hotkey 'materialListRefresh'
   * This is a shortcut for M+L and "Refresh"
+* Material List: Addition of hotkey 'materialListToggleInfoHud'
+  * This is a shortcut for M+L and button click on "Info HUD: ON / OFF"
 * Material List: Addition of counts of shulker boxes
 * Schematic Placement: Addition of hotkey 'setSchematicOrigin'
   * This moves the active schematic placement to player's position

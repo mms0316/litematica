@@ -395,7 +395,7 @@ public class DataManager implements IDirectoryCache
         this.selectionManager.clear();
         this.schematicPlacementManager.clear();
         this.schematicProjectsManager.clear();
-        this.materialList = null;
+        //this.materialList = null; //edit: no longer loses reference when changing dimensions
 
         File file = getCurrentStorageFile(false);
         JsonElement element = JsonUtils.parseJsonFile(file);

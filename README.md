@@ -87,6 +87,7 @@ Tweaks:
   * e.g. use "3-6" instead of "3,4,5,6"
   * Brought from 1.12.2 official branch
 * Material List: Removal of message when refreshing
+* Material List: No longer is cleared when changing dimensions
 * Material List (from Schematic Placement): No longer runs a counting task when opening the list 
 * Schematic Loading: Removal of warning when loading non .litematic schematics
 * Schematic Loading: Removal of non-important metadata preview

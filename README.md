@@ -59,7 +59,7 @@ Features:
   * Useful for map arts
   * If you have materials in your inventory for multiple layers, you could move that same amount of layers
 * Material List: Addition of config 'materialListWriteSplitMeasures'
-  * When using "Write to file", adds more columns separating shulker box, stacks and remainer amounts
+  * When using "Write to file", adds more columns separating shulker box, stacks and remainder amounts
 * Material List: Addition of config 'materialListContainerOverlayEnabled'
   * After registering containers with hotkey 'materialListContainerRegister', creates outlines on containers that have materials that match the Material List
   * Use hotkeys 'materialListContainerUnregister' or 'materialListContainerUnregisterAll' to unregister

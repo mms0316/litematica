@@ -379,6 +379,8 @@ public class KeyCallbacks
                     if (schematicPlacement != null)
                     {
                         materialList = schematicPlacement.getMaterialList();
+                        if (Configs.Generic.MATERIAL_LIST_HOTKEY_AUTO_REFRESH.getBooleanValue())
+                            materialList.reCreateMaterialList();
                     }
                     else
                     {

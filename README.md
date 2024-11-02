@@ -64,6 +64,8 @@ Features:
   * After registering containers with hotkey 'materialListContainerRegister', creates outlines on containers that have materials that match the Material List
   * Use hotkeys 'materialListContainerUnregister' or 'materialListContainerUnregisterAll' to unregister
   * May use materialListFetchContainerColor to change the outline's color and transparency
+* Material List: Addition of config 'materialListHotkeyAutoRefresh' to stop counting materials automatically when using hotkey 'openGuiMaterialList' for the first time
+  * May be useful for schematics that go beyond viewing distance
 * Material List: Addition of hotkey 'materialListFetch'
   * When using hotkey with a container opened, all materials matching the Material List are transferred to player's inventory
 * Material List: Addition of hotkey 'materialListRefresh'
@@ -90,7 +92,6 @@ Tweaks:
   * Brought from 1.12.2 official branch
 * Material List: Removal of message when refreshing
 * Material List: No longer is cleared when changing dimensions
-* Material List (from Schematic Placement): No longer runs a counting task when opening the list 
 * Schematic Loading: Removal of warning when loading non .litematic schematics
 * Schematic Loading: Removal of non-important metadata preview
   * Time created / modified when zero

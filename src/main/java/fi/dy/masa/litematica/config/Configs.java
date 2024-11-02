@@ -79,6 +79,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       LAYER_MODE_DYNAMIC          = new ConfigBoolean("layerModeFollowsPlayer", false, "litematica.config.generic.comment.layerModeFollowsPlayer").translatedName("litematica.config.generic.name.layerModeFollowsPlayer");
         public static final ConfigInteger       LAYER_MOVE_AMOUNT           = new ConfigInteger("layerMoveAmount", 1, 1, 128, "The amount of layers to move when using\nlayerNext or layerPrevious hotkeys.");
         public static final ConfigBoolean       LOAD_ENTIRE_SCHEMATICS      = new ConfigBoolean("loadEntireSchematics", false, "litematica.config.generic.comment.loadEntireSchematics").translatedName("litematica.config.generic.name.loadEntireSchematics");
+        public static final ConfigBoolean       MATERIAL_LIST_HOTKEY_AUTO_REFRESH = new ConfigBoolean("materialListHotkeyAutoRefresh", true, "When using openGuiMaterialList for the first time on a schematic placement, automatically starts counting materials");
         public static final ConfigBoolean       MATERIAL_LIST_IGNORE_STATE  = new ConfigBoolean("materialListIgnoreState", false, "litematica.config.generic.comment.materialListIgnoreState").translatedName("litematica.config.generic.name.materialListIgnoreState");
         public static final ConfigBoolean       PASTE_ALWAYS_USE_FILL       = new ConfigBoolean("pasteAlwaysUseFill", false, "litematica.config.generic.comment.pasteAlwaysUseFill").translatedName("litematica.config.generic.name.pasteAlwaysUseFill");
         public static final ConfigBoolean       PASTE_IGNORE_BE_ENTIRELY    = new ConfigBoolean("pasteIgnoreBlockEntitiesEntirely", false, "litematica.config.generic.comment.pasteIgnoreBlockEntitiesEntirely").translatedName("litematica.config.generic.name.pasteIgnoreBlockEntitiesEntirely");
@@ -139,6 +140,7 @@ public class Configs implements IConfigHandler
                 ITEM_USE_PACKET_CHECK_BYPASS,
                 LAYER_MODE_DYNAMIC,
                 //LOAD_ENTIRE_SCHEMATICS,
+                MATERIAL_LIST_HOTKEY_AUTO_REFRESH,
                 MATERIAL_LIST_IGNORE_STATE,
                 PASTE_ALWAYS_USE_FILL,
                 PASTE_IGNORE_BE_ENTIRELY,

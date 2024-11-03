@@ -593,6 +593,14 @@ public class WorldUtils
                     return ActionResult.FAIL;
                 }
 
+                if (Configs.Generic.EASY_PLACE_AVOID_BEACONS.getBooleanValue() &&
+                        DataManager.getBeaconManager().checkIfObstructs(world, pos, stateSchematic))
+                {
+                    InfoUtils.printActionbarMessage("Beacon may not be obstructed");
+                    easyPlaceShowFailMessage = false; // Do not overlap message
+                    return ActionResult.FAIL;
+                }
+
                 final var pickBlockResult = InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
                 final var swapInterval = Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue();
 

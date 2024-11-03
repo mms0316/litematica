@@ -55,6 +55,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       DEBUG_LOGGING               = new ConfigBoolean("debugLogging", false, "litematica.config.generic.comment.debugLogging").translatedName("litematica.config.generic.name.debugLogging");
         public static final ConfigOptionList    DATAFIXER_MODE              = new ConfigOptionList("datafixerMode", DataFixerMode.ALWAYS, "litematica.config.generic.comment.datafixerMode").translatedName("litematica.config.generic.name.datafixerMode");
         public static final ConfigInteger       DATAFIXER_DEFAULT_SCHEMA    = new ConfigInteger("datafixerDefaultSchema", 1139, 99, 2724, true, "litematica.config.generic.comment.datafixerDefaultSchema").translatedName("litematica.config.generic.name.datafixerDefaultSchema");
+        public static final ConfigBoolean       EASY_PLACE_AVOID_BEACONS    = new ConfigBoolean("easyPlaceAvoidBeacons", false, "Skip placing blocks that obstruct beacons (which were previously registered with 'beaconRegister' hotkey)");
         public static final ConfigBoolean       EASY_PLACE_FIRST            = new ConfigBoolean("easyPlaceFirst", true, "litematica.config.generic.comment.easyPlaceFirst").translatedName("litematica.config.generic.name.easyPlaceFirst");
         public static final ConfigBoolean       EASY_PLACE_HOLD_ENABLED     = new ConfigBoolean("easyPlaceHoldEnabled", true, "litematica.config.generic.comment.easyPlaceHoldEnabled").translatedName("litematica.config.generic.name.easyPlaceHoldEnabled");
         public static final ConfigBoolean       EASY_PLACE_IGNORE_ENDER_CHEST = new ConfigBoolean("easyPlaceIgnoreEnderChest", true, "If enabled, allows placing and interacting with Ender Chests when on Easy Place mode.");
@@ -79,6 +80,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       LAYER_MODE_DYNAMIC          = new ConfigBoolean("layerModeFollowsPlayer", false, "litematica.config.generic.comment.layerModeFollowsPlayer").translatedName("litematica.config.generic.name.layerModeFollowsPlayer");
         public static final ConfigInteger       LAYER_MOVE_AMOUNT           = new ConfigInteger("layerMoveAmount", 1, 1, 128, "The amount of layers to move when using\nlayerNext or layerPrevious hotkeys.");
         public static final ConfigBoolean       LOAD_ENTIRE_SCHEMATICS      = new ConfigBoolean("loadEntireSchematics", false, "litematica.config.generic.comment.loadEntireSchematics").translatedName("litematica.config.generic.name.loadEntireSchematics");
+        public static final ConfigBoolean       MATERIAL_LIST_AVOID_BEACONS = new ConfigBoolean("materialListAvoidBeacons", false, "Skip counting materials that obstruct beacons (which were previously registered with 'beaconRegister' hotkey");
         public static final ConfigBoolean       MATERIAL_LIST_HOTKEY_AUTO_REFRESH = new ConfigBoolean("materialListHotkeyAutoRefresh", true, "When using openGuiMaterialList for the first time on a schematic placement, automatically starts counting materials");
         public static final ConfigBoolean       MATERIAL_LIST_IGNORE_STATE  = new ConfigBoolean("materialListIgnoreState", false, "litematica.config.generic.comment.materialListIgnoreState").translatedName("litematica.config.generic.name.materialListIgnoreState");
         public static final ConfigBoolean       PASTE_ALWAYS_USE_FILL       = new ConfigBoolean("pasteAlwaysUseFill", false, "litematica.config.generic.comment.pasteAlwaysUseFill").translatedName("litematica.config.generic.name.pasteAlwaysUseFill");
@@ -119,6 +121,7 @@ public class Configs implements IConfigHandler
                 DEBUG_LOGGING,
                 DATAFIXER_MODE,
                 DATAFIXER_DEFAULT_SCHEMA,
+                EASY_PLACE_AVOID_BEACONS,
                 EASY_PLACE_FIRST,
                 EASY_PLACE_HOLD_ENABLED,
                 EASY_PLACE_IGNORE_ENDER_CHEST,
@@ -140,6 +143,7 @@ public class Configs implements IConfigHandler
                 ITEM_USE_PACKET_CHECK_BYPASS,
                 LAYER_MODE_DYNAMIC,
                 //LOAD_ENTIRE_SCHEMATICS,
+                MATERIAL_LIST_AVOID_BEACONS,
                 MATERIAL_LIST_HOTKEY_AUTO_REFRESH,
                 MATERIAL_LIST_IGNORE_STATE,
                 PASTE_ALWAYS_USE_FILL,

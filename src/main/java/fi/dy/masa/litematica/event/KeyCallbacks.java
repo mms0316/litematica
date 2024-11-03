@@ -63,6 +63,9 @@ public class KeyCallbacks
 
         Configs.Generic.PICK_BLOCKABLE_SLOTS.setValueChangeCallback(valueChangeCallback);
 
+        Hotkeys.BEACON_REGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.BEACON_UNREGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.BEACON_UNREGISTER_ALL.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.CLONE_SELECTION.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.EXECUTE_OPERATION.getKeybind().setCallback(callbackHotkeys);
@@ -429,6 +432,21 @@ public class KeyCallbacks
             else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())
             {
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(fi.dy.masa.malilib.util.EntityUtils.getCameraEntity());
+                return true;
+            }
+            else if (key == Hotkeys.BEACON_REGISTER.getKeybind())
+            {
+                DataManager.getBeaconManager().register(mc);
+                return true;
+            }
+            else if (key == Hotkeys.BEACON_UNREGISTER.getKeybind())
+            {
+                DataManager.getBeaconManager().unregister(mc);
+                return true;
+            }
+            else if (key == Hotkeys.BEACON_UNREGISTER_ALL.getKeybind())
+            {
+                DataManager.getBeaconManager().unregisterAll(mc);
                 return true;
             }
             else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind())

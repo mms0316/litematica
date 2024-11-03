@@ -55,6 +55,9 @@ Features:
   * If new config 'highlightRefillInInventory' is not disabled, lacking item in containers will be highlighted
   * Color may be controlled by new config 'highlightRefillInInventoryColor'
   * If config 'blockInfoLinesEnabled' is not disabled, lacking item will be shown as an Info Overlay
+* EasyPlace and Material List: Addition of configs 'easyPlaceAvoidBeacons' and 'materialListAvoidBeacons', and hotkeys 'beaconRegister', 'beaconUnregister' and 'beaconUnregisterAll'
+  * First, register beacons by pointing to them and hitting the hotkey
+  * Then, blocks that obstruct registered beacons won't be EasyPlaced or won't be counted in Material List
 * Render Layers: Addition of config 'layerMoveAmount'
   * Useful for map arts
   * If you have materials in your inventory for multiple layers, you could move that same amount of layers

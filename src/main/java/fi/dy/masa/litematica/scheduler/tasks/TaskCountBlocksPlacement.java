@@ -3,6 +3,7 @@ package fi.dy.masa.litematica.scheduler.tasks;
 import java.util.Collection;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
+import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.materials.IMaterialList;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
@@ -53,6 +54,10 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
 
         if (stateSchematic.isAir() == false)
         {
+            if (Configs.Generic.MATERIAL_LIST_AVOID_BEACONS.getBooleanValue() &&
+                    DataManager.getBeaconManager().checkIfObstructs(this.schematicWorld, pos, stateSchematic))
+                return;
+
             BlockState stateClient = this.clientWorld.getBlockState(pos);
 
             this.countsTotal.addTo(stateSchematic, 1);

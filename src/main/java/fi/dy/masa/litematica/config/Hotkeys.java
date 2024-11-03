@@ -8,6 +8,9 @@ import fi.dy.masa.malilib.hotkeys.KeybindSettings;
 public class Hotkeys
 {
     public static final ConfigHotkey ADD_SELECTION_BOX                  = new ConfigHotkey("addSelectionBox",                   "M,A",  "litematica.config.hotkeys.comment.addSelectionBox").translatedName("litematica.config.hotkeys.name.addSelectionBox");
+    public static final ConfigHotkey BEACON_REGISTER                    = new ConfigHotkey("beaconRegister",                    "",     "Register a beacon pointed by the crosshair. This can be used together with 'easyPlaceAvoidBeacons' or 'materialListAvoidBeacons' to disregard blocks that obstruct beacons");
+    public static final ConfigHotkey BEACON_UNREGISTER                  = new ConfigHotkey("beaconUnregister",                  "",     "Unregister beacon pointed by the crosshair");
+    public static final ConfigHotkey BEACON_UNREGISTER_ALL              = new ConfigHotkey("beaconUnregisterAll",               "",     "Unregister all previously registered beacons");
     public static final ConfigHotkey CLONE_SELECTION                    = new ConfigHotkey("cloneSelection",                    "",     "litematica.config.hotkeys.comment.cloneSelection").translatedName("litematica.config.hotkeys.name.cloneSelection");
     public static final ConfigHotkey DELETE_SELECTION_BOX               = new ConfigHotkey("deleteSelectionBox",                "",     "litematica.config.hotkeys.comment.deleteSelectionBox").translatedName("litematica.config.hotkeys.name.deleteSelectionBox");
     public static final ConfigHotkey EASY_PLACE_ACTIVATION              = new ConfigHotkey("easyPlaceUseKey",                   "BUTTON_2", KeybindSettings.PRESS_ALLOWEXTRA, "litematica.config.hotkeys.comment.easyPlaceUseKey").translatedName("litematica.config.hotkeys.name.easyPlaceUseKey");
@@ -93,6 +96,9 @@ public class Hotkeys
 
     public static final List<ConfigHotkey> HOTKEY_LIST = ImmutableList.of(
             ADD_SELECTION_BOX,
+            BEACON_REGISTER,
+            BEACON_UNREGISTER,
+            BEACON_UNREGISTER_ALL,
             CLONE_SELECTION,
             DELETE_SELECTION_BOX,
             EASY_PLACE_ACTIVATION,

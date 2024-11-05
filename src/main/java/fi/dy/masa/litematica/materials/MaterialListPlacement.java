@@ -50,6 +50,8 @@ public class MaterialListPlacement extends MaterialListBase
     @Override
     public void reCreateMaterialList()
     {
+        TaskScheduler.getInstanceClient().removeTasks(TaskCountBlocksPlacement.class);
+
         boolean ignoreState = Configs.Generic.MATERIAL_LIST_IGNORE_STATE.getBooleanValue();
         TaskCountBlocksPlacement task = new TaskCountBlocksPlacement(this.placement, this, ignoreState);
         TaskScheduler.getInstanceClient().scheduleTask(task, 20);

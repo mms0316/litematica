@@ -33,6 +33,8 @@ public class MaterialListAreaAnalyzer extends MaterialListBase
     @Override
     public void reCreateMaterialList()
     {
+        TaskScheduler.getInstanceClient().removeTasks(TaskCountBlocksArea.class);
+
         TaskCountBlocksArea task = new TaskCountBlocksArea(this.selection, this);
         TaskScheduler.getInstanceClient().scheduleTask(task, 20);
     }

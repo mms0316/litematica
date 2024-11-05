@@ -178,6 +178,40 @@ public class TaskScheduler
         }
     }
 
+    public boolean removeTasks(Class <? extends ITask> clazz)
+    {
+        synchronized (this)
+        {
+            boolean removed = false;
+
+            for (int index = this.tasks.size() - 1; index >= 0; index--)
+            {
+                ITask task = this.tasks.get(index);
+
+                if (clazz.equals(task.getClass()))
+                {
+                    task.stop();
+                    this.tasks.remove(index);
+                    removed = true;
+                }
+            }
+
+            for (int index = this.tasksToAdd.size() - 1; index >= 0; index--)
+            {
+                ITask task = this.tasksToAdd.get(index);
+
+                if (clazz.equals(task.getClass()))
+                {
+                    task.stop();
+                    this.tasksToAdd.remove(index);
+                    removed = true;
+                }
+            }
+
+            return removed;
+        }
+    }
+
     public boolean removeTask(ITask task)
     {
         synchronized (this)

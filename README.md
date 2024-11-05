@@ -105,6 +105,7 @@ Tweaks:
 Fixes:
 * EasyPlace: Allows right-clicking to set block states (e.g. Note Blocks) without needing to turn off EasyPlace
   * Brought from 1.12.2 official branch
+* Material List, Area Analyzer: Fixed having multiple unfinished tasks when changing layers or refreshing
 * Schematic Verifier: Considers exploded blocks
 * Schematic Verifier: When unloading a schematic placement, stops the related Verifier
 * Task Scheduler: Brought synchronization fix from 1.12.2

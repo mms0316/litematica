@@ -79,7 +79,6 @@ public class KeyCallbacks
         Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER_ALL.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.MATERIAL_LIST_REFRESH.getKeybind().setCallback(callbackHotkeys);
-        Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind().setCallback(callbackHotkeys);
@@ -112,6 +111,7 @@ public class KeyCallbacks
         Hotkeys.DELETE_SELECTION_BOX.getKeybind().setCallback(callbackMessage);
         Hotkeys.EASY_PLACE_FIRST_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.EASY_PLACE_FIRST));
         Hotkeys.EASY_PLACE_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.EASY_PLACE_MODE));
+        Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind().setCallback(callbackMessage);
         Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind().setCallback(callbackMessage);
         Hotkeys.SELECTION_MODE_CYCLE.getKeybind().setCallback(callbackMessage);
         Hotkeys.SET_AREA_ORIGIN.getKeybind().setCallback(callbackMessage);
@@ -478,21 +478,6 @@ public class KeyCallbacks
                     return true;
                 }
             }
-            else if (key == Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind())
-            {
-                var materialList = DataManager.getMaterialList();
-                if (materialList != null)
-                {
-                    materialList.toggleInfoHud();
-
-                    // If hotkey is configured to work on GUIs, and Material List GUI is opened,
-                    // also update the Info Hud button, even if the search filter may also be updated
-                    if (mc.currentScreen instanceof GuiMaterialList guiMaterialList)
-                        guiMaterialList.initGui();
-
-                    return true;
-                }
-            }
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())
             {
                 DataManager.getRenderLayerRange().setLayerMode((LayerMode) DataManager.getRenderLayerRange().getLayerMode().cycle(true));
@@ -664,6 +649,24 @@ public class KeyCallbacks
                             }
                         }
                     }
+                }
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind())
+            {
+                var materialList = DataManager.getMaterialList();
+                if (materialList != null)
+                {
+                    materialList.toggleInfoHud();
+
+                    // If hotkey is configured to work on GUIs, and Material List GUI is opened,
+                    // also update the Info Hud button, even if the search filter may also be updated
+                    if (mc.currentScreen instanceof GuiMaterialList guiMaterialList)
+                        guiMaterialList.initGui();
+
+                    InfoUtils.printBooleanConfigToggleMessage(Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getPrettyName(),
+                            materialList.getHudRenderer().getShouldRenderCustom());
+
+                    return true;
                 }
             }
             else if (key == Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind())

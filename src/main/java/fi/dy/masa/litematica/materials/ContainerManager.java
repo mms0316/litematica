@@ -305,6 +305,8 @@ public class ContainerManager {
                     idx++;
             }
         }
+
+        materialList.getHudRenderer().clearUpdateTime();
     }
 
 

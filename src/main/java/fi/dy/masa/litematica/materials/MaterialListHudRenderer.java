@@ -296,4 +296,9 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
         // Draw the border
         RenderUtils.drawOutline(x, y, width, height, 1, colorBorder, zLevel);
     }
+
+    public void clearUpdateTime()
+    {
+        this.lastUpdateTime = 0;
+    }
 }

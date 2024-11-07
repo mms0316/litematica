@@ -232,9 +232,11 @@ public class ContainerManager {
         var screenSlots = screenHandler.slots;
         final int screenMaxSlot = getScreenMaxSlot(screenHandler);
 
+        final int multiplier = materialList.getMultiplier();
+
         for (var entry : missingMaterials) {
             var stackMissing = entry.getStack();
-            var countMissing = entry.getCountMissing() - entry.getCountAvailable();
+            var countMissing = (entry.getCountMissing() * multiplier) - entry.getCountAvailable();
             if (countMissing <= 0) continue;
 
             for (var idx = screenMaxSlot; idx >= 0; idx--) {

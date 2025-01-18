@@ -52,6 +52,9 @@ public class KeyCallbacks
 
         Configs.Generic.PICK_BLOCKABLE_SLOTS.setValueChangeCallback(valueChangeCallback);
 
+        Hotkeys.BEACON_REGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.BEACON_UNREGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.BEACON_UNREGISTER_ALL.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.CLONE_SELECTION.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.EXECUTE_OPERATION.getKeybind().setCallback(callbackHotkeys);
@@ -60,6 +63,11 @@ public class KeyCallbacks
         Hotkeys.LAYER_NEXT.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_PREVIOUS.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.LAYER_SET_HERE.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER_ALL.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_FETCH.getKeybind().setCallback(callbackHotkeys);
+        Hotkeys.MATERIAL_LIST_REFRESH.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind().setCallback(callbackHotkeys);
@@ -91,10 +99,13 @@ public class KeyCallbacks
         Hotkeys.UNLOAD_CURRENT_SCHEMATIC.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.ADD_SELECTION_BOX.getKeybind().setCallback(callbackMessage);
         Hotkeys.DELETE_SELECTION_BOX.getKeybind().setCallback(callbackMessage);
+        Hotkeys.EASY_PLACE_FIRST_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.EASY_PLACE_FIRST));
         Hotkeys.EASY_PLACE_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.EASY_PLACE_MODE));
+        Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind().setCallback(callbackMessage);
         Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind().setCallback(callbackMessage);
         Hotkeys.SELECTION_MODE_CYCLE.getKeybind().setCallback(callbackMessage);
         Hotkeys.SET_AREA_ORIGIN.getKeybind().setCallback(callbackMessage);
+        Hotkeys.SET_SCHEMATIC_ORIGIN.getKeybind().setCallback(callbackMessage);
         Hotkeys.SCHEMATIC_PLACEMENT_ROTATION.getKeybind().setCallback(callbackMessage);
         Hotkeys.SCHEMATIC_PLACEMENT_MIRROR.getKeybind().setCallback(callbackMessage);
         Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind().setCallback(callbackMessage);
@@ -370,7 +381,8 @@ public class KeyCallbacks
                     if (schematicPlacement != null)
                     {
                         materialList = schematicPlacement.getMaterialList();
-                        materialList.reCreateMaterialList();
+                        if (Configs.Generic.MATERIAL_LIST_HOTKEY_AUTO_REFRESH.getBooleanValue())
+                            materialList.reCreateMaterialList();
                     }
                     else
                     {
@@ -408,18 +420,62 @@ public class KeyCallbacks
             }
             else if (key == Hotkeys.LAYER_NEXT.getKeybind())
             {
-                DataManager.getRenderLayerRange().moveLayer(1);
+                DataManager.getRenderLayerRange().moveLayer(Configs.Generic.LAYER_MOVE_AMOUNT.getIntegerValue());
                 return true;
             }
             else if (key == Hotkeys.LAYER_PREVIOUS.getKeybind())
             {
-                DataManager.getRenderLayerRange().moveLayer(-1);
+                DataManager.getRenderLayerRange().moveLayer(- Configs.Generic.LAYER_MOVE_AMOUNT.getIntegerValue());
                 return true;
             }
             else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())
             {
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(fi.dy.masa.malilib.util.EntityUtils.getCameraEntity());
                 return true;
+            }
+            else if (key == Hotkeys.BEACON_REGISTER.getKeybind())
+            {
+                DataManager.getBeaconManager().register(mc);
+                return true;
+            }
+            else if (key == Hotkeys.BEACON_UNREGISTER.getKeybind())
+            {
+                DataManager.getBeaconManager().unregister(mc);
+                return true;
+            }
+            else if (key == Hotkeys.BEACON_UNREGISTER_ALL.getKeybind())
+            {
+                DataManager.getBeaconManager().unregisterAll(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_REGISTER.getKeybind())
+            {
+                DataManager.getContainerManager().registerContainer(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER.getKeybind())
+            {
+                DataManager.getContainerManager().unregisterContainer(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_CONTAINER_UNREGISTER_ALL.getKeybind())
+            {
+                DataManager.getContainerManager().unregisterContainerAll(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_FETCH.getKeybind())
+            {
+                DataManager.getContainerManager().fetchMaterials(mc);
+                return true;
+            }
+            else if (key == Hotkeys.MATERIAL_LIST_REFRESH.getKeybind())
+            {
+                var materialList = DataManager.getMaterialList();
+                if (materialList != null)
+                {
+                    materialList.reCreateMaterialList();
+                    return true;
+                }
             }
             else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())
             {
@@ -602,6 +658,24 @@ public class KeyCallbacks
                     }
                 }
             }
+            else if (key == Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind())
+            {
+                var materialList = DataManager.getMaterialList();
+                if (materialList != null)
+                {
+                    materialList.toggleInfoHud();
+
+                    // If hotkey is configured to work on GUIs, and Material List GUI is opened,
+                    // also update the Info Hud button, even if the search filter may also be updated
+                    if (mc.currentScreen instanceof GuiMaterialList guiMaterialList)
+                        guiMaterialList.initGui();
+
+                    InfoUtils.printBooleanConfigToggleMessage(Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getPrettyName(),
+                            materialList.getHudRenderer().getShouldRenderCustom());
+
+                    return true;
+                }
+            }
             else if (key == Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind())
             {
                 if (mode.getUsesAreaSelection())
@@ -690,6 +764,18 @@ public class KeyCallbacks
                         area.setExplicitOrigin(pos);
                         String posStr = String.format("x: %d, y: %d, z: %d", pos.getX(), pos.getY(), pos.getZ());
                         InfoUtils.printActionbarMessage("litematica.message.set_area_origin", posStr);
+                        return true;
+                    }
+                }
+            }
+            else if (key == Hotkeys.SET_SCHEMATIC_ORIGIN.getKeybind())
+            {
+                if (mc.player != null)
+                {
+                    var project = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
+                    if (project != null)
+                    {
+                        project.setOrigin(fi.dy.masa.malilib.util.PositionUtils.getEntityBlockPos(mc.player), null);
                         return true;
                     }
                 }

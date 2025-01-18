@@ -11,9 +11,13 @@ public class Hotkeys
     private static final String HOTKEYS_KEY = Reference.MOD_ID+".config.hotkeys";
 
     public static final ConfigHotkey ADD_SELECTION_BOX                  = new ConfigHotkey("addSelectionBox",                   "M,A").apply(HOTKEYS_KEY);
+    public static final ConfigHotkey BEACON_REGISTER                    = new ConfigHotkey("beaconRegister",                    "",     "Register a beacon pointed by the crosshair. This can be used together with 'easyPlaceAvoidBeacons' or 'materialListAvoidBeacons' to disregard blocks that obstruct beacons");
+    public static final ConfigHotkey BEACON_UNREGISTER                  = new ConfigHotkey("beaconUnregister",                  "",     "Unregister beacon pointed by the crosshair");
+    public static final ConfigHotkey BEACON_UNREGISTER_ALL              = new ConfigHotkey("beaconUnregisterAll",               "",     "Unregister all previously registered beacons");
     public static final ConfigHotkey CLONE_SELECTION                    = new ConfigHotkey("cloneSelection",                    "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey DELETE_SELECTION_BOX               = new ConfigHotkey("deleteSelectionBox",                "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey EASY_PLACE_ACTIVATION              = new ConfigHotkey("easyPlaceUseKey",                   "BUTTON_2", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
+    public static final ConfigHotkey EASY_PLACE_FIRST_TOGGLE            = new ConfigHotkey("easyPlaceFirstToggle",              "",     "Allows quickly toggling on/off Easy Place closest/furthest block placing");
     public static final ConfigHotkey EASY_PLACE_TOGGLE                  = new ConfigHotkey("easyPlaceToggle",                   "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey EXECUTE_OPERATION                  = new ConfigHotkey("executeOperation",                  "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey INVERT_GHOST_BLOCK_RENDER_STATE    = new ConfigHotkey("invertGhostBlockRenderState",       "").apply(HOTKEYS_KEY);
@@ -23,6 +27,12 @@ public class Hotkeys
     public static final ConfigHotkey LAYER_NEXT                         = new ConfigHotkey("layerNext",                         "PAGE_UP").apply(HOTKEYS_KEY);
     public static final ConfigHotkey LAYER_PREVIOUS                     = new ConfigHotkey("layerPrevious",                     "PAGE_DOWN").apply(HOTKEYS_KEY);
     public static final ConfigHotkey LAYER_SET_HERE                     = new ConfigHotkey("layerSetHere",                      "").apply(HOTKEYS_KEY);
+    public static final ConfigHotkey MATERIAL_LIST_CONTAINER_REGISTER   = new ConfigHotkey("materialListContainerRegister",     "", KeybindSettings.MODIFIER_GUI, "Register materials inside an opened container to be used for Material List");
+    public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER = new ConfigHotkey("materialListContainerUnregister",   "", "Unregister container used for Material List");
+    public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER_ALL = new ConfigHotkey("materialListContainerUnregisterAll", "", "Unregister all containers used for Material List");
+    public static final ConfigHotkey MATERIAL_LIST_FETCH                = new ConfigHotkey("materialListFetch",                 "", KeybindSettings.MODIFIER_GUI, "Fetch materials required by the active Material List from opened container");
+    public static final ConfigHotkey MATERIAL_LIST_REFRESH              = new ConfigHotkey("materialListRefresh",               "",     "Refresh active Material List");
+    public static final ConfigHotkey MATERIAL_LIST_TOGGLE_INFO_HUD      = new ConfigHotkey("materialListToggleInfoHud",         "",     "Toggle Info Hud for active Material List");
     public static final ConfigHotkey NUDGE_SELECTION_NEGATIVE           = new ConfigHotkey("nudgeSelectionNegative",            "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey NUDGE_SELECTION_POSITIVE           = new ConfigHotkey("nudgeSelectionPositive",            "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey MOVE_ENTIRE_SELECTION              = new ConfigHotkey("moveEntireSelection",               "").apply(HOTKEYS_KEY);
@@ -64,6 +74,7 @@ public class Hotkeys
     public static final ConfigHotkey SELECTION_MODE_CYCLE               = new ConfigHotkey("selectionModeCycle",                "LEFT_CONTROL,M").apply(HOTKEYS_KEY);
     public static final ConfigHotkey SELECTION_SHRINK_HOTKEY            = new ConfigHotkey("selectionShrink",                   "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey SET_AREA_ORIGIN                    = new ConfigHotkey("setAreaOrigin",                     "").apply(HOTKEYS_KEY);
+    public static final ConfigHotkey SET_SCHEMATIC_ORIGIN               = new ConfigHotkey("setSchematicOrigin",                "",     "Set the active schematic placement\n to the player's position");
     public static final ConfigHotkey SET_SELECTION_BOX_POSITION_1       = new ConfigHotkey("setSelectionBoxPosition1",          "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey SET_SELECTION_BOX_POSITION_2       = new ConfigHotkey("setSelectionBoxPosition2",          "").apply(HOTKEYS_KEY);
     public static final ConfigHotkey TOGGLE_ALL_RENDERING               = new ConfigHotkey("toggleAllRendering",                "M,R").apply(HOTKEYS_KEY);
@@ -89,9 +100,13 @@ public class Hotkeys
 
     public static final List<ConfigHotkey> HOTKEY_LIST = ImmutableList.of(
             ADD_SELECTION_BOX,
+            BEACON_REGISTER,
+            BEACON_UNREGISTER,
+            BEACON_UNREGISTER_ALL,
             CLONE_SELECTION,
             DELETE_SELECTION_BOX,
             EASY_PLACE_ACTIVATION,
+            EASY_PLACE_FIRST_TOGGLE,
             EASY_PLACE_TOGGLE,
             EXECUTE_OPERATION,
             INVERT_GHOST_BLOCK_RENDER_STATE,
@@ -101,6 +116,12 @@ public class Hotkeys
             LAYER_NEXT,
             LAYER_PREVIOUS,
             LAYER_SET_HERE,
+            MATERIAL_LIST_CONTAINER_REGISTER,
+            MATERIAL_LIST_CONTAINER_UNREGISTER,
+            MATERIAL_LIST_CONTAINER_UNREGISTER_ALL,
+            MATERIAL_LIST_FETCH,
+            MATERIAL_LIST_REFRESH,
+            MATERIAL_LIST_TOGGLE_INFO_HUD,
             NUDGE_SELECTION_NEGATIVE,
             NUDGE_SELECTION_POSITIVE,
             MOVE_ENTIRE_SELECTION,
@@ -142,6 +163,7 @@ public class Hotkeys
             SELECTION_MODE_CYCLE,
             SELECTION_SHRINK_HOTKEY,
             SET_AREA_ORIGIN,
+            SET_SCHEMATIC_ORIGIN,
             SET_SELECTION_BOX_POSITION_1,
             SET_SELECTION_BOX_POSITION_2,
             TOGGLE_ALL_RENDERING,

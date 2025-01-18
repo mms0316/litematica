@@ -1,5 +1,7 @@
 package fi.dy.masa.litematica.mixin;
 
+import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.util.AddonUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,5 +31,17 @@ public abstract class MixinHandledScreen extends Screen
     private void litematica_renderSlotHighlightsPost(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci)
     {
         MaterialListHudRenderer.renderLookedAtBlockInInventory((HandledScreen<?>) (Object) this, this.client);
+
+        if (Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue())
+        {
+            final var color = Configs.Colors.HIGHLIGHT_REFILL_IN_INV_COLOR.getColor();
+            final var guiScreen = (HandledScreen<?>) (Object) this;
+
+            final var refillItem = AddonUtils.getLastRefillItem();
+            refillItem.ifPresent(itemStack -> MaterialListHudRenderer.highlightSlotsWithItem(itemStack, guiScreen, color, this.client));
+
+            final var ranOutItem = AddonUtils.getLastRanOutItem();
+            ranOutItem.ifPresent(itemStack -> MaterialListHudRenderer.highlightSlotsWithItem(itemStack, guiScreen, color, this.client));
+        }
     }
 }

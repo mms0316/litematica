@@ -320,10 +320,7 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
                 meta = pair.getRight();
                 version = pair.getLeft();
 
-                if (entry.getName().endsWith(LitematicaSchematic.FILE_EXTENSION))
-                {
-                    this.createPreviewImage(file, meta);
-                }
+                this.createPreviewImage(file, meta);
 
                 this.cachedMetadata.put(file, meta);
                 this.cachedVersion.put(file, version);

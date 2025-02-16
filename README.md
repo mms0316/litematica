@@ -76,10 +76,11 @@ Features:
 * Material List: Addition of hotkey 'materialListToggleInfoHud'
   * This is a shortcut for M+L and button click on "Info HUD: ON / OFF"
 * Material List: Addition of counts of shulker boxes
+* Rendering: Addition of config 'schematicOverlayColorMissing2' to be alternated when using RenderLayers with axis
 * Schematic Placement: Addition of hotkey 'setSchematicOrigin'
   * This moves the active schematic placement to player's position
   * This is a shortcut for - (minus key) and "Move to player"
-* Schematic Loading: Addition of metadata preview for .schem and .nbt
+* (Before 1.21.4 only) Schematic Loading: Addition of metadata preview for .schem and .nbt
 * Schematic Loading: Addition of custom embedded image preview for .schem and .nbt
 * Schematic Verifier: Addition of config 'schematicVerifierCheckChunkReload'
   * Useful for building with multiple people

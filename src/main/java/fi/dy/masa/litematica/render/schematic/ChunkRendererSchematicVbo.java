@@ -27,6 +27,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.chunk.WorldChunk;
@@ -34,6 +35,7 @@ import net.minecraft.world.chunk.WorldChunk;
 import fi.dy.masa.malilib.util.Color4f;
 import fi.dy.masa.malilib.util.EntityUtils;
 import fi.dy.masa.malilib.util.IntBoundingBox;
+import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
@@ -489,8 +491,30 @@ public class ChunkRendererSchematicVbo implements AutoCloseable
         if (Configs.Visuals.ENABLE_SCHEMATIC_OVERLAY.getBooleanValue())
         {
             OverlayType type = this.getOverlayType(stateSchematic, stateClient);
+            boolean secondaryColor = false;
 
-            this.overlayColor = this.getOverlayColor(type);
+            LayerRange layerRange = DataManager.getRenderLayerRange();
+            if (layerRange.getLayerMode() != LayerMode.ALL)
+            {
+                Axis axis = layerRange.getAxis();
+                if (axis != null)
+                {
+                    if (axis == Axis.X)
+                    {
+                        secondaryColor = (pos.getX() % 2 == 0);
+                    }
+                    else if (axis == Axis.Y)
+                    {
+                        secondaryColor = (pos.getY() % 2 == 0);
+                    }
+                    else if (axis == Axis.Z)
+                    {
+                        secondaryColor = (pos.getZ() % 2 == 0);
+                    }
+                }
+            }
+
+            this.overlayColor = this.getOverlayColor(type, secondaryColor);
 
             if (this.overlayColor != null)
             {
@@ -751,6 +775,12 @@ public class ChunkRendererSchematicVbo implements AutoCloseable
     @Nullable
     protected static Color4f getOverlayColor(OverlayType overlayType)
     {
+        return getOverlayColor(overlayType, false);
+    }
+
+    @Nullable
+    protected static Color4f getOverlayColor(OverlayType overlayType, boolean useSecondaryColor)
+    {
         Color4f overlayColor = null;
 
         switch (overlayType)
@@ -758,7 +788,14 @@ public class ChunkRendererSchematicVbo implements AutoCloseable
             case MISSING:
                 if (Configs.Visuals.SCHEMATIC_OVERLAY_TYPE_MISSING.getBooleanValue())
                 {
-                    overlayColor = Configs.Colors.SCHEMATIC_OVERLAY_COLOR_MISSING.getColor();
+                    if (useSecondaryColor)
+                    {
+                        overlayColor = Configs.Colors.SCHEMATIC_OVERLAY_COLOR_MISSING_2.getColor();
+                    }
+                    else
+                    {
+                        overlayColor = Configs.Colors.SCHEMATIC_OVERLAY_COLOR_MISSING.getColor();
+                    }
                 }
                 break;
             case EXTRA:

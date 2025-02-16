@@ -148,6 +148,7 @@
     "litematica.config.colors.name.schematicOverlayColorExtra": "schematicOverlayColorExtra",
     "litematica.config.colors.name.schematicOverlayColorMissing": "schematicOverlayColorMissing",
     "litematica.config.colors.name.schematicOverlayColorWrongBlock": "schematicOverlayColorWrongBlock",
+    "litematica.config.colors.name.schematicOverlayColorWrongBlock2": "schematicOverlayColorWrongBlock2",
     "litematica.config.colors.name.schematicOverlayColorWrongState": "schematicOverlayColorWrongState",
 
     "litematica.config.hotkeys.name.addSelectionBox": "addSelectionBox",
@@ -374,6 +375,7 @@
     "litematica.config.colors.comment.schematicOverlayColorExtra": "The color of the blocks overlay for extra blocks",
     "litematica.config.colors.comment.schematicOverlayColorMissing": "The color of the blocks overlay for missing blocks",
     "litematica.config.colors.comment.schematicOverlayColorWrongBlock": "The color of the blocks overlay for wrong blocks",
+    "litematica.config.colors.comment.schematicOverlayColorWrongBlock2": "Secondary color of the blocks overlay for wrong blocks",
     "litematica.config.colors.comment.schematicOverlayColorWrongState": "The color of the blocks overlay for wrong block states",
 
     "litematica.config.hotkeys.comment.addSelectionBox": "Add a new selection box (position 1) here",

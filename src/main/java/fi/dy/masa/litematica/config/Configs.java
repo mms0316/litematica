@@ -377,6 +377,7 @@ public class Configs implements IConfigHandler
         public static final ConfigColor REBUILD_REPLACE_OVERLAY_COLOR       = new ConfigColor("schematicRebuildReplaceOverlayColor","#4CF0A010").apply(COLORS_KEY);
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_EXTRA       = new ConfigColor("schematicOverlayColorExtra",         "#4CFF4CE6").apply(COLORS_KEY);
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_MISSING     = new ConfigColor("schematicOverlayColorMissing",       "#2C33B3E6").apply(COLORS_KEY);
+        public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_MISSING_2   = new ConfigColor("schematicOverlayColorMissing2",      "#2C33E687").apply(COLORS_KEY);
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_WRONG_BLOCK = new ConfigColor("schematicOverlayColorWrongBlock",    "#4CFF3333").apply(COLORS_KEY);
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_WRONG_STATE = new ConfigColor("schematicOverlayColorWrongState",    "#4CFF9010").apply(COLORS_KEY);
 
@@ -391,6 +392,7 @@ public class Configs implements IConfigHandler
                 REBUILD_REPLACE_OVERLAY_COLOR,
                 SCHEMATIC_OVERLAY_COLOR_EXTRA,
                 SCHEMATIC_OVERLAY_COLOR_MISSING,
+                SCHEMATIC_OVERLAY_COLOR_MISSING_2,
                 SCHEMATIC_OVERLAY_COLOR_WRONG_BLOCK,
                 SCHEMATIC_OVERLAY_COLOR_WRONG_STATE
         );

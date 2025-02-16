@@ -28,6 +28,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.chunk.Chunk;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message.MessageType;
@@ -306,7 +307,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     }
 
     @Override
-    public boolean execute()
+    public boolean execute(Profiler profiler)
     {
         int chunksBefore = 0;
         int recheckBlocksBefore = 0;
@@ -319,8 +320,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
             recheckChunksBefore = this.recheckChunkQueue.size();
         }
 
-        this.verifyChunks();
-        this.checkChangedPositions();
+        this.verifyChunks(profiler);
+        this.checkChangedPositions(profiler);
         this.checkChangedChunks();
 
         //Updates infohud
@@ -527,8 +528,9 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         }
     }
 
-    private void checkChangedPositions()
+    private void checkChangedPositions(Profiler profiler)
     {
+        profiler.push("verify_check_pos");
         if ((this.finished || this.verificationActive) && this.recheckQueue.isEmpty() == false)
         {
             Iterator<BlockPos> iter = this.recheckQueue.iterator();
@@ -600,6 +602,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 }
             }
         }
+
+        profiler.pop();
     }
 
     private ArrayListMultimap<Pair<BlockState, BlockState>, BlockPos> getMapForMismatchType(MismatchType mismatchType)
@@ -619,8 +623,9 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         }
     }
 
-    private void verifyChunks()
+    private boolean verifyChunks(Profiler profiler)
     {
+        profiler.push("verify_chunks");
         if (this.verificationActive)
         {
             Iterator<ChunkPos> iter = this.requiredChunks.iterator();
@@ -650,7 +655,9 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 this.notifyListener();
             }
         }
+        profiler.pop();
     }
+
 
     private void checkChangedChunks()
     {

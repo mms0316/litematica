@@ -82,7 +82,7 @@ public class RenderUtils
         }
         catch (Exception e)
         {
-            Litematica.logger.error("renderBlockOutline: Failed to draw Area Selection box (Error: {})", e.getLocalizedMessage());
+            Litematica.LOGGER.error("renderBlockOutline: Failed to draw Area Selection box (Error: {})", e.getLocalizedMessage());
         }
     }
 
@@ -203,7 +203,7 @@ public class RenderUtils
         }
         catch (Exception e)
         {
-            Litematica.logger.error("renderBlockOutlineOverlapping: Failed to draw Area Selection box (Error: {})", e.getLocalizedMessage());
+            Litematica.LOGGER.error("renderBlockOutlineOverlapping: Failed to draw Area Selection box (Error: {})", e.getLocalizedMessage());
         }
     }
 
@@ -738,6 +738,7 @@ public class RenderUtils
     {
         int xInv = 0;
         int yInv = 0;
+        int compatShift = OverlayRenderer.calculateCompatYShift();
 
         switch (align)
         {
@@ -747,7 +748,7 @@ public class RenderUtils
                 break;
             case TOP_CENTER:
                 xInv = GuiUtils.getScaledWindowWidth() / 2 - (props.width / 2);
-                yInv = offY;
+                yInv = offY + compatShift;
                 break;
         }
 
@@ -759,7 +760,7 @@ public class RenderUtils
         fi.dy.masa.malilib.render.InventoryOverlay.renderInventoryBackground(type, xInv, yInv, props.slotsPerRow, props.totalSlots, mc);
         fi.dy.masa.malilib.render.InventoryOverlay.renderInventoryStacks(type, inv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, props.slotsPerRow, 0, inv.size(), disabledSlots, mc, drawContext);
 
-        return props.height;
+        return props.height + compatShift;
     }
 
     public static void renderBackgroundMask(int startX, int startY, int width, int height, DrawContext drawContext)

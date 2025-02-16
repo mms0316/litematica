@@ -49,7 +49,7 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
 
         this.title = StringUtils.translate("litematica.gui.title.schematic_browser");
         this.infoWidth = 170;
-        this.infoHeight = 290;
+        this.infoHeight = 310;
         this.parent = parent;
     }
 
@@ -252,7 +252,8 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
 
             if (pair != null)
             {
-                y += 14;
+                //y += 14;
+                y += 12;
 
                 int iconSize = pair.getRight().getImage().getWidth();
                 boolean needsScaling = height < this.infoHeight;
@@ -369,7 +370,7 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
                         {
                             int val = previewImageData[i++];
                             // Swap the color channels from ARGB to ABGR
-                            val = (val & 0xFF00FF00) | (val & 0xFF0000) >> 16 | (val & 0xFF) << 16;
+                            //val = (val & 0xFF00FF00) | (val & 0xFF0000) >> 16 | (val & 0xFF) << 16;
                             image.setColorArgb(x, y, val);
                         }
                     }
@@ -380,7 +381,7 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
                 }
                 catch (Exception e)
                 {
-                    Litematica.logger.warn("Failed to create a preview image", e);
+                    Litematica.LOGGER.warn("Failed to create a preview image", e);
                 }
             }
         }

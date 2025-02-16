@@ -28,7 +28,6 @@ import fi.dy.masa.litematica.gui.GuiSchematicBrowserBase;
 import fi.dy.masa.litematica.gui.Icons;
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
 import fi.dy.masa.litematica.schematic.SchematicMetadata;
-import fi.dy.masa.litematica.util.FileType;
 import fi.dy.masa.litematica.schematic.SchematicSchema;
 
 public class WidgetSchematicBrowser extends WidgetFileBrowserBase
@@ -284,24 +283,19 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
     @Nullable
     protected SchematicMetadata getSchematicMetadata(DirectoryEntry entry)
     {
-        var fileDir = entry.getDirectory();
-        var fileName = entry.getName();
-        File file = new File(fileDir, fileName);
+        File file = new File(entry.getDirectory(), entry.getName());
         SchematicMetadata meta = this.cachedMetadata.get(file);
 
         if (meta == null && this.cachedMetadata.containsKey(file) == false)
         {
-            var fileType = FileType.fromFile(file);
-            switch (fileType) {
-                case LITEMATICA_SCHEMATIC ->
-                        meta = LitematicaSchematic.readMetadataFromFile(fileDir, fileName);
-                case SPONGE_SCHEMATIC, VANILLA_STRUCTURE ->
-                        meta = SchematicMetadata.readMetadataFromFile(fileType, file);
-            }
-
-            if (meta != null)
+            if (entry.getName().endsWith(LitematicaSchematic.FILE_EXTENSION))
             {
-                this.createPreviewImage(file, meta);
+                meta = LitematicaSchematic.readMetadataFromFile(entry.getDirectory(), entry.getName());
+
+                if (meta != null)
+                {
+                    this.createPreviewImage(file, meta);
+                }
             }
 
             this.cachedMetadata.put(file, meta);

@@ -757,7 +757,7 @@ public class WorldUtils
                             {
                                 if (Configs.Generic.DEBUG_LOGGING.getBooleanValue())
                                 {
-                                    Litematica.logger.info("Can't orientate");
+                                    Litematica.LOGGER.info("Can't orientate");
                                 }
                                 return ActionResult.FAIL;
                             }

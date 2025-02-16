@@ -74,13 +74,13 @@ public class ContainerManager {
                 var entry = arr.get(i).getAsJsonObject();
 
                 if (!JsonUtils.hasString(entry, "id")) {
-                    Litematica.logger.warn("Failed to load material id at line {}", i);
+                    Litematica.LOGGER.warn("Failed to load material id at line {}", i);
                     continue;
                 }
                 var id = entry.get("id").getAsString();
 
                 if (!JsonUtils.hasArray(entry, "pos")) {
-                    Litematica.logger.warn("Failed to load material positions at line {}", i);
+                    Litematica.LOGGER.warn("Failed to load material positions at line {}", i);
                     continue;
                 }
                 var posArray = entry.getAsJsonArray("pos");
@@ -93,7 +93,7 @@ public class ContainerManager {
                     } catch (Exception ignored) { }
 
                     if (blockPos == null) {
-                        Litematica.logger.warn("Failed to load position at line {}", i);
+                        Litematica.LOGGER.warn("Failed to load position at line {}", i);
                         continue;
                     }
 

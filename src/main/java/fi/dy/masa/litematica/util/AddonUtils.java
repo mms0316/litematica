@@ -493,7 +493,7 @@ public class AddonUtils {
                     }
                 }
             } catch (Exception e) {
-                Litematica.logger.warn("AddonUtils: Failed to reflect method AbstractBlock::onUse", e);
+                Litematica.LOGGER.warn("AddonUtils: Failed to reflect method AbstractBlock::onUse", e);
             }
 
             HAS_USE_ACTION_CACHE.put(block, val);

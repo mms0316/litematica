@@ -352,15 +352,15 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
             if (chunksBefore != chunksAfter)
             {
-                Litematica.logger.info("requiredChunks: " + chunksBefore + " -> " + chunksAfter);
+                Litematica.LOGGER.info("requiredChunks: " + chunksBefore + " -> " + chunksAfter);
             }
             if (recheckBlocksBefore != recheckBlocksAfter)
             {
-                Litematica.logger.info("recheckQueue: " + recheckBlocksBefore + " -> " + recheckBlocksAfter);
+                Litematica.LOGGER.info("recheckQueue: " + recheckBlocksBefore + " -> " + recheckBlocksAfter);
             }
             if (recheckChunksBefore != recheckChunksAfter)
             {
-                Litematica.logger.info("recheckChunksQueue: " + recheckChunksBefore + " -> " + recheckChunksAfter);
+                Litematica.LOGGER.info("recheckChunksQueue: " + recheckChunksBefore + " -> " + recheckChunksAfter);
             }
         }
 
@@ -623,7 +623,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         }
     }
 
-    private boolean verifyChunks(Profiler profiler)
+    private void verifyChunks(Profiler profiler)
     {
         profiler.push("verify_chunks");
         if (this.verificationActive)

@@ -367,7 +367,7 @@ public class SchematicMetadata
     public static SchematicMetadata readMetadataFromFile(FileType fileType, File file) {
         switch (fileType) {
             case SPONGE_SCHEMATIC -> {
-                NbtCompound nbt = NbtUtils.readNbtFromFile(file);
+                NbtCompound nbt = NbtUtils.readNbtFromFileAsPath(file.toPath());
                 if (nbt == null) return null;
                 SchematicMetadata metadata = new SchematicMetadata();
 
@@ -468,7 +468,7 @@ public class SchematicMetadata
                 return metadata;
             }
             case VANILLA_STRUCTURE -> {
-                NbtCompound nbt = NbtUtils.readNbtFromFile(file);
+                NbtCompound nbt = NbtUtils.readNbtFromFileAsPath(file.toPath());
                 if (nbt == null) return null;
                 SchematicMetadata metadata = new SchematicMetadata();
 

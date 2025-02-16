@@ -11,7 +11,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -56,7 +55,7 @@ public class BeaconManager {
                 } catch (Exception ignored) { }
 
                 if (blockPos == null) {
-                    Litematica.logger.warn("Failed to load position at line {}", i);
+                    Litematica.LOGGER.warn("Failed to load position at line {}", i);
                     continue;
                 }
 

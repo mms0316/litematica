@@ -71,6 +71,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       EASY_PLACE_MODE             = new ConfigBoolean("easyPlaceMode", false).apply(GENERIC_KEY);
         //public static final ConfigBoolean       EASY_PLACE_POST_REWRITE     = new ConfigBoolean("easyPlacePostRewrite", false).apply(GENERIC_KEY);
         public static final ConfigInteger       EASY_PLACE_PLACE_INTERVAL   = new ConfigInteger("easyPlacePlaceInterval", 400, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter placing a block on a same location.\nUseful to avoid desyncs with the server.");
+        public static final ConfigBoolean       EASY_PLACE_PICK_BLOCK_HALT  = new ConfigBoolean("easyPlacePickBlockHalt", true, "Reduces player speed if Pick Block fails or picks a Shulker Box");
         public static final ConfigInteger       EASY_PLACE_USE_INTERVAL     = new ConfigInteger("easyPlaceUseInterval", 20, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter interacting with a block.\nUseful to avoid overshooting Note Blocks when having high ping.");
         public static final ConfigBoolean       EASY_PLACE_SP_HANDLING      = new ConfigBoolean("easyPlaceSinglePlayerHandling", true).apply(GENERIC_KEY);
         public static final ConfigInteger       EASY_PLACE_SWAP_INTERVAL    = new ConfigInteger("easyPlaceSwapInterval", 0, 0, 10000).apply(GENERIC_KEY);
@@ -142,8 +143,9 @@ public class Configs implements IConfigHandler
                 EASY_PLACE_LEAVE_ONE,
                 EASY_PLACE_MODE,
                 //EASY_PLACE_POST_REWRITE,
-                EASY_PLACE_SP_HANDLING,
+                EASY_PLACE_PICK_BLOCK_HALT,
                 EASY_PLACE_PROTOCOL,
+                EASY_PLACE_SP_HANDLING,
                 EASY_PLACE_SWING_HAND,
                 EASY_PLACE_VANILLA_REACH,
                 ENTITY_DATA_SYNC,

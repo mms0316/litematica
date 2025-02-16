@@ -621,6 +621,12 @@ public class WorldUtils
                 {
                     // An internal message was displayed
                     easyPlaceShowFailMessage = false; // Do not overlap message
+
+                    if (Configs.Generic.EASY_PLACE_PICK_BLOCK_HALT.getBooleanValue())
+                    {
+                        mc.player.setVelocity(0, mc.player.getVelocity().getY(), 0);
+                        mc.player.setSprinting(false);    
+                    }
                 }
 
                 if (pickBlockResult.changed() && swapInterval > 0 && EntityUtils.isCreativeMode(mc.player) == false)

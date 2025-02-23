@@ -749,13 +749,24 @@ public class OverlayRenderer
             addSep = true;
         }
 
-        final var lastRanOutItem = AddonUtils.getLastRanOutItem();
-        if (lastRanOutItem.isPresent()) {
+        final var ranOutItems = AddonUtils.getRanOutItems();
+        final var refillItems = AddonUtils.getRefillItems();
+        if (!ranOutItems.isEmpty() || !refillItems.isEmpty()) {
             if (addSep)
                 this.blockInfoLines.add("");
 
-            this.blockInfoLines.add(ul + "Item to refill:");
-            this.blockInfoLines.add(Registries.ITEM.getId(lastRanOutItem.get().getItem()).toString());
+            if (!ranOutItems.isEmpty()) {
+                this.blockInfoLines.add(ul + "Item to restock:");
+                for (var itemStack : ranOutItems) {
+                    this.blockInfoLines.add(Registries.ITEM.getId(itemStack.getItem()).toString());
+                }
+            }
+            if (!refillItems.isEmpty()) {
+                this.blockInfoLines.add(ul + "Item to refill:");
+                for (var itemStack : refillItems) {
+                    this.blockInfoLines.add(Registries.ITEM.getId(itemStack.getItem()).toString());
+                }
+            }
       }
     }
 

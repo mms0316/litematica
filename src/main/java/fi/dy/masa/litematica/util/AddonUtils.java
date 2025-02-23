@@ -47,14 +47,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 public class AddonUtils {
     private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
     private static final HashMap<AbstractBlock, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
 
-    private static ItemStack lastRanOutItem;
-    private static ItemStack lastRefillItem;
+    private static List<ItemStack> ranOutItems = new ArrayList<>();
+    private static List<ItemStack> refillItems = new ArrayList<>();
     private static long lastRefillTimeCheck;
 
     public static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
@@ -502,26 +501,38 @@ public class AddonUtils {
         return val;
     }
 
-    public static void setLastRanOutItem(ItemStack stack) {
-        lastRanOutItem = stack.copy();
+    public static void addRanOutItem(ItemStack stack) {
+        for (var item : ranOutItems) {
+            if (InventoryUtils.areStacksEqualIgnoreNbt(item, stack)) {
+                return;
+            }
+        }
+
+        ranOutItems.add(stack.copy());
     }
 
-    public static Optional<ItemStack> getLastRanOutItem() {
-        return Optional.ofNullable(lastRanOutItem);
+    public static List<ItemStack> getRanOutItems() {
+        return ranOutItems;
     }
 
-    public static void setLastRefillItem(ItemStack stack) {
-        lastRefillItem = stack.copy();
+    public static void addRefillItem(ItemStack stack) {
+        for (var item : refillItems) {
+            if (InventoryUtils.areStacksEqualIgnoreNbt(item, stack)) {
+                return;
+            }
+        }
+
+        refillItems.add(stack.copy());
     }
 
-    public static Optional<ItemStack> getLastRefillItem() {
-        return Optional.ofNullable(lastRefillItem);
+    public static List<ItemStack> getRefillItems() {
+        return refillItems;
     }
 
 
     public static void checkClearLastItems() {
         if (!Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue()) return;
-        if (lastRanOutItem == null && lastRefillItem == null) return;
+        if (ranOutItems.isEmpty() && refillItems.isEmpty()) return;
 
         final long now = System.currentTimeMillis();
         if (now - lastRefillTimeCheck <= 5_000L) return;
@@ -533,11 +544,17 @@ public class AddonUtils {
         final var inv = player.getInventory();
         if (inv == null) return;
 
-        if (lastRanOutItem != null && inv.contains(lastRanOutItem))
-            lastRanOutItem = null;
+        for (int i = ranOutItems.size() - 1; i >= 0; i--) {
+            if (inv.contains(ranOutItems.get(i))) {
+                ranOutItems.remove(i);
+            }
+        }
 
-        if (lastRefillItem != null && inv.contains(lastRefillItem))
-            lastRefillItem = null;
+        for (int i = refillItems.size() - 1; i >= 0; i--) {
+            if (inv.contains(refillItems.get(i))) {
+                refillItems.remove(i);
+            }
+        }
     }
 
 }

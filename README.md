@@ -98,6 +98,7 @@ Tweaks:
   * Brought from 1.12.2 official branch
 * Material List: Removal of message when refreshing
 * Material List: No longer is cleared when changing dimensions
+* Pick Block Shulkers: Prefers hotbar then the Shulker Box with the least amount of items
 * Schematic Loading: Removal of warning when loading non .litematic schematics
 * Schematic Loading: Removal of non-important metadata preview
   * Time created / modified when zero

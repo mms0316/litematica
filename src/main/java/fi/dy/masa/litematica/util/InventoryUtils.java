@@ -224,7 +224,7 @@ public class InventoryUtils
                         for (String s : substitutions)
                         {
                             ItemStack substStack = new ItemStack(Registries.ITEM.get(Identifier.of(s)));
-                            slot = findSlotWithBoxWithItem(mc.player.playerScreenHandler, substStack, false);
+                            slot = findBestPlayerSlotWithBoxWithItem(mc.player.playerScreenHandler, substStack);
                             if (slot != -1)
                             {
                                 ItemStack boxStack = mc.player.playerScreenHandler.slots.get(slot).getStack();
@@ -279,7 +279,7 @@ public class InventoryUtils
         }
         else if (Configs.Generic.PICK_BLOCK_SHULKERS.getBooleanValue())
         {
-            slot = findSlotWithBoxWithItem(mc.player.playerScreenHandler, stack, false);
+            slot = findBestPlayerSlotWithBoxWithItem(mc.player.playerScreenHandler, stack);
 
             if (slot != -1)
             {
@@ -388,6 +388,23 @@ public class InventoryUtils
         return false;
     }
 
+    private static int getListAmount(DefaultedList<ItemStack> items, ItemStack referenceItem)
+    {
+        int amount = 0;
+        if (items.size() > 0)
+        {
+            for (ItemStack item : items)
+            {
+                if (fi.dy.masa.malilib.util.InventoryUtils.areStacksEqualIgnoreNbt(item, referenceItem))
+                {
+                    amount += item.getCount();
+                }
+            }
+        }
+
+        return amount;
+    }
+
     public static int findSlotWithBoxWithItem(ScreenHandler container, ItemStack stackReference, boolean reverse)
     {
         final int startSlot = reverse ? container.slots.size() - 1 : 0;
@@ -407,6 +424,47 @@ public class InventoryUtils
         }
 
         return -1;
+    }
+
+    public static int findBestPlayerSlotWithBoxWithItem(ScreenHandler container, ItemStack stackReference)
+    {
+        if (!(container instanceof PlayerScreenHandler))
+            return -1;
+
+        // Start looking at hotbar (slots 36 ~ 44)
+        for (int slotNum = 36; slotNum <= 44; ++slotNum)
+        {
+            Slot slot = container.slots.get(slotNum);
+
+            if (doesShulkerBoxContainItem(slot.getStack(), stackReference))
+            {
+                return slot.id;
+            }
+        }
+
+        // For slots 9 ~ 35, check which box has the least amount of items
+        int bestSlot = -1;
+        int bestCount = Integer.MAX_VALUE;
+
+        for (int slotNum = 9; slotNum <= 35; ++slotNum)
+        {
+            Slot slot = container.slots.get(slotNum);
+
+            if (slot.getStack().isEmpty())
+                continue;
+
+            int count = getListAmount(fi.dy.masa.malilib.util.InventoryUtils.getStoredItems(slot.getStack()), stackReference);
+            if (count == 0)
+                continue;
+
+            if (count < bestCount)
+            {
+                bestCount = count;
+                bestSlot = slot.id;
+            }
+        }
+
+        return bestSlot;
     }
 
     /**

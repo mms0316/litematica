@@ -3,6 +3,7 @@ package fi.dy.masa.litematica.util;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
+import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.malilib.util.InventoryUtils;
 
 import net.minecraft.block.AbstractBannerBlock;
@@ -401,6 +402,23 @@ public class AddonUtils {
                 if (clientHasAir || (ignoreClientWorldFluids && stateClient.isLiquid()))
                 {
                     return OverlayType.MISSING;
+                }
+
+                if (stateSchematic.getBlock() != stateClient.getBlock())
+                {
+                    if (Configs.Generic.ENABLE_DIFFERENT_BLOCKS.getBooleanValue() &&
+                        BlockUtils.isInSameGroup(stateSchematic, stateClient))
+                    {
+                        if (BlockUtils.matchPropertiesOnly(stateSchematic, stateClient))
+                        {
+                            // Different block of a common BlockTags Group, and same state
+                            return OverlayType.DIFF_BLOCK;
+                        }
+                        else
+                        {
+                            return OverlayType.WRONG_STATE;
+                        }
+                    }
                 }
 
                 final Block schematicBlock = stateSchematic.getBlock();

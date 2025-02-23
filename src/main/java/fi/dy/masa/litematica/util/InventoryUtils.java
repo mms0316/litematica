@@ -93,12 +93,14 @@ public class InventoryUtils
 
     public static boolean setPickedItemToHand(ItemStack stack, MinecraftClient mc)
     {
+        if (mc.player == null) return false;
         int slotNum = mc.player.getInventory().getSlotWithStack(stack);
         return setPickedItemToHand(slotNum, stack, mc);
     }
 
     public static boolean setPickedItemToHand(int sourceSlot, ItemStack stack, MinecraftClient mc)
     {
+        if (mc.player == null) return false;
         boolean changed = false;
         PlayerEntity player = mc.player;
         PlayerInventory inventory = player.getInventory();
@@ -315,6 +317,11 @@ public class InventoryUtils
 
     private static int getPickBlockTargetSlot(PlayerEntity player)
     {
+        if (PICK_BLOCKABLE_SLOTS.isEmpty() || player == null)
+        {
+            return -1;
+        }
+
         int slotNum = -1;
         long now = System.nanoTime();
 
@@ -676,6 +683,7 @@ public class InventoryUtils
                                       int threshold,
                                       boolean allowHotbar)
     {
+        if (player == null) return;
         PlayerInventory container = player.getInventory();
         final ItemStack handStack = player.getStackInHand(hand);
         final int count = handStack.getCount();

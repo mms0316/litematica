@@ -432,6 +432,11 @@ public class SchematicPlacementManager
 
             if (placement.getSchematic() == schematic)
             {
+                if (placement.hasVerifier())
+                {
+                    placement.getSchematicVerifier().reset();
+                }
+
                 removed |= this.removeSchematicPlacement(placement, false);
                 --i;
             }

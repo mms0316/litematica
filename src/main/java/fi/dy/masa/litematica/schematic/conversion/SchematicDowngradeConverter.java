@@ -1,12 +1,17 @@
 package fi.dy.masa.litematica.schematic.conversion;
 
+import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
+import net.minecraft.recipe.Recipe;
 import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
@@ -15,6 +20,7 @@ import net.minecraft.util.math.BlockPos;
 
 import fi.dy.masa.malilib.util.InventoryUtils;
 import fi.dy.masa.malilib.util.data.Constants;
+import fi.dy.masa.malilib.util.nbt.NbtUtils;
 
 public class SchematicDowngradeConverter
 {
@@ -45,11 +51,30 @@ public class SchematicDowngradeConverter
                 case "equipment" -> newEntity.copyFrom(processEntityEquipment(oldEntity.get(key), minecraftDataVersion, registryManager));
                 case "drop_chances" -> newEntity.copyFrom(processEntityDropChances(oldEntity.get(key)));
                 case "fall_distance" -> newEntity.putFloat("FallDistance", oldEntity.getFloat(key));
+                // NbtUtils.readBlockPosFromArrayTag() // get(key, BlockPos.CODEC).orElse(null)
+                case "anchor_pos" -> processBlockPosTag(NbtUtils.readBlockPosFromIntArray(oldEntity, key), "A", newEntity);
+                case "block_pos" -> processBlockPosTag(NbtUtils.readBlockPosFromIntArray(oldEntity, key), "Tile", newEntity);
+                case "bound_pos" -> processBlockPosTag(NbtUtils.readBlockPosFromIntArray(oldEntity, key), "Bound", newEntity);
+                case "home_pos" -> processBlockPosTag(NbtUtils.readBlockPosFromIntArray(oldEntity, key), "HomePos", newEntity);
+                case "sleeping_pos" -> processBlockPosTag(NbtUtils.readBlockPosFromIntArray(oldEntity, key), "Sleeping", newEntity);
+                case "has_egg" -> newEntity.putBoolean("HasEgg", oldEntity.getBoolean(key));
+                case "life_ticks" -> newEntity.putInt("LifeTicks", oldEntity.getInt(key));
+                case "size" -> newEntity.putInt("Size", oldEntity.getInt(key));
                 default -> newEntity.put(key, oldEntity.get(key));
             }
         }
 
         return newEntity;
+    }
+
+    private static void processBlockPosTag(@Nullable BlockPos oldPos, String prefix, NbtCompound newTags)
+    {
+        if (oldPos != null)
+        {
+            newTags.putInt(prefix+"X", oldPos.getX());
+            newTags.putInt(prefix+"Y", oldPos.getY());
+            newTags.putInt(prefix+"Z", oldPos.getZ());
+        }
     }
 
     private static NbtCompound processEntityDropChances(NbtElement nbtElement)
@@ -464,11 +489,36 @@ public class SchematicDowngradeConverter
                 }
                 case "RecordItem" -> newTE.put("RecordItem", processRecordItem(oldTE.get(key), minecraftDataVersion, registryManager));
                 case "Book" -> newTE.put("Book", processBookTag(oldTE.get(key), minecraftDataVersion, registryManager));
+                // 1.21.5+
+                //case "RecipesUsed" -> newTE.put("RecipesUsed", processRecipesUsedTag(oldTE));
+                case "CustomName" -> newTE.putString("CustomName", processCustomNameTag(oldTE, key, registryManager));
+                case "custom_name" -> newTE.putString("CustomName", processCustomNameTag(oldTE, key, registryManager));
                 default -> newTE.put(key, oldTE.get(key));
             }
         }
 
         return newTE;
+    }
+
+    // 1.21.5+ Only ?  Might not even be needed
+    private static NbtCompound processRecipesUsedTag(NbtElement nbtIn)
+    {
+        NbtCompound oldNbt = (NbtCompound) nbtIn;
+        NbtCompound newNbt = new NbtCompound();
+
+        // todo -- make sure this even needed
+        /*
+        Codec<Map<RegistryKey<Recipe<?>>, Integer>> CODEC = Codec.unboundedMap(Recipe.KEY_CODEC, Codec.INT);
+        Reference2IntOpenHashMap<RegistryKey<Recipe<?>>> recipesUsed = new Reference2IntOpenHashMap<>();
+
+        recipesUsed.putAll((Map<? extends RegistryKey<Recipe<?>>, ? extends Integer>) oldNbt.get("RecipesUsed", CODEC).orElse(Map.of()));
+        recipesUsed.forEach((id, count) ->
+        {
+            newNbt.putInt(id.getValue().toString(), count);
+        });
+         */
+
+        return newNbt;
     }
 
     private static NbtList processItemsTag(NbtList oldItems, int minecraftDataVersion, @Nonnull DynamicRegistryManager registryManager)
@@ -1037,12 +1087,18 @@ public class SchematicDowngradeConverter
     private static String processCustomNameTag(NbtCompound nameTag, String key, @Nonnull DynamicRegistryManager registryManager)
     {
         // Sometimes this is missing the 'text' designation ?
+
+        /*
         String oldNameString = nameTag.getString(key);
         MutableText oldCustomName = Text.Serialization.fromJson(oldNameString, registryManager);
 
         //System.out.printf("processCustomNameTag(): oldName [%s], text: [%s], newString [%s]\n", oldNameString, oldCustomName.getString(), newCustomName);
 
-        return Text.Serialization.toJsonString(oldCustomName, registryManager);
+         */
+
+        Text oldName = BlockEntity.tryParseCustomName(nameTag.getString(key), registryManager);
+
+        return Text.Serialization.toJsonString(oldName, registryManager);
     }
 
     private static NbtElement processBlockState(NbtElement bsTag)

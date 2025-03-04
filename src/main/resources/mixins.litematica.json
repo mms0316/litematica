@@ -28,6 +28,7 @@
     "MixinClientPlayNetworkHandler",
     "MixinClientWorld",
     "MixinDebugHud",
+    "MixinInGameHud",
     "MixinHandledScreen",
     "MixinMinecraftClient",
     "MixinMinecraftClient_easyPlace",

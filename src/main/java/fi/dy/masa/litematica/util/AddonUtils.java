@@ -6,24 +6,14 @@ import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.malilib.util.InventoryUtils;
 
-import net.minecraft.block.AbstractBannerBlock;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.AbstractSignBlock;
-import net.minecraft.block.AbstractSkullBlock;
-import net.minecraft.block.AbstractTorchBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.FluidBlock;
-import net.minecraft.block.MultifaceGrowthBlock;
-import net.minecraft.block.WallBannerBlock;
-import net.minecraft.block.WallRedstoneTorchBlock;
-import net.minecraft.block.WallSignBlock;
-import net.minecraft.block.WallSkullBlock;
-import net.minecraft.block.WallTorchBlock;
+import net.minecraft.block.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.BundleItem;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -48,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class AddonUtils {
     private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
@@ -575,4 +566,33 @@ public class AddonUtils {
         }
     }
 
+    public static void renderHotbarItem(DrawContext context, int x, int y, ItemStack stack) {
+        if (!Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue()) return;
+
+        if (stack.isEmpty()) return;
+
+        final var refillItems = AddonUtils.getRefillItems();
+        final var ranOutItems = AddonUtils.getRanOutItems();
+
+        Stream<ItemStack> combinedStream = Stream.concat(refillItems.stream(), ranOutItems.stream());
+
+        final var stackItem = stack.getItem();
+        if (stackItem instanceof BlockItem blockItem && blockItem.getBlock() instanceof ShulkerBoxBlock) {
+            if (combinedStream.noneMatch(itemStack -> fi.dy.masa.litematica.util.InventoryUtils.doesShulkerBoxContainItem(stack, itemStack)))
+                return;
+        }
+        else if (stackItem instanceof BundleItem) {
+            if (combinedStream.noneMatch(itemStack -> fi.dy.masa.litematica.util.InventoryUtils.doesBundleContainItem(stack, itemStack)))
+                return;
+        }
+        else
+            return;
+
+        int borderColor = Configs.Colors.HIGHLIGHT_REFILL_IN_INV_COLOR.getColor().intValue;
+        int borderThickness = 2;
+
+        context.getMatrices().push();
+        context.fill(x - borderThickness, y - borderThickness, x + 16 + borderThickness, y + 16 + borderThickness, borderColor);
+        context.getMatrices().pop();
+    }
 }

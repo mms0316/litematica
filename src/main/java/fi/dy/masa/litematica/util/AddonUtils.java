@@ -2,6 +2,7 @@ package fi.dy.masa.litematica.util;
 
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.malilib.util.InventoryUtils;
@@ -44,8 +45,8 @@ public class AddonUtils {
     private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
     private static final HashMap<AbstractBlock, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
 
-    private static List<ItemStack> ranOutItems = new ArrayList<>();
-    private static List<ItemStack> refillItems = new ArrayList<>();
+    private static final List<ItemStack> ranOutItems = new ArrayList<>();
+    private static final List<ItemStack> refillItems = new ArrayList<>();
     private static long lastRefillTimeCheck;
 
     public static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
@@ -432,61 +433,6 @@ public class AddonUtils {
         }
     }
 
-    /**
-     * @param screenHandler Chest / Double Chest / Shulker Box screen handler
-     * @param match ItemStack that will be searched for in screen handler
-     * @return Slot index pointing to the slot with the fewest count of the ItemStack, or an empty slot, of the
-     * player's inventory or hotbar.
-     */
-    public static int findInventorySlotToFill(ScreenHandler screenHandler, ItemStack match) {
-        //https://wiki.vg/Inventory#Chest
-        int minDestSlot = 27;
-        int maxDestSlot = 62;
-        if (screenHandler.slots.size() == 90) {
-            //https://wiki.vg/Inventory#Large_chest
-            minDestSlot += 27;
-            maxDestSlot += 27;
-        }
-
-        int emptySlot = -1;
-        int partialSlot = -1;
-        int partialSlotCount = -1;
-        // Reversed because shift+click also does this
-        for (int destSlot = maxDestSlot; destSlot >= minDestSlot; destSlot--) {
-            var slot = screenHandler.slots.get(destSlot);
-            var slotStack = slot.getStack();
-
-            if (slotStack.isEmpty()) {
-                if (emptySlot == -1) {
-                    emptySlot = destSlot;
-                }
-            } else {
-                var slotStackCount = slotStack.getCount();
-                if (slotStackCount == slotStack.getMaxCount()) {
-                    //Not a partial slot
-                    continue;
-                }
-
-                if (InventoryUtils.areStacksEqualIgnoreNbt(match, slotStack)) {
-                    if (partialSlot == -1 || slotStackCount < partialSlotCount) {
-                        partialSlot = destSlot;
-                        partialSlotCount = slotStack.getCount();
-
-                        if (partialSlotCount == 1) {
-                            break; //cant get lower than this
-                        }
-                    }
-                }
-            }
-        }
-
-        if (partialSlot == -1) {
-            return emptySlot;
-        } else {
-            return partialSlot;
-        }
-    }
-
     public static boolean hasUseAction(AbstractBlock block) {
         Boolean val = HAS_USE_ACTION_CACHE.get(block);
 
@@ -545,8 +491,6 @@ public class AddonUtils {
 
         final long now = System.currentTimeMillis();
         if (now - lastRefillTimeCheck <= 5_000L) return;
-
-        lastRefillTimeCheck = now;
 
         final var player = MinecraftClient.getInstance().player;
         if (player == null) return;

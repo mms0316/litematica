@@ -199,6 +199,8 @@ public class InventoryUtils
             }
             else
             {
+                InventoryUtils.refreshSlotTimeout(mc.player.getInventory().selectedSlot);
+
                 int slot = inv.getSlotWithStack(stack);
 
                 var pickBlockResult = pickBlockSurvival(slot, stack, inv, mc);

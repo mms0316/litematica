@@ -311,6 +311,112 @@ public class ContainerManager {
         materialList.getHudRenderer().clearUpdateTime();
     }
 
+    public void fetchMaterialsKeepStacks(MinecraftClient mc) {
+        if (mc.player == null) return;
+        var screenHandler = mc.player.currentScreenHandler;
+        if (!(screenHandler instanceof GenericContainerScreenHandler ||
+                screenHandler instanceof ShulkerBoxScreenHandler)) return;
+
+        var materialList = DataManager.getMaterialList();
+        if (materialList == null) return;
+
+        var missingMaterials = materialList.getMaterialsMissingOnly(true);
+        if (missingMaterials == null || missingMaterials.isEmpty()) return;
+
+        var screenSlots = screenHandler.slots;
+        final int screenMaxSlot = getScreenMaxSlot(screenHandler);
+
+        final int multiplier = materialList.getMultiplier();
+
+        for (var entry : missingMaterials) {
+            var stackMissing = entry.getStack();
+            var countMissing = (entry.getCountMissing() * multiplier) - entry.getCountAvailable();
+            if (countMissing <= 0) continue;
+
+            int spaceForStackInInventory = 0;
+            for (int invIdx = screenMaxSlot + 1; invIdx < screenSlots.size(); invIdx++) {
+                var slot = screenHandler.slots.get(invIdx);
+                var slotStack = slot.getStack();
+                if (slotStack.isEmpty()) continue;
+
+                if (!InventoryUtils.areStacksEqualIgnoreNbt(slotStack, stackMissing)) continue;
+
+                spaceForStackInInventory += slotStack.getMaxCount() - slotStack.getCount();
+            }
+            if (spaceForStackInInventory <= 0) continue;
+
+            for (var idx = screenMaxSlot; idx >= 0; idx--) {
+                var containerSlot = screenSlots.get(idx);
+                var repeatIteration = false;
+
+                var containerStack = containerSlot.getStack();
+                if (!InventoryUtils.areStacksEqualIgnoreNbt(containerStack, stackMissing)) continue;
+
+                Litematica.debugLog("Fetching " + countMissing + " from " + containerStack.getName());
+
+                //https://minecraft.wiki/w/Java_Edition_protocol#Click_Container
+                //https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Inventory#Windows
+
+                // Possible action 1: Fetching entire stack without overshooting
+                var containerCountOld = containerStack.getCount();
+                if (containerCountOld <= countMissing && containerCountOld <= spaceForStackInInventory) {
+                    //Fetch entire stack
+                    mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.QUICK_MOVE, mc.player);
+
+                    spaceForStackInInventory -= containerCountOld;
+                } else {
+                    // Possible action 2: Fetching half of the stack without overshooting
+                    if (containerCountOld / 2 <= countMissing && containerCountOld / 2 <= spaceForStackInInventory) {
+                        //Move half to cursor (rounded up)
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 1, SlotActionType.PICKUP, mc.player);
+                        //Fetch the other half (rounded down)
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.QUICK_MOVE, mc.player);
+                        //Restore cursor
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.PICKUP, mc.player);
+
+                        spaceForStackInInventory -= containerCountOld / 2;
+                        repeatIteration = true;
+                    } else {
+                        //Find available stack to drop one
+                        var targetSlot = findNonEmptyInventorySlotToFill(screenHandler, stackMissing);
+                        if (targetSlot < 0)
+                            break; //No space in inventory
+
+                        //Move stack to cursor
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.PICKUP, mc.player);
+                        //Drop one by one
+                        for (int i = 0; i < countMissing; i++) {
+                            var cursorBefore = screenHandler.getCursorStack().getCount();
+                            mc.interactionManager.clickSlot(screenHandler.syncId, targetSlot, 1, SlotActionType.PICKUP, mc.player);
+                            var cursorAfter = screenHandler.getCursorStack().getCount();
+                            if (cursorBefore == cursorAfter) {
+                                //Nothing moved - target slot has become full
+                                repeatIteration = true; //Try another destination slot
+                                break;
+                            }
+
+                            spaceForStackInInventory--;
+                        }
+                        //Restore cursor
+                        mc.interactionManager.clickSlot(screenHandler.syncId, idx, 0, SlotActionType.PICKUP, mc.player);
+                    }
+                }
+
+                if (spaceForStackInInventory <= 0)
+                    break;
+
+                var containerCountNew = containerSlot.getStack().getCount();
+                countMissing -= (containerCountOld - containerCountNew);
+                if (countMissing <= 0)
+                    break;
+
+                if (repeatIteration)
+                    idx++;
+            }
+        }
+
+        materialList.getHudRenderer().clearUpdateTime();
+    }
 
     /**
      * @param screenHandler Chest / Double Chest / Shulker Box screen handler
@@ -365,6 +471,50 @@ public class ContainerManager {
         } else {
             return partialSlot;
         }
+    }
+
+    /**
+     * @param screenHandler Chest / Double Chest / Shulker Box screen handler
+     * @param match         ItemStack that will be searched for in screen handler
+     * @return Slot index pointing to the slot with the fewest count of the ItemStack of the
+     * player's inventory or hotbar.
+     */
+    private int findNonEmptyInventorySlotToFill(ScreenHandler screenHandler, ItemStack match) {
+        //https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Inventory#Windows
+        int minDestSlot = 27;
+        int maxDestSlot = 62;
+        if (screenHandler.slots.size() == 90) {
+            minDestSlot += 27;
+            maxDestSlot += 27;
+        }
+
+        int partialSlot = -1;
+        int partialSlotCount = -1;
+        // Reversed because shift+click also does this
+        for (int destSlot = maxDestSlot; destSlot >= minDestSlot; destSlot--) {
+            var slot = screenHandler.slots.get(destSlot);
+            var slotStack = slot.getStack();
+            if (slotStack.isEmpty()) continue;
+
+            var slotStackCount = slotStack.getCount();
+            if (slotStackCount == slotStack.getMaxCount()) {
+                //Not a partial slot
+                continue;
+            }
+
+            if (InventoryUtils.areStacksEqualIgnoreNbt(match, slotStack)) {
+                if (partialSlot == -1 || slotStackCount < partialSlotCount) {
+                    partialSlot = destSlot;
+                    partialSlotCount = slotStack.getCount();
+
+                    if (partialSlotCount == 1) {
+                        break; //cant get lower than this
+                    }
+                }
+            }
+        }
+
+        return partialSlot;
     }
 
     public void setContainerPos(BlockPos pos) {

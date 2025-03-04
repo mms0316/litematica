@@ -31,6 +31,7 @@ public class Hotkeys
     public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER = new ConfigHotkey("materialListContainerUnregister",   "", "Unregister container used for Material List");
     public static final ConfigHotkey MATERIAL_LIST_CONTAINER_UNREGISTER_ALL = new ConfigHotkey("materialListContainerUnregisterAll", "", "Unregister all containers used for Material List");
     public static final ConfigHotkey MATERIAL_LIST_FETCH                = new ConfigHotkey("materialListFetch",                 "", KeybindSettings.MODIFIER_GUI, "Fetch materials required by the active Material List from opened container");
+    public static final ConfigHotkey MATERIAL_LIST_FETCH_KEEP_STACKS    = new ConfigHotkey("materialListFetchKeepStacks",       "", KeybindSettings.MODIFIER_GUI, "Fetch materials required by the active Material List from opened container without filling empty slots");
     public static final ConfigHotkey MATERIAL_LIST_REFRESH              = new ConfigHotkey("materialListRefresh",               "",     "Refresh active Material List");
     public static final ConfigHotkey MATERIAL_LIST_TOGGLE_INFO_HUD      = new ConfigHotkey("materialListToggleInfoHud",         "",     "Toggle Info Hud for active Material List");
     public static final ConfigHotkey NUDGE_SELECTION_NEGATIVE           = new ConfigHotkey("nudgeSelectionNegative",            "").apply(HOTKEYS_KEY);
@@ -120,6 +121,7 @@ public class Hotkeys
             MATERIAL_LIST_CONTAINER_UNREGISTER,
             MATERIAL_LIST_CONTAINER_UNREGISTER_ALL,
             MATERIAL_LIST_FETCH,
+            MATERIAL_LIST_FETCH_KEEP_STACKS,
             MATERIAL_LIST_REFRESH,
             MATERIAL_LIST_TOGGLE_INFO_HUD,
             NUDGE_SELECTION_NEGATIVE,

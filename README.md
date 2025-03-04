@@ -71,8 +71,9 @@ Features:
   * May use materialListFetchContainerColor to change the outline's color and transparency
 * Material List: Addition of config 'materialListHotkeyAutoRefresh' to stop counting materials automatically when using hotkey 'openGuiMaterialList' for the first time
   * May be useful for schematics that go beyond viewing distance
-* Material List: Addition of hotkey 'materialListFetch'
+* Material List: Addition of hotkeys 'materialListFetch' and 'materialListFetchKeepStacks'
   * When using hotkey with a container opened, all materials matching the Material List are transferred to player's inventory
+  * 'materialListFetch' fetches to empty slots, while 'materialListFetchKeepStacks' does not'
 * Material List: Addition of hotkey 'materialListRefresh'
   * This is a shortcut for M+L and "Refresh"
 * Material List: Addition of hotkey 'materialListToggleInfoHud'

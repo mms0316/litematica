@@ -497,17 +497,10 @@ public class AddonUtils {
         final var inv = player.getInventory();
         if (inv == null) return;
 
-        for (int i = ranOutItems.size() - 1; i >= 0; i--) {
-            if (inv.contains(ranOutItems.get(i))) {
-                ranOutItems.remove(i);
-            }
-        }
+        ranOutItems.removeIf(inv::contains);
+        refillItems.removeIf(inv::contains);
 
-        for (int i = refillItems.size() - 1; i >= 0; i--) {
-            if (inv.contains(refillItems.get(i))) {
-                refillItems.remove(i);
-            }
-        }
+        lastRefillTimeCheck = now;
     }
 
     public static void renderHotbarItem(DrawContext context, int x, int y, ItemStack stack) {

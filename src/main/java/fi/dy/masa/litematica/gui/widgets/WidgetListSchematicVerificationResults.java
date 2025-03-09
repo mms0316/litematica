@@ -1,11 +1,17 @@
 package fi.dy.masa.litematica.gui.widgets;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import fi.dy.masa.litematica.gui.Icons;
+import fi.dy.masa.malilib.gui.LeftRight;
+import fi.dy.masa.malilib.gui.widgets.WidgetSearchBar;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.item.ItemStack;
@@ -20,6 +26,8 @@ import fi.dy.masa.litematica.util.ItemUtils;
 import fi.dy.masa.malilib.gui.widgets.WidgetListBase;
 import fi.dy.masa.malilib.util.ItemType;
 import fi.dy.masa.malilib.util.StringUtils;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 public class WidgetListSchematicVerificationResults extends WidgetListBase<BlockMismatchEntry, WidgetSchematicVerificationResult>
 {
@@ -36,6 +44,8 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
         this.browserEntryHeight = 22;
         this.guiSchematicVerifier = parent;
         this.allowMultiSelection = true;
+        this.widgetSearchBar = new WidgetSearchBar(x + 2, y + 8, width - 16, 14, 0, Icons.FILE_ICON_SEARCH, LeftRight.RIGHT);
+        this.widgetSearchBar.setZLevel(1);
         this.sorter = new VerifierResultSorter(parent.getPlacement().getSchematicVerifier());
     }
 
@@ -51,6 +61,57 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
     {
         super.offsetSelectionOrScrollbar(amount, changeSelection);
         lastScrollbarPosition = this.scrollBar.getValue();
+    }
+
+    @Override
+    protected Collection<BlockMismatchEntry> getAllEntries()
+    {
+        List<BlockMismatchEntry> listContents = new ArrayList<>();
+
+        MismatchType type = this.guiSchematicVerifier.getResultMode();
+
+        if (type == MismatchType.ALL)
+        {
+            this.addEntriesForType(listContents, MismatchType.WRONG_BLOCK);
+            if (Configs.Generic.ENABLE_DIFFERENT_BLOCKS.getBooleanValue())
+            {
+                this.addEntriesForType(listContents, MismatchType.DIFF_BLOCK);
+            }
+            this.addEntriesForType(listContents, MismatchType.WRONG_STATE);
+            this.addEntriesForType(listContents, MismatchType.EXTRA);
+            this.addEntriesForType(listContents, MismatchType.MISSING);
+        }
+        else
+        {
+            this.addEntriesForType(listContents, type);
+        }
+
+        return listContents;
+    }
+
+    @Override
+    protected List<String> getEntryStringsForFilter(BlockMismatchEntry entry)
+    {
+        if (entry.blockMismatch == null)
+            return Collections.emptyList();
+
+        List<String> list = new ArrayList<>();
+
+        Block block = entry.blockMismatch.stateExpected.getBlock();
+        Identifier rl = Registries.ITEM.getId(block.asItem());
+
+        list.add(block.getName().getString().toLowerCase());
+        if (rl != null)
+            list.add(rl.toString().toLowerCase());
+
+        block = entry.blockMismatch.stateFound.getBlock();
+        rl = Registries.ITEM.getId(block.asItem());
+
+        list.add(block.getName().getString().toLowerCase());
+        if (rl != null)
+            list.add(rl.toString().toLowerCase());
+
+        return list;
     }
 
     @Override
@@ -83,27 +144,7 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
     @Override
     protected void refreshBrowserEntries()
     {
-        this.listContents.clear();
-
-        MismatchType type = this.guiSchematicVerifier.getResultMode();
-
-        if (type == MismatchType.ALL)
-        {
-            this.addEntriesForType(MismatchType.WRONG_BLOCK);
-            if (Configs.Generic.ENABLE_DIFFERENT_BLOCKS.getBooleanValue())
-            {
-                this.addEntriesForType(MismatchType.DIFF_BLOCK);
-            }
-            this.addEntriesForType(MismatchType.WRONG_STATE);
-            this.addEntriesForType(MismatchType.EXTRA);
-            this.addEntriesForType(MismatchType.MISSING);
-        }
-        else
-        {
-            this.addEntriesForType(type);
-        }
-
-        this.reCreateListEntryWidgets();
+        super.refreshBrowserEntries();
 
         if (this.scrollbarRestored == false && lastScrollbarPosition <= this.scrollBar.getMaxValue())
         {
@@ -114,10 +155,10 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
         }
     }
 
-    private void addEntriesForType(MismatchType type)
+    private void addEntriesForType(Collection<BlockMismatchEntry> listContents, MismatchType type)
     {
         String title = type.getFormattingCode() + type.getDisplayname() + TXT_RST;
-        this.listContents.add(new BlockMismatchEntry(type, title));
+        listContents.add(new BlockMismatchEntry(type, title));
         List<BlockMismatch> list;
 
         if (type == MismatchType.CORRECT_STATE)
@@ -162,7 +203,7 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
 
         for (BlockMismatch mismatch : list)
         {
-            this.listContents.add(new BlockMismatchEntry(type, mismatch));
+            listContents.add(new BlockMismatchEntry(type, mismatch));
         }
     }
 

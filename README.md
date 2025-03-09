@@ -89,6 +89,7 @@ Features:
   * Useful for building with multiple people
   * Keeps checking for block changes outside render distance
 * Schematic Verifier: Addition of cardinal coordinates for entries in Info Hud
+* Schematic Verifier GUI: Addition of search bar
 
 Tweaks:
 * EasyPlace: Prestocks main hand using a single shift+click packet

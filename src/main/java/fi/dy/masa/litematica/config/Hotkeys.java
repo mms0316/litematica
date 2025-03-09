@@ -51,6 +51,7 @@ public class Hotkeys
     public static final ConfigHotkey PICK_BLOCK_FIRST                   = new ConfigHotkey("pickBlockFirst",                    "BUTTON_3",     KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
     public static final ConfigHotkey PICK_BLOCK_LAST                    = new ConfigHotkey("pickBlockLast",                     "",             KeybindSettings.MODIFIER_INGAME).apply(HOTKEYS_KEY);
     public static final ConfigHotkey PICK_BLOCK_TOGGLE                  = new ConfigHotkey("pickBlockToggle",                   "M,BUTTON_3").apply(HOTKEYS_KEY);
+    public static final ConfigHotkey REFILL_LIST_CLEAR                  = new ConfigHotkey("refillListClear",                   "",     "Clear list of items to refill and restock");
     public static final ConfigHotkey RENDER_INFO_OVERLAY                = new ConfigHotkey("renderInfoOverlay",                 "I",             KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
     public static final ConfigHotkey RENDER_OVERLAY_THROUGH_BLOCKS      = new ConfigHotkey("renderOverlayThroughBlocks",        "RIGHT_CONTROL", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
     public static final ConfigHotkey RERENDER_SCHEMATIC                 = new ConfigHotkey("rerenderSchematic",                 "F3,M").apply(HOTKEYS_KEY);
@@ -141,6 +142,7 @@ public class Hotkeys
             PICK_BLOCK_FIRST,
             PICK_BLOCK_LAST,
             PICK_BLOCK_TOGGLE,
+            REFILL_LIST_CLEAR,
             RENDER_INFO_OVERLAY,
             RENDER_OVERLAY_THROUGH_BLOCKS,
             RERENDER_SCHEMATIC,

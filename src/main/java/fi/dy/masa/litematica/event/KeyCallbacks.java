@@ -84,6 +84,7 @@ public class KeyCallbacks
         Hotkeys.PICK_BLOCK_FIRST.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.PICK_BLOCK_LAST.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.PICK_BLOCK_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.PICK_BLOCK_ENABLED));
+        Hotkeys.REFILL_LIST_CLEAR.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.RERENDER_SCHEMATIC.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.SAVE_AREA_AS_IN_MEMORY_SCHEMATIC.getKeybind().setCallback(callbackHotkeys);
         Hotkeys.SAVE_AREA_AS_SCHEMATIC_TO_FILE.getKeybind().setCallback(callbackHotkeys);
@@ -515,6 +516,12 @@ public class KeyCallbacks
                 }
 
                 return false;
+            }
+            else if (key == Hotkeys.REFILL_LIST_CLEAR.getKeybind())
+            {
+                AddonUtils.clearRefillItems();
+                AddonUtils.clearRanOutItems();
+                return true;
             }
             else if (key == Hotkeys.SAVE_AREA_AS_SCHEMATIC_TO_FILE.getKeybind())
             {

@@ -464,10 +464,18 @@ public class AddonUtils {
         }
 
         ranOutItems.add(stack.copy());
+
+        lastRefillTimeCheck = 0;
     }
 
     public static List<ItemStack> getRanOutItems() {
         return ranOutItems;
+    }
+
+    public static void clearRanOutItems() {
+        ranOutItems.clear();
+
+        lastRefillTimeCheck = 0;
     }
 
     public static void addRefillItem(ItemStack stack) {
@@ -478,12 +486,19 @@ public class AddonUtils {
         }
 
         refillItems.add(stack.copy());
+
+        lastRefillTimeCheck = 0;
     }
 
     public static List<ItemStack> getRefillItems() {
         return refillItems;
     }
 
+    public static void clearRefillItems() {
+        refillItems.clear();
+
+        lastRefillTimeCheck = 0;
+    }
 
     public static void checkClearLastItems() {
         if (!Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue()) return;

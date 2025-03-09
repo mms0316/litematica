@@ -3,6 +3,7 @@ package fi.dy.masa.litematica.materials;
 import java.util.Collections;
 import java.util.List;
 
+import fi.dy.masa.litematica.util.AddonUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -218,29 +219,7 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
 
     protected String getFormattedCountString(int count, int maxStackSize)
     {
-        int stacks = count / maxStackSize;
-        int remainder = count % maxStackSize;
-        double boxCount = (double) count / (27D * maxStackSize);
-
-        if (count > maxStackSize)
-        {
-            if (boxCount >= 1.0)
-            {
-                return String.format("%d (%.2f %s)", count, boxCount, StringUtils.translate("litematica.gui.label.material_list.abbr.shulker_box"));
-            }
-            else if (remainder > 0)
-            {
-                return String.format("%d (%d x %d + %d)", count, stacks, maxStackSize, remainder);
-            }
-            else
-            {
-                return String.format("%d (%d x %d)", count, stacks, maxStackSize);
-            }
-        }
-        else
-        {
-            return String.format("%d", count);
-        }
+        return AddonUtils.getFormattedCountString(count, maxStackSize, false);
     }
 
     public static void renderLookedAtBlockInInventory(HandledScreen<?> gui, MinecraftClient mc)

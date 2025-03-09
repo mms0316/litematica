@@ -79,6 +79,7 @@ Features:
 * Material List: Addition of hotkey 'materialListToggleInfoHud'
   * This is a shortcut for M+L and button click on "Info HUD: ON / OFF"
 * Material List: Addition of counts of shulker boxes
+  * If config 'materialListUseBSIFormat' is enabled, counts are shown in B (shulker boxes) S (stacks) I (remainder items) format
 * Rendering: Addition of config 'schematicOverlayColorMissing2' to be alternated when using RenderLayers with axis
 * Schematic Placement: Addition of hotkey 'setSchematicOrigin'
   * This moves the active schematic placement to player's position

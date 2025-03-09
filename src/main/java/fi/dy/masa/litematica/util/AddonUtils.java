@@ -3,6 +3,7 @@ package fi.dy.masa.litematica.util;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
+import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.malilib.util.InventoryUtils;
 
@@ -530,5 +531,82 @@ public class AddonUtils {
         context.getMatrices().push();
         context.fill(x - borderThickness, y - borderThickness, x + 16 + borderThickness, y + 16 + borderThickness, borderColor);
         context.getMatrices().pop();
+    }
+
+    public static String getFormattedCountString(int count, int maxStackSize, boolean bigFormat) {
+        if (count <= maxStackSize)
+            return Integer.toString(count);
+
+        if (Configs.Generic.MATERIAL_LIST_USE_BSI_FORMAT.getBooleanValue())
+            return getFormattedCountStringBSI(count, maxStackSize);
+
+        if (bigFormat) {
+            return getFormattedCountStringBig(count, maxStackSize);
+        } else {
+            return getFormattedCountStringSmall(count, maxStackSize);
+        }
+    }
+
+    public static String getFormattedCountStringBSI(int total, int maxStackSize) {
+        int stacks = total / maxStackSize;
+        int remainder = total % maxStackSize;
+        int boxCount = stacks / 27;
+
+        StringBuilder sb = new StringBuilder();
+
+        if (boxCount > 0) {
+            sb.append(boxCount);
+            sb.append('B');
+        }
+
+        if (stacks > 0) {
+            if (!sb.isEmpty()) {
+                sb.append(' ');
+            }
+            sb.append(stacks % 27);
+            sb.append('S');
+        }
+
+        if (remainder > 0) {
+            if (!sb.isEmpty()) {
+                sb.append(' ');
+            }
+            sb.append(remainder);
+            sb.append('I');
+        }
+
+        return sb.toString();
+    }
+
+    public static String getFormattedCountStringBig(int total, int maxStackSize) {
+        int stacks = total / maxStackSize;
+        int remainder = total % maxStackSize;
+        double boxCount = (double) total / (27D * maxStackSize);
+        final String shulkerBoxAbbr = StringUtils.translate("litematica.gui.label.material_list.abbr.shulker_box");
+
+        if (maxStackSize > 1) {
+            if (stacks >= 27)
+                return String.format("%d = %d %s + %d x %d + %d = %.2f %s", total, stacks / 27, shulkerBoxAbbr, stacks % 27, maxStackSize, remainder, boxCount, shulkerBoxAbbr);
+            else if (remainder > 0)
+                return String.format("%d = %d x %d + %d = %.2f %s", total, stacks, maxStackSize, remainder, boxCount, shulkerBoxAbbr);
+            else
+                return String.format("%d = %d x %d = %.2f %s", total, stacks, maxStackSize, boxCount, shulkerBoxAbbr);
+        }
+        else
+            return String.format("%d = %.2f %s", total, boxCount, shulkerBoxAbbr);
+    }
+
+    public static String getFormattedCountStringSmall(int total, int maxStackSize) {
+        int stacks = total / maxStackSize;
+        int remainder = total % maxStackSize;
+        double boxCount = (double) total / (27D * maxStackSize);
+        final String shulkerBoxAbbr = StringUtils.translate("litematica.gui.label.material_list.abbr.shulker_box");
+
+        if (boxCount >= 1.0)
+            return String.format("%d (%.2f %s)", total, boxCount, shulkerBoxAbbr);
+        else if (remainder > 0)
+            return String.format("%d (%d x %d + %d)", total, stacks, maxStackSize, remainder);
+        else
+            return String.format("%d (%d x %d)", total, stacks, maxStackSize);
     }
 }

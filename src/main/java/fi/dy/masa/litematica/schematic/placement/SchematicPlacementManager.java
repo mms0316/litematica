@@ -41,6 +41,7 @@ import fi.dy.masa.litematica.render.LitematicaRenderer;
 import fi.dy.masa.litematica.render.OverlayRenderer;
 import fi.dy.masa.litematica.render.infohud.StatusInfoRenderer;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkBase;
 import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkCommand;
 import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkDirect;
@@ -120,7 +121,9 @@ public class SchematicPlacementManager
     protected boolean canHandleChunk(ClientWorld clientWorld, int chunkX, int chunkZ)
     {
         return Configs.Generic.LOAD_ENTIRE_SCHEMATICS.getBooleanValue() ||
-               WorldUtils.isClientChunkLoaded(clientWorld, chunkX, chunkZ);
+               WorldUtils.isClientChunkLoaded(clientWorld, chunkX, chunkZ) ||
+               TaskScheduler.getInstanceClient().getAllTasks().stream()
+                    .filter(task -> task instanceof TaskCountBlocksPlacementPersistent).findAny().isPresent();
     }
 
     public boolean hasQueuedChunks()

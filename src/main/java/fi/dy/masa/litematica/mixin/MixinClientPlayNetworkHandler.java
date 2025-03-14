@@ -10,10 +10,13 @@ import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.NbtQueryResponseS2CPacket;
 import net.minecraft.network.packet.s2c.play.UnloadChunkS2CPacket;
+import net.minecraft.util.math.ChunkPos;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntitiesDataStorage;
+import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
 
@@ -39,7 +42,10 @@ public abstract class MixinClientPlayNetworkHandler
         }
 
         DataManager.getSchematicPlacementManager().onClientChunkLoad(chunkX, chunkZ);
-        // TODO verifier updates?
+
+        TaskScheduler.getInstanceClient().getAllTasks().stream()
+        .filter(task -> task instanceof TaskCountBlocksPlacementPersistent)
+        .forEach(task -> ((TaskCountBlocksPlacementPersistent)task).onChunkData(new ChunkPos(chunkX, chunkZ)));
     }
 
     @Inject(method = "onUnloadChunk", at = @At("RETURN"))

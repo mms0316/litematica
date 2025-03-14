@@ -19,6 +19,8 @@ import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.mixin.IMixinHandledScreen;
 import fi.dy.masa.litematica.render.infohud.IInfoHudRenderer;
 import fi.dy.masa.litematica.render.infohud.RenderPhase;
+import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
@@ -183,7 +185,16 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
             y += lineHeight;
         }
 
-        String title = GuiBase.TXT_BOLD + StringUtils.translate("litematica.gui.button.material_list") + GuiBase.TXT_RST;
+        String titleIncomplete = "";
+        if (this.materialList instanceof MaterialListPlacement &&
+            TaskScheduler.getInstanceClient().getAllTasks().stream()
+                .filter(task -> task instanceof TaskCountBlocksPlacementPersistent)
+                .anyMatch(task -> ((TaskCountBlocksPlacementPersistent) task).hasPendingChunks()))
+        {
+            titleIncomplete = " (Incomplete)" ;
+        }
+
+        String title = GuiBase.TXT_BOLD + StringUtils.translate("litematica.gui.button.material_list") + titleIncomplete + GuiBase.TXT_RST;
 
         drawContext.drawText(font, title, posX + 2, posY + 2, textColor, useShadow);
 

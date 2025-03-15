@@ -81,6 +81,10 @@ Features:
   * This is a shortcut for M+L and button click on "Info HUD: ON / OFF"
 * Material List: Addition of counts of shulker boxes
   * If config 'materialListUseBSIFormat' is enabled, counts are shown in B (shulker boxes) S (stacks) I (remainder items) format
+* Material List from Schematic Placement: Addition of config 'materialListPlacementPersistent' to change Material List to act like Schematic Verifier, at the cost of increased CPU and memory usage
+  * Related task is now always running
+  * Considers block updates
+  * Doesn't need all chunks to be loaded before showing results
 * Rendering: Addition of config 'schematicOverlayColorMissing2' to be alternated when using RenderLayers with axis
 * Schematic Placement: Addition of hotkey 'setSchematicOrigin'
   * This moves the active schematic placement to player's position
@@ -102,10 +106,6 @@ Tweaks:
   * Brought from 1.12.2 official branch
 * Material List: Removal of message when refreshing
 * Material List: No longer is cleared when changing dimensions
-* Material List from Schematic Placement: Now acts like Schematic Verifier at expense of more CPU and memory usage
-  * Doesn't need to be entirely loaded before showing blocks
-  * Considers block updates
-  * Related task is now always running  
 * Pick Block Shulkers: Prefers hotbar then the Shulker Box with the least amount of items
 * Schematic Loading: Removal of warning when loading non .litematic schematics
 * Schematic Loading: Removal of non-important metadata preview

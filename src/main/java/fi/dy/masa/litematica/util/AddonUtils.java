@@ -571,12 +571,12 @@ public class AddonUtils {
 
         StringBuilder sb = new StringBuilder();
 
-        if (boxCount > 0) {
+        if (boxCount != 0) {
             sb.append(boxCount);
             sb.append('B');
         }
 
-        if (stacks > 0) {
+        if (stacks % 27 != 0) {
             if (!sb.isEmpty()) {
                 sb.append(' ');
             }
@@ -584,7 +584,7 @@ public class AddonUtils {
             sb.append('S');
         }
 
-        if (remainder > 0) {
+        if (remainder != 0) {
             if (!sb.isEmpty()) {
                 sb.append(' ');
             }

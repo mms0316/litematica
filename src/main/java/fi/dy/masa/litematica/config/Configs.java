@@ -98,7 +98,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       MATERIAL_LIST_HOTKEY_AUTO_REFRESH = new ConfigBoolean("materialListHotkeyAutoRefresh", true, "When using openGuiMaterialList for the first time on a schematic placement, automatically starts counting materials");
         public static final ConfigBoolean       MATERIAL_LIST_IGNORE_STATE  = new ConfigBoolean("materialListIgnoreState", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       MATERIAL_LIST_USE_BSI_FORMAT = new ConfigBoolean("materialListUseBSIFormat", false, "Use B (Shulker Boxes) S (stacks) I (remainder items) format for material lists");
-        public static final ConfigBoolean       MATERIAL_LIST_PLACEMENT_PERSISTENT = new ConfigBoolean("materialListPlacementPersistent", false, "Material List (from schematic placements)\nwill keep checking for block updates");
+        public static final ConfigBoolean       MATERIAL_LIST_PLACEMENT_PERSISTENT = new ConfigBoolean("materialListPlacementPersistent", true, "Material List (from schematic placements)\nwill keep checking for block updates and immediately give partial results");
         public static final ConfigInteger       MATERIAL_LIST_PLACEMENT_PERSISTENT_DELAY = new ConfigInteger("materialListPlacementPersistentDelay", 0, 0, 5000, "Adds delay in miliseconds to Material List's (from schematic placements) checks of block updates. Increase to reduce CPU usage.");
         public static final ConfigBoolean       PASTE_ALWAYS_USE_FILL       = new ConfigBoolean("pasteAlwaysUseFill", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       PASTE_IGNORE_BE_ENTIRELY    = new ConfigBoolean("pasteIgnoreBlockEntitiesEntirely", false).apply(GENERIC_KEY);

@@ -104,6 +104,8 @@ Tweaks:
 * EasyPlace: Addition of support for ranges in 'pickBlockableSlots'
   * e.g. use "3-6" instead of "3,4,5,6"
   * Brought from 1.12.2 official branch
+* EasyPlace: Skips handling InventoryS2CPacket (for player inventory) for 'easyPlaceSkipInventoryUpdateDuration' (default 100ms)
+  * This fixes wrong block placements when being too fast
 * Material List: Removal of message when refreshing
 * Material List: No longer is cleared when changing dimensions
 * Pick Block Shulkers: Prefers hotbar then the Shulker Box with the least amount of items

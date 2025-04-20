@@ -1,15 +1,13 @@
 package fi.dy.masa.litematica.mixin;
 
+import fi.dy.masa.litematica.util.AddonUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
-import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
-import net.minecraft.network.packet.s2c.play.NbtQueryResponseS2CPacket;
-import net.minecraft.network.packet.s2c.play.UnloadChunkS2CPacket;
+import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.util.math.ChunkPos;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
@@ -97,6 +95,14 @@ public abstract class MixinClientPlayNetworkHandler
         {
             // when the player becomes OP, the server sends the command tree to the client
             EntitiesDataStorage.getInstance().resetOpCheck();
+        }
+    }
+
+    @Inject(method = "onInventory", at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/PlayerScreenHandler;updateSlotStacks(ILjava/util/List;Lnet/minecraft/item/ItemStack;)V"), cancellable = true)
+    private void litematica_onPlayerInventoryUpdate(InventoryS2CPacket packet, CallbackInfo ci)
+    {
+        if (AddonUtils.isInventoryUpdateSkipped()) {
+            ci.cancel();
         }
     }
 }

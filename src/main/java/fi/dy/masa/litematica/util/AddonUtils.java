@@ -49,6 +49,8 @@ public class AddonUtils {
     private static final List<ItemStack> refillItems = new ArrayList<>();
     private static long lastRefillTimeCheck;
 
+    private static long inventoryUpdateTime = 0;
+
     public static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
     {
         if (state1 == null || state2 == null)
@@ -623,5 +625,12 @@ public class AddonUtils {
             return String.format("%d (%d x %d + %d)", total, stacks, maxStackSize, remainder);
         else
             return String.format("%d (%d x %d)", total, stacks, maxStackSize);
+    }
+
+    public static void skipInventoryUpdate() {
+        inventoryUpdateTime = System.currentTimeMillis() + Configs.Generic.EASY_PLACE_SKIP_INVENTORY_UPDATE_DURATION.getIntegerValue();
+    }
+    public static boolean isInventoryUpdateSkipped() {
+        return System.currentTimeMillis() < inventoryUpdateTime;
     }
 }

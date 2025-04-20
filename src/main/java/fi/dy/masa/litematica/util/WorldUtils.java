@@ -629,7 +629,11 @@ public class WorldUtils
             Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
             //&& Configs.Generic.EASY_PLACE_POST_REWRITE.getBooleanValue() == false)
         {
-            WorldUtils.doEasyPlaceAction(mc);
+            ActionResult result = doEasyPlaceAction(mc);
+            if (result == ActionResult.SUCCESS)
+            {
+                AddonUtils.skipInventoryUpdate();
+            }
         }
     }
 
@@ -659,6 +663,10 @@ public class WorldUtils
                 }
 
                 return true;
+            }
+            else
+            {
+                AddonUtils.skipInventoryUpdate();
             }
 
             return result != ActionResult.PASS;

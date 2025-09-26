@@ -2028,6 +2028,9 @@ public class LitematicaSchematic
             this.metadata.setName(metadata.contains("Name") ? metadata.getString("Name", "?") : name);
             this.metadata.setAuthor(metadata.contains("Author") ? metadata.getString("Author", "?") : "unknown");
             this.metadata.setTimeCreated(metadata.contains("Date") ? metadata.getLong("Date", System.currentTimeMillis()) : System.currentTimeMillis());
+
+            //Extension - ARGB square picture
+            metadata.getIntArray("PreviewImageData").ifPresent(array -> this.metadata.setPreviewImagePixelData(array));
         }
         else
         {
@@ -2242,6 +2245,13 @@ public class LitematicaSchematic
 
             this.metadata.setTotalBlocks(totalBlocks);
             this.entities.put(name, this.readEntitiesFromVanillaStructure(tag, minecraftDataVersion));
+
+            //Extension - ARGB square picture
+            var imgData = tag.getIntArray("PreviewImageData");
+            if (imgData.isEmpty()) {
+                imgData = tag.getIntArray("previewImageData");
+            }
+            imgData.ifPresent(array -> this.metadata.setPreviewImagePixelData(array));
 
             return true;
         }

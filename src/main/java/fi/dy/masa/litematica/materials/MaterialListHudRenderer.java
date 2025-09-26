@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import org.joml.Matrix3x2fStack;
 
+import fi.dy.masa.litematica.util.AddonUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -24,6 +25,8 @@ import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.mixin.screen.IMixinHandledScreen;
 import fi.dy.masa.litematica.render.infohud.IInfoHudRenderer;
 import fi.dy.masa.litematica.render.infohud.RenderPhase;
+import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
@@ -179,7 +182,16 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
             y += lineHeight;
         }
 
-        String title = GuiBase.TXT_BOLD + StringUtils.translate("litematica.gui.button.material_list") + GuiBase.TXT_RST;
+        String titleIncomplete = "";
+        if (this.materialList instanceof MaterialListPlacement &&
+            TaskScheduler.getInstanceClient().getAllTasks().stream()
+                .filter(task -> task instanceof TaskCountBlocksPlacementPersistent)
+                .anyMatch(task -> ((TaskCountBlocksPlacementPersistent) task).hasPendingChunks()))
+        {
+            titleIncomplete = " (Incomplete)" ;
+        }
+
+        String title = GuiBase.TXT_BOLD + StringUtils.translate("litematica.gui.button.material_list") + titleIncomplete + GuiBase.TXT_RST;
 
         drawContext.drawText(font, title, posX + 2, posY + 2, textColor, useShadow);
 
@@ -214,29 +226,7 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
 
     protected String getFormattedCountString(int count, int maxStackSize)
     {
-        int stacks = count / maxStackSize;
-        int remainder = count % maxStackSize;
-        double boxCount = (double) count / (27D * maxStackSize);
-
-        if (count > maxStackSize)
-        {
-            if (boxCount >= 1.0)
-            {
-                return String.format("%d (%.2f %s)", count, boxCount, StringUtils.translate("litematica.gui.label.material_list.abbr.shulker_box"));
-            }
-            else if (remainder > 0)
-            {
-                return String.format("%d (%d x %d + %d)", count, stacks, maxStackSize, remainder);
-            }
-            else
-            {
-                return String.format("%d (%d x %d)", count, stacks, maxStackSize);
-            }
-        }
-        else
-        {
-            return String.format("%d", count);
-        }
+        return AddonUtils.getFormattedCountString(count, maxStackSize, false);
     }
 
     public static void renderLookedAtBlockInInventory(DrawContext drawContext, HandledScreen<?> gui, MinecraftClient mc)
@@ -291,5 +281,10 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
 
         // Draw the border
         RenderUtils.drawOutline(drawContext, x, y, width, height, 1, colorBorder);    // zLevel
+    }
+
+    public void clearUpdateTime()
+    {
+        this.lastUpdateTime = 0;
     }
 }

@@ -29,6 +29,7 @@
         "world.MixinWorldChunk"
     ],
     "client": [
+        "MixinInGameHud",
         "MixinMinecraftClient",
         "MixinMinecraftClient_easyPlace",
         "entity.MixinAbstractSignEditScreen",

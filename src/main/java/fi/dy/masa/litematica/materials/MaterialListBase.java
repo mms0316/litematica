@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import fi.dy.masa.litematica.render.infohud.InfoHud;
 import fi.dy.masa.litematica.util.BlockInfoListType;
 import fi.dy.masa.malilib.interfaces.ICompletionListener;
 import fi.dy.masa.malilib.util.JsonUtils;
@@ -251,6 +252,21 @@ public abstract class MaterialListBase implements IMaterialList
         this.reverse = JsonUtils.getBooleanOrDefault(obj, "sort_reverse", false);
         this.hideAvailable = JsonUtils.getBooleanOrDefault(obj, "hide_available", false);
         this.multiplier = JsonUtils.getIntegerOrDefault(obj, "multiplier", 1);
+    }
+
+    public void toggleInfoHud()
+    {
+        MaterialListHudRenderer renderer = this.getHudRenderer();
+        renderer.toggleShouldRender();
+
+        if (this.getHudRenderer().getShouldRenderCustom())
+        {
+            InfoHud.getInstance().addInfoHudRenderer(renderer, true);
+        }
+        else
+        {
+            InfoHud.getInstance().removeInfoHudRenderersOfType(renderer.getClass(), true);
+        }
     }
 
     public enum SortCriteria

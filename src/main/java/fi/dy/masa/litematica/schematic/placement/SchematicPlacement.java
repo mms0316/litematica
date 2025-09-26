@@ -349,7 +349,7 @@ public class SchematicPlacement
     {
         if (this.materialList == null)
         {
-            this.materialList = new MaterialListPlacement(this, true);
+            this.materialList = new MaterialListPlacement(this, Configs.Generic.MATERIAL_LIST_HOTKEY_AUTO_REFRESH.getBooleanValue());
         }
 
         return this.materialList;

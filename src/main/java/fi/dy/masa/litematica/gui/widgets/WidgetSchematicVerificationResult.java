@@ -261,11 +261,14 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
 
         if (this.header1 != null && this.header2 != null)
         {
-            this.drawString(drawContext, x1, y, color, this.header1);
-            this.drawString(drawContext, x2, y, color, this.header2);
-            this.drawString(drawContext, x3, y, color, this.header3);
+            if (this.listWidget.getSearchBarWidget().isSearchOpen() == false)
+            {
+                this.drawString(drawContext, x1, y, color, this.header1);
+                this.drawString(drawContext, x2, y, color, this.header2);
+                this.drawString(drawContext, x3, y, color, this.header3);
 
-            this.renderColumnHeader(drawContext, mouseX, mouseY, Icons.ARROW_DOWN, Icons.ARROW_UP);
+                this.renderColumnHeader(drawContext, mouseX, mouseY, Icons.ARROW_DOWN, Icons.ARROW_UP);
+            }
         }
         else if (this.header1 != null)
         {

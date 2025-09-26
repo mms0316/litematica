@@ -1,20 +1,22 @@
 package fi.dy.masa.litematica.mixin.network;
 
+import fi.dy.masa.litematica.util.AddonUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
-import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
-import net.minecraft.network.packet.s2c.play.NbtQueryResponseS2CPacket;
-import net.minecraft.network.packet.s2c.play.UnloadChunkS2CPacket;
+import net.minecraft.network.packet.s2c.play.*;
+import net.minecraft.util.math.ChunkPos;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntitiesDataStorage;
+import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
+import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
 
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class MixinClientPlayNetworkHandler
@@ -30,10 +32,18 @@ public abstract class MixinClientPlayNetworkHandler
             Configs.Visuals.ENABLE_SCHEMATIC_RENDERING.getBooleanValue())
         {
             SchematicWorldRefresher.INSTANCE.markSchematicChunksForRenderUpdate(chunkX, chunkZ);
+
+            if (Configs.Generic.SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD.getBooleanValue())
+            {
+                SchematicVerifier.markVerifierChunkChanges(chunkX, chunkZ);
+            }
         }
 
         DataManager.getSchematicPlacementManager().onClientChunkLoad(chunkX, chunkZ);
-        // TODO verifier updates?
+
+        TaskScheduler.getInstanceClient().getAllTasks().stream()
+        .filter(task -> task instanceof TaskCountBlocksPlacementPersistent)
+        .forEach(task -> ((TaskCountBlocksPlacementPersistent)task).onChunkData(new ChunkPos(chunkX, chunkZ)));
     }
 
     @Inject(method = "onUnloadChunk", at = @At("RETURN"))
@@ -85,6 +95,14 @@ public abstract class MixinClientPlayNetworkHandler
         {
             // when the player becomes OP, the server sends the command tree to the client
             EntitiesDataStorage.getInstance().resetOpCheck();
+        }
+    }
+
+    @Inject(method = "onInventory", at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/PlayerScreenHandler;updateSlotStacks(ILjava/util/List;Lnet/minecraft/item/ItemStack;)V"), cancellable = true)
+    private void litematica_onPlayerInventoryUpdate(InventoryS2CPacket packet, CallbackInfo ci)
+    {
+        if (AddonUtils.isInventoryUpdateSkipped()) {
+            ci.cancel();
         }
     }
 }

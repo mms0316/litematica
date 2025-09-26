@@ -130,22 +130,30 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
             this.drawString(drawContext, str, x, y, textColor);
             y += 12;
 
-            String strDate = DATE_FORMAT.format(new Date(meta.getTimeCreated()));
-            str = StringUtils.translate("litematica.gui.label.schematic_info.time_created", strDate);
-            this.drawString(drawContext, str, x, y, textColor);
-            y += 12;
-
-            if (meta.hasBeenModified())
+            long timeCreated = meta.getTimeCreated();
+            if (timeCreated > 0)
             {
-                strDate = DATE_FORMAT.format(new Date(meta.getTimeModified()));
-                str = StringUtils.translate("litematica.gui.label.schematic_info.time_modified", strDate);
+                String strDate = DATE_FORMAT.format(new Date(timeCreated));
+                str = StringUtils.translate("litematica.gui.label.schematic_info.time_created", strDate);
+                this.drawString(drawContext, str, x, y, textColor);
+                y += 12;
+
+                if (meta.hasBeenModified())
+                {
+                    strDate = DATE_FORMAT.format(new Date(meta.getTimeModified()));
+                    str = StringUtils.translate("litematica.gui.label.schematic_info.time_modified", strDate);
+                    this.drawString(drawContext, str, x, y, textColor);
+                    y += 12;
+                }
+            }
+
+            int regionCount = meta.getRegionCount();
+            if (regionCount > 0)
+            {
+                str = StringUtils.translate("litematica.gui.label.schematic_info.region_count", meta.getRegionCount());
                 this.drawString(drawContext, str, x, y, textColor);
                 y += 12;
             }
-
-            str = StringUtils.translate("litematica.gui.label.schematic_info.region_count", meta.getRegionCount());
-            this.drawString(drawContext, str, x, y, textColor);
-            y += 12;
 
             if (this.parent.getScreenHeight() >= 340)
             {
@@ -313,10 +321,7 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
                 meta = pair.getRight();
                 version = pair.getLeft();
 
-                if (entry.getName().endsWith(LitematicaSchematic.FILE_EXTENSION))
-                {
-                    this.createPreviewImage(file, meta);
-                }
+                this.createPreviewImage(file, meta);
 
                 this.cachedMetadata.put(file, meta);
                 this.cachedVersion.put(file, version);

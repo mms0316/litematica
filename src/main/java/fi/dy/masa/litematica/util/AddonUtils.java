@@ -1,0 +1,652 @@
+package fi.dy.masa.litematica.util;
+
+import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.world.SchematicWorldHandler;
+import fi.dy.masa.malilib.util.StringUtils;
+import fi.dy.masa.malilib.util.game.BlockUtils;
+import fi.dy.masa.malilib.util.InventoryUtils;
+
+import net.minecraft.block.*;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.BundleItem;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.state.property.Properties;
+import net.minecraft.state.property.Property;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Triple;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Stream;
+
+public class AddonUtils {
+    private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
+    private static final HashMap<AbstractBlock, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
+
+    private static final List<ItemStack> ranOutItems = new ArrayList<>();
+    private static final List<ItemStack> refillItems = new ArrayList<>();
+    private static long lastRefillTimeCheck;
+
+    private static long inventoryUpdateTime = 0;
+
+    public static boolean isMatchingStateRestrictedProtocol (BlockState state1, BlockState state2)
+    {
+        if (state1 == null || state2 == null)
+        {
+            return false;
+        }
+
+        if (state1 == state2)
+        {
+            return true;
+        }
+
+        var orientationProperties = new Property<?>[] {
+                Properties.FACING, //pistons
+                Properties.BLOCK_HALF, //stairs, trapdoors
+                Properties.HOPPER_FACING,
+                Properties.DOOR_HINGE,
+                Properties.HORIZONTAL_FACING, //small dripleaf
+                Properties.AXIS, //logs
+                Properties.SLAB_TYPE,
+                Properties.VERTICAL_DIRECTION,
+                Properties.ROTATION, //banners
+                Properties.HANGING, //lanterns
+                Properties.BLOCK_FACE, //lever
+                Properties.ATTACHMENT, //bell (double-check for single-wall / double-wall)
+                //Properties.HORIZONTAL_AXIS, //Nether portals, though they aren't directly placeable
+                //Properties.ORIENTATION, //jigsaw blocks
+        };
+
+        for (var property : orientationProperties)
+        {
+            boolean hasProperty1 = state1.contains(property);
+            boolean hasProperty2 = state2.contains(property);
+
+            if (hasProperty1 != hasProperty2)
+                return false;
+            if (!hasProperty1)
+                continue;
+
+            if (state1.get(property) != state2.get(property))
+                return false;
+        }
+
+        //Other properties are considered as matching
+        return true;
+    }
+
+    public static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    {
+        final var updatedHitResult = new BlockHitResult(hitVecIn, direction, pos, false);
+        final var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
+        final var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
+        return isMatchingStateRestrictedProtocol(attemptState, stateSchematic);
+    }
+
+    public static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    {
+        var block = stateSchematic.getBlock();
+        if (block instanceof AbstractTorchBlock) //Torch, Soul Torch, Redstone Torch
+        {
+            boolean isOnWall = block instanceof WallTorchBlock || block instanceof WallRedstoneTorchBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractBannerBlock)
+        {
+            boolean isOnWall = block instanceof WallBannerBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractSignBlock)
+        {
+            boolean isOnWall = block instanceof WallSignBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+        else if (block instanceof AbstractSkullBlock) //Wither Skull, Player Skull
+        {
+            boolean isOnWall = block instanceof WallSkullBlock;
+            return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
+        }
+        else if (block instanceof MultifaceGrowthBlock) //Sculk Vein, Glow Lichen
+        {
+            final var clientState = mc.world.getBlockState(pos);
+            final boolean isSameClass = clientState.getBlock().getClass().equals(block.getClass());
+
+            Direction direction = sideIn.getOpposite();
+            if (isSameClass && MultifaceGrowthBlock.hasDirection(clientState, direction))
+                // This direction is already placed.
+                return null;
+
+            final var posSupport = pos.offset(direction);
+
+            // Check if supporting block exists
+            if (!MultifaceGrowthBlock.canGrowOn(mc.world, direction, pos, mc.world.getBlockState(posSupport)))
+                return null;
+
+            return Triple.of(posSupport, sideIn, hitVecIn);
+        }
+
+        return Direction.stream()
+                .filter(direction -> isMatchingStateRestrictedProtocol(pos, stateSchematic, direction, hitVecIn, mc, hand))
+                .findAny()
+                .map(direction -> Triple.of(pos, direction, hitVecIn))
+                .orElse(null);
+    }
+
+    private static Triple<BlockPos, Direction, Vec3d> getWallPlaceableOrientation(BlockPos pos, BlockState stateSchematic, Vec3d hitVecOut, MinecraftClient mc, Hand hand, boolean isOnWall) {
+        Direction sideOut;
+        BlockPos posOrig = pos;
+
+        if (isOnWall)
+        {
+            if (!stateSchematic.contains(Properties.HORIZONTAL_FACING))
+            {
+                //Shouldn't happen, fail instead of crashing just in case
+                return null;
+            }
+
+            sideOut = stateSchematic.get(Properties.HORIZONTAL_FACING);
+            pos = pos.offset(sideOut.getOpposite());
+        }
+        else
+        {
+            sideOut = Direction.UP;
+            pos = pos.down();
+        }
+        BlockState stateFacing = mc.world.getBlockState(pos);
+
+        if (stateFacing == null || stateFacing.isAir())
+            return null;
+
+        //Check for blocks that have rotation property (Banners, Signs, Skulls)
+        if (stateSchematic.contains(Properties.ROTATION))
+        {
+            if (!isMatchingStateRestrictedProtocol(posOrig, stateSchematic, sideOut, hitVecOut, mc, hand))
+                return null;
+        }
+
+        return Triple.of(pos, sideOut, hitVecOut);
+    }
+
+    public static ActionResult checkEasyPlaceFluidBucket(MinecraftClient mc) {
+        //Re-run traces to stop wasting liquid on liquid, and ignoring easyPlaceFirst config, as interactItem works differently
+
+        final double traceMaxRange = mc.player.getBlockInteractionRange();
+        final World world = SchematicWorldHandler.getSchematicWorld();
+
+        //Raytrace first non-liquid block
+        var hitResult = RayTraceUtils.getRayTraceFromEntity(mc.world, mc.player, false, traceMaxRange);
+        if (hitResult.getType() != HitResult.Type.BLOCK)
+            return ActionResult.FAIL;
+        var blockHitResult = (BlockHitResult)hitResult;
+        final var blockPosLast = blockHitResult.getBlockPos();
+        //Keep block before first non-liquid block
+        final var blockPosBeforeLast = blockPosLast.offset(blockHitResult.getSide());
+
+        //Raytrace first block including liquid
+        hitResult = RayTraceUtils.getRayTraceFromEntity(mc.world, mc.player, true, traceMaxRange);
+        if (hitResult.getType() != HitResult.Type.BLOCK)
+            return ActionResult.FAIL;
+        final var blockPosFirst = ((BlockHitResult)hitResult).getBlockPos();
+
+        //Fail if there are liquids in-between
+        //If there are liquids in-between, it'd waste liquid or create obsidian
+        if (blockPosFirst.toCenterPos().squaredDistanceTo(blockPosBeforeLast.toCenterPos()) > 1.0 + Math.ulp(1.0))
+            return ActionResult.FAIL;
+
+        final var blockStateSchematic = world.getBlockState(blockPosBeforeLast);
+        final var blockSchematic = blockStateSchematic.getBlock();
+        final var blockStateVanilla = mc.world.getBlockState(blockPosBeforeLast);
+        final var blockVanilla = blockStateVanilla.getBlock();
+
+        //Fail if target is not to be a liquid source
+        if (!(blockSchematic instanceof FluidBlock))
+            return ActionResult.FAIL;
+
+        if (!blockStateVanilla.isAir())
+        {
+            //Fail if target is not of the desired fluid
+            // (this comparison works because all Blocks are pointers to a single instance)
+            if (blockSchematic != blockVanilla)
+                return ActionResult.FAIL;
+
+            //Fail if world already has block as a liquid source
+            if (blockStateVanilla.get(FluidBlock.LEVEL) == 0)
+                return ActionResult.FAIL;
+        }
+
+        return ActionResult.SUCCESS;
+    }
+
+
+    //Adapted from malilib liteloader_1.12.2 branch, and changed code to use a single packet
+    /**
+     * Re-stocks more items to the stack in the player's current hotbar slot.
+     * @param threshold the number of items at or below which the re-stocking will happen
+     * @param allowHotbar whether or not to allow taking items from other hotbar slots
+     */
+    public static boolean preRestockHand(PlayerEntity player, Hand hand, int threshold, boolean allowHotbar)
+    {
+        boolean changed = false;
+        final ItemStack stackHand = player.getEquippedStack(hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
+        final int count = stackHand.getCount();
+        final int max = stackHand.getMaxCount();
+
+        if (stackHand.isEmpty() == false &&
+                (count <= threshold && count < max))
+        {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            ScreenHandler container = player.playerScreenHandler;
+            //mc.interactionManager.clickSlot() considers these slot numbers: https://wiki.vg/Inventory#Player_Inventory
+            //36 - 44: hotbar
+            //9 - 35: main inventory
+            //45: offhand
+            //Meanwhile, player.getInventory() considers these slot numbers:
+            //0 - 8: hotbar
+            //9 - 35: main inventory
+            //40: offhand
+            int endSlot = allowHotbar ? 44 : 35;
+            PlayerInventory inventory = player.getInventory();
+            int currentMainHandSlot = inventory.getSelectedSlot() + 36;
+            int currentSlot = hand == Hand.MAIN_HAND ? currentMainHandSlot : 45;
+
+            for (int slotNum = 9; slotNum <= endSlot; ++slotNum)
+            {
+                if (slotNum == currentMainHandSlot)
+                {
+                    continue;
+                }
+
+                ItemStack stackSlot = inventory.getStack(slotNum >= 36 ? slotNum - 36 : slotNum);
+
+                if (InventoryUtils.areStacksEqualIgnoreNbt(stackHand, stackSlot))
+                {
+                    if (hand == Hand.OFF_HAND)
+                    {
+                        // If all the items from the found slot can fit into the current
+                        // stack in hand, then left click, otherwise right click to split the stack
+                        int button = stackSlot.getCount() + count <= max ? 0 : 1;
+
+                        mc.interactionManager.clickSlot(container.syncId, slotNum, button, SlotActionType.PICKUP, player);
+                        mc.interactionManager.clickSlot(container.syncId, currentSlot, 0, SlotActionType.PICKUP, player);
+                    }
+                    else
+                    {
+                        //Do shift-click
+                        mc.interactionManager.clickSlot(container.syncId, slotNum, 0, SlotActionType.QUICK_MOVE, player);
+                    }
+                    changed = true;
+
+                    break;
+                }
+            }
+        }
+
+        return changed;
+    }
+
+    public static void setSubstitutions(List<String> substitutionList)
+    {
+        SUBSTITUTIONS.clear();
+
+        for (String substitutionItem : substitutionList)
+        {
+            //Each substitution is separated by semicolons
+            String[] substitutions = substitutionItem.split(";");
+
+            SUBSTITUTIONS.add(substitutions);
+        }
+    }
+
+    public static HashSet<String> getSubstitutions(String id)
+    {
+        HashSet<String> substitutionList = new HashSet<>();
+
+        for (String[] substitutions : SUBSTITUTIONS)
+        {
+            if (ArrayUtils.contains(substitutions, id))
+            {
+                Collections.addAll(substitutionList, substitutions);
+                //does not break here, because there may be multiple entries
+            }
+        }
+
+        substitutionList.remove(id); //remove self
+
+        return substitutionList;
+    }
+
+    public static boolean maySubstitute(Identifier schematicId, Identifier clientId)
+    {
+        if (schematicId.equals(clientId))
+        {
+            return true;
+        }
+
+        for (String[] substitutions : SUBSTITUTIONS)
+        {
+            if (ArrayUtils.contains(substitutions, schematicId.toString()) &&
+                    ArrayUtils.contains(substitutions, clientId.toString()))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean hasEqualProperties(BlockState blockState1, BlockState blockState2)
+    {
+        final var properties1 = blockState1.getEntries();
+        final var properties2 = blockState2.getEntries();
+
+        if (properties1 == properties2) return true;
+        if (properties1.size() != properties2.size()) return false;
+
+        for (var entry : properties1.entrySet()) {
+            var val1 = entry.getValue();
+            var val2 = properties2.get(entry.getKey());
+
+            if (val1 != val2) return false;
+        }
+
+        return true;
+    }
+
+    @SuppressWarnings("deprecation")
+    public static OverlayType getOverlayType(BlockState stateSchematic, BlockState stateClient, IgnoreBlockRegistry ignoreBlockRegistry)
+    {
+        boolean ignoreClientWorldFluids = Configs.Visuals.IGNORE_EXISTING_FLUIDS.getBooleanValue();
+        if (stateSchematic == stateClient)
+        {
+            return OverlayType.NONE;
+        }
+        else
+        {
+            boolean clientHasAir = stateClient.isAir();
+            boolean schematicHasAir = stateSchematic.isAir();
+
+            if (schematicHasAir)
+            {
+                if (clientHasAir)
+                {
+                    return OverlayType.NONE;
+                }
+                else if (ignoreClientWorldFluids && stateClient.isLiquid())
+                {
+                    return OverlayType.NONE;
+                }
+                else if (ignoreBlockRegistry.hasBlock(stateClient.getBlock()))
+                {
+                    return OverlayType.NONE;
+                }
+                else
+                {
+                    return OverlayType.EXTRA;
+                }
+            }
+            else
+            {
+                if (clientHasAir || (ignoreClientWorldFluids && stateClient.isLiquid()))
+                {
+                    return OverlayType.MISSING;
+                }
+
+                if (stateSchematic.getBlock() != stateClient.getBlock())
+                {
+                    if (Configs.Generic.ENABLE_DIFFERENT_BLOCKS.getBooleanValue() &&
+                        BlockUtils.isInSameGroup(stateSchematic, stateClient))
+                    {
+                        if (BlockUtils.matchPropertiesOnly(stateSchematic, stateClient))
+                        {
+                            // Different block of a common BlockTags Group, and same state
+                            return OverlayType.DIFF_BLOCK;
+                        }
+                        else
+                        {
+                            return OverlayType.WRONG_STATE;
+                        }
+                    }
+                }
+
+                final Block schematicBlock = stateSchematic.getBlock();
+                final Block clientBlock = stateClient.getBlock();
+                final Identifier schematicBlockName = Registries.BLOCK.getId(schematicBlock);
+                final Identifier clientBlockName = Registries.BLOCK.getId(clientBlock);
+
+                if (!maySubstitute(schematicBlockName, clientBlockName))
+                {
+                    return OverlayType.WRONG_BLOCK;
+                }
+
+                if (!hasEqualProperties(stateSchematic, stateClient))
+                {
+                    return OverlayType.WRONG_STATE;
+                }
+
+                return OverlayType.NONE;
+            }
+        }
+    }
+
+    public static boolean hasUseAction(AbstractBlock block) {
+        Boolean val = HAS_USE_ACTION_CACHE.get(block);
+
+        if (val == null) {
+            val = false;
+            try {
+                var methods = block.getClass().getDeclaredMethods();
+                for (var method : methods) {
+                    if (method.getName().equals("method_55766")) {
+                        val = !(method.getDeclaringClass().equals(AbstractBlock.class));
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                Litematica.LOGGER.warn("AddonUtils: Failed to reflect method AbstractBlock::onUse", e);
+            }
+
+            HAS_USE_ACTION_CACHE.put(block, val);
+        }
+
+        return val;
+    }
+
+    public static void addRanOutItem(ItemStack stack) {
+        for (var item : ranOutItems) {
+            if (InventoryUtils.areStacksEqualIgnoreNbt(item, stack)) {
+                return;
+            }
+        }
+
+        ranOutItems.add(stack.copy());
+
+        lastRefillTimeCheck = 0;
+    }
+
+    public static List<ItemStack> getRanOutItems() {
+        return ranOutItems;
+    }
+
+    public static void clearRanOutItems() {
+        ranOutItems.clear();
+
+        lastRefillTimeCheck = 0;
+    }
+
+    public static void addRefillItem(ItemStack stack) {
+        for (var item : refillItems) {
+            if (InventoryUtils.areStacksEqualIgnoreNbt(item, stack)) {
+                return;
+            }
+        }
+
+        refillItems.add(stack.copy());
+
+        lastRefillTimeCheck = 0;
+    }
+
+    public static List<ItemStack> getRefillItems() {
+        return refillItems;
+    }
+
+    public static void clearRefillItems() {
+        refillItems.clear();
+
+        lastRefillTimeCheck = 0;
+    }
+
+    public static void checkClearLastItems() {
+        if (!Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue()) return;
+        if (ranOutItems.isEmpty() && refillItems.isEmpty()) return;
+
+        final long now = System.currentTimeMillis();
+        if (now - lastRefillTimeCheck <= 5_000L) return;
+
+        final var player = MinecraftClient.getInstance().player;
+        if (player == null) return;
+        final var inv = player.getInventory();
+        if (inv == null) return;
+
+        ranOutItems.removeIf(inv::contains);
+        refillItems.removeIf(inv::contains);
+
+        lastRefillTimeCheck = now;
+    }
+
+    public static void renderHotbarItem(DrawContext context, int x, int y, ItemStack stack) {
+        if (!Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue()) return;
+
+        if (stack.isEmpty()) return;
+
+        final var refillItems = AddonUtils.getRefillItems();
+        final var ranOutItems = AddonUtils.getRanOutItems();
+
+        Stream<ItemStack> combinedStream = Stream.concat(refillItems.stream(), ranOutItems.stream());
+
+        final var stackItem = stack.getItem();
+        if (stackItem instanceof BlockItem blockItem && blockItem.getBlock() instanceof ShulkerBoxBlock) {
+            if (combinedStream.noneMatch(itemStack -> fi.dy.masa.litematica.util.InventoryUtils.doesShulkerBoxContainItem(stack, itemStack)))
+                return;
+        }
+        else if (stackItem instanceof BundleItem) {
+            if (combinedStream.noneMatch(itemStack -> fi.dy.masa.litematica.util.InventoryUtils.doesBundleContainItem(stack, itemStack)))
+                return;
+        }
+        else
+            return;
+
+        int borderColor = Configs.Colors.HIGHLIGHT_REFILL_IN_INV_COLOR.getColor().intValue;
+        int borderThickness = 2;
+
+        context.getMatrices().pushMatrix();
+        context.fill(x - borderThickness, y - borderThickness, x + 16 + borderThickness, y + 16 + borderThickness, borderColor);
+        context.getMatrices().popMatrix();
+    }
+
+    public static String getFormattedCountString(int count, int maxStackSize, boolean bigFormat) {
+        if (count <= maxStackSize)
+            return Integer.toString(count);
+
+        if (Configs.Generic.MATERIAL_LIST_USE_BSI_FORMAT.getBooleanValue())
+            return getFormattedCountStringBSI(count, maxStackSize);
+
+        if (bigFormat) {
+            return getFormattedCountStringBig(count, maxStackSize);
+        } else {
+            return getFormattedCountStringSmall(count, maxStackSize);
+        }
+    }
+
+    public static String getFormattedCountStringBSI(int total, int maxStackSize) {
+        int stacks = total / maxStackSize;
+        int remainder = total % maxStackSize;
+        int boxCount = stacks / 27;
+
+        StringBuilder sb = new StringBuilder();
+
+        if (boxCount != 0) {
+            sb.append(boxCount);
+            sb.append('B');
+        }
+
+        if (stacks % 27 != 0) {
+            if (!sb.isEmpty()) {
+                sb.append(' ');
+            }
+            sb.append(stacks % 27);
+            sb.append('S');
+        }
+
+        if (remainder != 0) {
+            if (!sb.isEmpty()) {
+                sb.append(' ');
+            }
+            sb.append(remainder);
+            sb.append('I');
+        }
+
+        return sb.toString();
+    }
+
+    public static String getFormattedCountStringBig(int total, int maxStackSize) {
+        int stacks = total / maxStackSize;
+        int remainder = total % maxStackSize;
+        double boxCount = (double) total / (27D * maxStackSize);
+        final String shulkerBoxAbbr = StringUtils.translate("litematica.gui.label.material_list.abbr.shulker_box");
+
+        if (maxStackSize > 1) {
+            if (stacks >= 27)
+                return String.format("%d = %d %s + %d x %d + %d = %.2f %s", total, stacks / 27, shulkerBoxAbbr, stacks % 27, maxStackSize, remainder, boxCount, shulkerBoxAbbr);
+            else if (remainder > 0)
+                return String.format("%d = %d x %d + %d = %.2f %s", total, stacks, maxStackSize, remainder, boxCount, shulkerBoxAbbr);
+            else
+                return String.format("%d = %d x %d = %.2f %s", total, stacks, maxStackSize, boxCount, shulkerBoxAbbr);
+        }
+        else
+            return String.format("%d = %.2f %s", total, boxCount, shulkerBoxAbbr);
+    }
+
+    public static String getFormattedCountStringSmall(int total, int maxStackSize) {
+        int stacks = total / maxStackSize;
+        int remainder = total % maxStackSize;
+        double boxCount = (double) total / (27D * maxStackSize);
+        final String shulkerBoxAbbr = StringUtils.translate("litematica.gui.label.material_list.abbr.shulker_box");
+
+        if (boxCount >= 1.0)
+            return String.format("%d (%.2f %s)", total, boxCount, shulkerBoxAbbr);
+        else if (remainder > 0)
+            return String.format("%d (%d x %d + %d)", total, stacks, maxStackSize, remainder);
+        else
+            return String.format("%d (%d x %d)", total, stacks, maxStackSize);
+    }
+
+    public static void skipInventoryUpdate() {
+        inventoryUpdateTime = System.currentTimeMillis() + Configs.Generic.EASY_PLACE_SKIP_INVENTORY_UPDATE_DURATION.getIntegerValue();
+    }
+    public static boolean isInventoryUpdateSkipped() {
+        return System.currentTimeMillis() < inventoryUpdateTime;
+    }
+}

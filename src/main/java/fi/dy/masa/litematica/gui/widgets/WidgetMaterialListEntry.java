@@ -4,6 +4,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.joml.Matrix3x2fStack;
 
+import fi.dy.masa.litematica.util.AddonUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.item.ItemStack;
 
@@ -38,7 +39,6 @@ public class WidgetMaterialListEntry extends WidgetListEntrySortable<MaterialLis
     @Nullable private final String header2;
     @Nullable private final String header3;
     @Nullable private final String header4;
-    private final String shulkerBoxAbbr;
     private final boolean isOdd;
 
     public WidgetMaterialListEntry(int x, int y, int width, int height, boolean isOdd,
@@ -51,7 +51,6 @@ public class WidgetMaterialListEntry extends WidgetListEntrySortable<MaterialLis
         this.isOdd = isOdd;
         this.listWidget = listWidget;
         this.materialList = materialList;
-        this.shulkerBoxAbbr = StringUtils.translate("litematica.gui.label.material_list.abbr.shulker_box");
 
         if (this.entry != null)
         {
@@ -324,35 +323,7 @@ public class WidgetMaterialListEntry extends WidgetListEntrySortable<MaterialLis
 
     private String getFormattedCountString(int total, int maxStackSize)
     {
-        int stacks = total / maxStackSize;
-        int remainder = total % maxStackSize;
-        double boxCount = (double) total / (27D * maxStackSize);
-        String strCount;
-
-        if (total > maxStackSize)
-        {
-            if (maxStackSize > 1)
-            {
-                if (remainder > 0)
-                {
-                    strCount = String.format("%d = %d x %d + %d = %.2f %s", total, stacks, maxStackSize, remainder, boxCount, this.shulkerBoxAbbr);
-                }
-                else
-                {
-                    strCount = String.format("%d = %d x %d = %.2f %s", total, stacks, maxStackSize, boxCount, this.shulkerBoxAbbr);
-                }
-            }
-            else
-            {
-                strCount = String.format("%d = %.2f %s", total, boxCount, this.shulkerBoxAbbr);
-            }
-        }
-        else
-        {
-            strCount = String.format("%d", total);
-        }
-
-        return strCount;
+        return AddonUtils.getFormattedCountString(total, maxStackSize, true);
     }
 
     static class ButtonListener implements IButtonActionListener

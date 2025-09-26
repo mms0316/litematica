@@ -16,6 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -92,19 +93,27 @@ public class EntityUtils
     @Nullable
     public static Hand getUsedHandForItem(PlayerEntity player, ItemStack stack)
     {
-        Hand hand = null;
+        final var mainHandStack = player.getMainHandStack();
+        final Identifier stackId = Registries.ITEM.getId(stack.getItem());
 
-        if (InventoryUtils.areStacksEqualIgnoreNbt(player.getMainHandStack(), stack))
+        if (InventoryUtils.areStacksEqualIgnoreNbt(mainHandStack, stack) ||
+                AddonUtils.maySubstitute(
+                    Registries.ITEM.getId(mainHandStack.getItem()), stackId))
         {
-            hand = Hand.MAIN_HAND;
-        }
-        else if (player.getMainHandStack().isEmpty() &&
-                InventoryUtils.areStacksEqualIgnoreNbt(player.getOffHandStack(), stack))
-        {
-            hand = Hand.OFF_HAND;
+            return Hand.MAIN_HAND;
         }
 
-        return hand;
+        final var offHandStack = player.getOffHandStack();
+
+        if (mainHandStack.isEmpty() && (
+                InventoryUtils.areStacksEqualIgnoreNbt(offHandStack, stack) ||
+                AddonUtils.maySubstitute(
+                    Registries.ITEM.getId(offHandStack.getItem()), stackId)))
+        {
+            return Hand.OFF_HAND;
+        }
+
+        return null;
     }
 
     public static boolean areStacksEqualIgnoreDurability(ItemStack stack1, ItemStack stack2)

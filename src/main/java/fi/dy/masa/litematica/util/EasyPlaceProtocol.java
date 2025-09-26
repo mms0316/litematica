@@ -13,6 +13,7 @@ public enum EasyPlaceProtocol implements IConfigOptionListEntry, StringIdentifia
     V3                  ("v3",                    "litematica.gui.label.easy_place_protocol.v3"),
     V2                  ("v2",                    "litematica.gui.label.easy_place_protocol.v2"),
     SLAB_ONLY           ("slabs_only",            "litematica.gui.label.easy_place_protocol.slabs_only"),
+    RESTRICTED          ("restricted",            "litematica.gui.label.easy_place_protocol.restricted"),
     NONE                ("none",                  "litematica.gui.label.easy_place_protocol.none");
 
     public static final StringIdentifiable.EnumCodec<EasyPlaceProtocol> CODEC = StringIdentifiable.createCodec(EasyPlaceProtocol::values);

@@ -33,7 +33,7 @@ public class Configs implements IConfigHandler
     private static final String GENERIC_KEY = Reference.MOD_ID+".config.generic";
     public static class Generic
     {
-        public static final ConfigOptionList    EASY_PLACE_PROTOCOL         = new ConfigOptionList("easyPlaceProtocolVersion", EasyPlaceProtocol.AUTO).apply(GENERIC_KEY);
+        public static final ConfigOptionList    EASY_PLACE_PROTOCOL         = new ConfigOptionList("easyPlaceProtocolVersion", EasyPlaceProtocol.RESTRICTED, "The type of \"accurate placement protocol\" to use.\n- Auto: Uses v3 in single player, and by default Restricted in multiplayer,\n  unless the server has Carpet mod that sends a 'carpet:hello'\n  packet, in which case v2 is used on that server.\n- Version 3: Only supported by Litematica itself (in single player) for now.\n- Version 2: Compatible with servers with the Carpet mod\n  (either QuickCarpet by skyrising and DeadlyMC,\n  or CarpetExtra in addition to FabricCarpet.\n  And in both cases the 'accurateBlockPlacement' Carpet rule needs\n  to be enabled on the server).\n- Slabs only: Only fixes top slabs. Compatible with Paper servers.\n- Restricted: Places what is possible in Paper servers or fails when\n player's orientation does not match.\n- None: Does not modify coordinates.");
         public static final ConfigOptionList    PASTE_NBT_BEHAVIOR          = new ConfigOptionList("pasteNbtRestoreBehavior", PasteNbtBehavior.NONE).apply(GENERIC_KEY);
         public static final ConfigOptionList    PASTE_REPLACE_BEHAVIOR      = new ConfigOptionList("pasteReplaceBehavior", ReplaceBehavior.NONE).apply(GENERIC_KEY);
         public static final ConfigOptionList    PASTE_LAYER_BEHAVIOR        = new ConfigOptionList("pasteLayerBehavior", PasteLayerBehavior.ALL).apply(GENERIC_KEY);
@@ -41,6 +41,7 @@ public class Configs implements IConfigHandler
         public static final ConfigOptionList    PLACEMENT_RESTRICTION_WARN  = new ConfigOptionList("placementRestrictionWarn", MessageOutputType.ACTIONBAR).apply(GENERIC_KEY);
         public static final ConfigOptionList    SCHEMATIC_VCS_DELETE_MODE   = new ConfigOptionList("schematicVcsDeleteMode", PlacementDeletionMode.MATCHING_BLOCK).apply(GENERIC_KEY);
         public static final ConfigOptionList    SELECTION_CORNERS_MODE      = new ConfigOptionList("selectionCornersMode", CornerSelectionMode.CORNERS).apply(GENERIC_KEY);
+        public static final ConfigStringList    SUBSTITUTIONS               = new ConfigStringList("substitutions", ImmutableList.of(), "Materials that may be replaced by others \n(without triggering blocks listing as wrong).\nThese are in the format: block1;block2;...;blockN\nThe blocks string format is the vanilla format, such as:\n- minecraft:dirt;minecraft:grass\n- minecraft:quartz_stairs;minecraft:smooth_quartz_stairs");
 
         public static final ConfigBoolean       CUSTOM_SCHEMATIC_BASE_DIRECTORY_ENABLED = new ConfigBoolean("customSchematicBaseDirectoryEnabled", false).apply(GENERIC_KEY);
         public static final ConfigString        CUSTOM_SCHEMATIC_BASE_DIRECTORY         = new ConfigString( "customSchematicBaseDirectory", DataManager.getDefaultBaseSchematicDirectory().toAbsolutePath().toString()).apply(GENERIC_KEY);
@@ -63,10 +64,18 @@ public class Configs implements IConfigHandler
         public static final ConfigOptionList    DATAFIXER_MODE              = new ConfigOptionList("datafixerMode", DataFixerMode.ALWAYS).apply(GENERIC_KEY);
         public static final ConfigInteger       DATAFIXER_DEFAULT_SCHEMA    = new ConfigInteger("datafixerDefaultSchema", 1139, 99, 2724, true).apply(GENERIC_KEY);
         //public static final ConfigBoolean       EASY_PLACE_CLICK_ADJACENT   = new ConfigBoolean("easyPlaceClickAdjacent", false).apply(GENERIC_KEY);
+        public static final ConfigBoolean       EASY_PLACE_AVOID_BEACONS    = new ConfigBoolean("easyPlaceAvoidBeacons", false, "Skip placing blocks that obstruct beacons (which were previously registered with 'beaconRegister' hotkey)");
         public static final ConfigBoolean       EASY_PLACE_FIRST            = new ConfigBoolean("easyPlaceFirst", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       EASY_PLACE_HOLD_ENABLED     = new ConfigBoolean("easyPlaceHoldEnabled", true).apply(GENERIC_KEY);
+        public static final ConfigBoolean       EASY_PLACE_IGNORE_ENDER_CHEST = new ConfigBoolean("easyPlaceIgnoreEnderChest", true, "If enabled, allows placing and interacting with Ender Chests when on Easy Place mode.");
+        public static final ConfigBoolean       EASY_PLACE_IGNORE_SHULKER_BOX = new ConfigBoolean("easyPlaceIgnoreShulkerBox", true, "If enabled, allows placing and interacting with Shulker boxes when on Easy Place mode.");
+        public static final ConfigBoolean       EASY_PLACE_LEAVE_ONE        = new ConfigBoolean("easyPlaceLeaveOne", false, "When enabled, Litematica will not use\nthe last remaining item of a stack.");
         public static final ConfigBoolean       EASY_PLACE_MODE             = new ConfigBoolean("easyPlaceMode", false).apply(GENERIC_KEY);
         //public static final ConfigBoolean       EASY_PLACE_POST_REWRITE     = new ConfigBoolean("easyPlacePostRewrite", false).apply(GENERIC_KEY);
+        public static final ConfigInteger       EASY_PLACE_PLACE_INTERVAL   = new ConfigInteger("easyPlacePlaceInterval", 400, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter placing a block on a same location.\nUseful to avoid desyncs with the server.");
+        public static final ConfigBoolean       EASY_PLACE_PICK_BLOCK_HALT  = new ConfigBoolean("easyPlacePickBlockHalt", true, "Reduces player speed if Pick Block fails or picks a Shulker Box");
+        public static final ConfigInteger       EASY_PLACE_USE_INTERVAL     = new ConfigInteger("easyPlaceUseInterval", 20, 0, 10000, "The interval in milliseconds the Easy Place mode waits\nafter interacting with a block.\nUseful to avoid overshooting Note Blocks when having high ping.");
+        public static final ConfigInteger       EASY_PLACE_SKIP_INVENTORY_UPDATE_DURATION = new ConfigInteger("easyPlaceSkipInventoryUpdateDuration", 100, 0, 10000, "After using Easy Place, skips InventoryS2CPackets for this time in milliseconds.\n");
         public static final ConfigBoolean       EASY_PLACE_SP_HANDLING      = new ConfigBoolean("easyPlaceSinglePlayerHandling", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       EASY_PLACE_SP_VALIDATION    = new ConfigBoolean("easyPlaceSinglePlayerValidation", true).apply(GENERIC_KEY);
         public static final ConfigInteger       EASY_PLACE_SWAP_INTERVAL    = new ConfigInteger("easyPlaceSwapInterval", 0, 0, 10000).apply(GENERIC_KEY);
@@ -83,10 +92,17 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       FIX_STAIRS_MIRROR           = new ConfigBoolean("fixStairsMirror", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       GENERATE_LOWERCASE_NAMES    = new ConfigBoolean("generateLowercaseNames", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       HIGHLIGHT_BLOCK_IN_INV      = new ConfigBoolean("highlightBlockInInventory", false).apply(GENERIC_KEY);
+        public static final ConfigBoolean       HIGHLIGHT_REFILL_IN_INV     = new ConfigBoolean("highlightRefillInInventory", true, "litematica.config.generic.comment.highlightRefillInInventory").translatedName("litematica.config.generic.name.highlightRefillInInventory");
         public static final ConfigBoolean       ITEM_USE_PACKET_CHECK_BYPASS= new ConfigBoolean("itemUsePacketCheckBypass", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       LAYER_MODE_DYNAMIC          = new ConfigBoolean("layerModeFollowsPlayer", false).apply(GENERIC_KEY);
+        public static final ConfigInteger       LAYER_MOVE_AMOUNT           = new ConfigInteger("layerMoveAmount", 1, 1, 128, "The amount of layers to move when using\nlayerNext or layerPrevious hotkeys.");
         public static final ConfigBoolean       LOAD_ENTIRE_SCHEMATICS      = new ConfigBoolean("loadEntireSchematics", false).apply(GENERIC_KEY);
+        public static final ConfigBoolean       MATERIAL_LIST_AVOID_BEACONS = new ConfigBoolean("materialListAvoidBeacons", false, "Skip counting materials that obstruct beacons (which were previously registered with 'beaconRegister' hotkey");
+        public static final ConfigBoolean       MATERIAL_LIST_HOTKEY_AUTO_REFRESH = new ConfigBoolean("materialListHotkeyAutoRefresh", true, "When using openGuiMaterialList for the first time on a schematic placement, automatically starts counting materials");
         public static final ConfigBoolean       MATERIAL_LIST_IGNORE_STATE  = new ConfigBoolean("materialListIgnoreState", false).apply(GENERIC_KEY);
+        public static final ConfigBoolean       MATERIAL_LIST_USE_BSI_FORMAT = new ConfigBoolean("materialListUseBSIFormat", false, "Use B (Shulker Boxes) S (stacks) I (remainder items) format for material lists");
+        public static final ConfigBoolean       MATERIAL_LIST_PLACEMENT_PERSISTENT = new ConfigBoolean("materialListPlacementPersistent", true, "Material List (from schematic placements)\nwill keep checking for block updates and immediately give partial results");
+        public static final ConfigInteger       MATERIAL_LIST_PLACEMENT_PERSISTENT_DELAY = new ConfigInteger("materialListPlacementPersistentDelay", 0, 0, 5000, "Adds delay in miliseconds to Material List's (from schematic placements) checks of block updates. Increase to reduce CPU usage.");
         public static final ConfigBoolean       MATERIAL_LIST_RECIPE_DETAILS= new ConfigBoolean("materialListRecipeDetails", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       PASTE_ALWAYS_USE_FILL       = new ConfigBoolean("pasteAlwaysUseFill", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       PASTE_IGNORE_BE_ENTIRELY    = new ConfigBoolean("pasteIgnoreBlockEntitiesEntirely", false).apply(GENERIC_KEY);
@@ -109,6 +125,7 @@ public class Configs implements IConfigHandler
 //        public static final ConfigBoolean       RECIPE_BOOK_SP_SHADOW_UNLOCK= new ConfigBoolean("recipeBookSinglePlayerShadowUnlock", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       RENDER_MATERIALS_IN_GUI     = new ConfigBoolean("renderMaterialListInGuis", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       RENDER_THREAD_NO_TIMEOUT    = new ConfigBoolean("renderThreadNoTimeout", true).apply(GENERIC_KEY);
+        public static final ConfigBoolean       SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD = new ConfigBoolean("schematicVerifierCheckChunkReload", false, "If enabled, Schematic Verifier rechecks blocks when chunks become visible again. Requires more processing power.");
         public static final ConfigInteger       SERVER_NBT_REQUEST_RATE     = new ConfigInteger("serverNbtRequestRate", 2).apply(GENERIC_KEY);
         public static final ConfigBoolean       SIGN_TEXT_PASTE             = new ConfigBoolean("signTextPaste", true).apply(GENERIC_KEY);
         public static final ConfigString        TOOL_ITEM                   = new ConfigString( "toolItem", "minecraft:stick").apply(GENERIC_KEY);
@@ -129,13 +146,19 @@ public class Configs implements IConfigHandler
                 DATAFIXER_MODE,
                 DATAFIXER_DEFAULT_SCHEMA,
                 //EASY_PLACE_CLICK_ADJACENT,
+                EASY_PLACE_AVOID_BEACONS,
                 EASY_PLACE_FIRST,
                 EASY_PLACE_HOLD_ENABLED,
+                EASY_PLACE_IGNORE_ENDER_CHEST,
+                EASY_PLACE_IGNORE_SHULKER_BOX,
+                EASY_PLACE_LEAVE_ONE,
                 EASY_PLACE_MODE,
                 //EASY_PLACE_POST_REWRITE,
+                EASY_PLACE_PICK_BLOCK_HALT,
+                EASY_PLACE_PROTOCOL,
+                EASY_PLACE_SKIP_INVENTORY_UPDATE_DURATION,
                 EASY_PLACE_SP_HANDLING,
                 EASY_PLACE_SP_VALIDATION,
-                EASY_PLACE_PROTOCOL,
                 EASY_PLACE_SWING_HAND,
                 EASY_PLACE_VANILLA_REACH,
                 ENABLE_DIFFERENT_BLOCKS,
@@ -149,10 +172,16 @@ public class Configs implements IConfigHandler
                 FIX_STAIRS_MIRROR,
                 GENERATE_LOWERCASE_NAMES,
                 HIGHLIGHT_BLOCK_IN_INV,
+                HIGHLIGHT_REFILL_IN_INV,
                 ITEM_USE_PACKET_CHECK_BYPASS,
                 LAYER_MODE_DYNAMIC,
                 //LOAD_ENTIRE_SCHEMATICS,
+                MATERIAL_LIST_AVOID_BEACONS,
+                MATERIAL_LIST_HOTKEY_AUTO_REFRESH,
                 MATERIAL_LIST_IGNORE_STATE,
+                MATERIAL_LIST_USE_BSI_FORMAT,
+                MATERIAL_LIST_PLACEMENT_PERSISTENT,
+                MATERIAL_LIST_PLACEMENT_PERSISTENT_DELAY,
                 MATERIAL_LIST_RECIPE_DETAILS,
                 PASTE_ALWAYS_USE_FILL,
                 PASTE_IGNORE_BE_ENTIRELY,
@@ -177,6 +206,7 @@ public class Configs implements IConfigHandler
 //                RECIPE_BOOK_SP_SHADOW_UNLOCK,
                 RENDER_MATERIALS_IN_GUI,
                 RENDER_THREAD_NO_TIMEOUT,
+                SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD,
                 SERVER_NBT_REQUEST_RATE,
                 SIGN_TEXT_PASTE,
                 TOOL_ITEM_ENABLED,
@@ -195,8 +225,12 @@ public class Configs implements IConfigHandler
                 COMMAND_NAME_SUMMON,
                 COMMAND_TASK_INTERVAL,
                 CUSTOM_SCHEMATIC_BASE_DIRECTORY,
+                EASY_PLACE_PLACE_INTERVAL,
                 EASY_PLACE_SWAP_INTERVAL,
+                EASY_PLACE_USE_INTERVAL,
+                LAYER_MOVE_AMOUNT,
                 PICK_BLOCKABLE_SLOTS,
+                SUBSTITUTIONS,
                 TOOL_ITEM,
                 TOOL_ITEM_COMPONENTS
         );
@@ -222,6 +256,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       IGNORE_EXISTING_FLUIDS              = new ConfigBoolean("ignoreExistingFluids", false).apply(VISUALS_KEY);
         public static final ConfigBoolean       IGNORE_EXISTING_BLOCKS              = new ConfigBoolean("ignoreExistingBlocks", false).apply(VISUALS_KEY);
         public static final ConfigStringList    IGNORABLE_EXISTING_BLOCKS           = new ConfigStringList("ignorableExistingBlocks", ImmutableList.of()).apply(VISUALS_KEY);
+        public static final ConfigBoolean       MATERIAL_LIST_WRITE_SPLIT_MEASURES   = new ConfigBoolean("materialListWriteSplitMeasures", true, "If enabled, Material List's Write to file \nhas additional columns for shulker boxes,\nstacks and left over counts");
         public static final ConfigBoolean       OVERLAY_REDUCED_INNER_SIDES         = new ConfigBoolean("overlayReducedInnerSides", false).apply(VISUALS_KEY);
         public static final ConfigDouble        PLACEMENT_BOX_SIDE_ALPHA            = new ConfigDouble( "placementBoxSideAlpha", 0.2, 0, 1).apply(VISUALS_KEY);
         public static final ConfigBoolean       RENDER_AO_MODERN_ENABLE             = new ConfigBoolean("renderAOModernEnable", false).apply(VISUALS_KEY);
@@ -267,6 +302,7 @@ public class Configs implements IConfigHandler
                 IGNORE_EXISTING_FLUIDS,
                 IGNORE_EXISTING_BLOCKS,
                 IGNORABLE_EXISTING_BLOCKS,
+                MATERIAL_LIST_WRITE_SPLIT_MEASURES,
                 OVERLAY_REDUCED_INNER_SIDES,
                 RENDER_AO_MODERN_ENABLE,
                 RENDER_AREA_SELECTION_BOX_SIDES,
@@ -322,6 +358,7 @@ public class Configs implements IConfigHandler
         public static final ConfigInteger       INFO_HUD_OFFSET_Y                   = new ConfigInteger("infoHudOffsetY", 1, 0, 32000).apply(INFO_OVERLAYS_KEY);
         public static final ConfigDouble        INFO_HUD_SCALE                      = new ConfigDouble( "infoHudScale", 1, 0.1, 4).apply(INFO_OVERLAYS_KEY);
         public static final ConfigBoolean       INFO_OVERLAYS_TARGET_FLUIDS         = new ConfigBoolean("infoOverlaysTargetFluids", false).apply(INFO_OVERLAYS_KEY);
+        public static final ConfigBoolean       MATERIAL_LIST_CONTAINER_OVERLAY_ENABLED = new ConfigBoolean("materialListContainerOverlayEnabled", true, "If enabled, shows Material List container overlays");
         public static final ConfigInteger       MATERIAL_LIST_HUD_MAX_LINES         = new ConfigInteger("materialListHudMaxLines", 10, 1, 128).apply(INFO_OVERLAYS_KEY);
         public static final ConfigDouble        MATERIAL_LIST_HUD_SCALE             = new ConfigDouble( "materialListHudScale", 1, 0.1, 4).apply(INFO_OVERLAYS_KEY);
         public static final ConfigBoolean       STATUS_INFO_HUD                     = new ConfigBoolean("statusInfoHud", false).apply(INFO_OVERLAYS_KEY);
@@ -340,6 +377,7 @@ public class Configs implements IConfigHandler
                 BLOCK_INFO_LINES_ENABLED,
                 BLOCK_INFO_OVERLAY_ENABLED,
                 INFO_OVERLAYS_TARGET_FLUIDS,
+                MATERIAL_LIST_CONTAINER_OVERLAY_ENABLED,
                 STATUS_INFO_HUD,
                 STATUS_INFO_HUD_AUTO,
                 VERIFIER_OVERLAY_ENABLED,
@@ -373,6 +411,8 @@ public class Configs implements IConfigHandler
     {
         public static final ConfigColor AREA_SELECTION_BOX_SIDE_COLOR       = new ConfigColor("areaSelectionBoxSideColor",          "#30FFFFFF").apply(COLORS_KEY);
         public static final ConfigColor HIGHTLIGHT_BLOCK_IN_INV_COLOR       = new ConfigColor("hightlightBlockInInventoryColor",    "#30FF30FF").apply(COLORS_KEY);
+        public static final ConfigColor HIGHLIGHT_REFILL_IN_INV_COLOR       = new ConfigColor("highlightRefillInInventoryColor",    "#30FFFF30", "litematica.config.colors.comment.highlightRefillInInventoryColor").translatedName("litematica.config.colors.name.highlightRefillInInventoryColor");
+        public static final ConfigColor MATERIAL_LIST_FETCH_CONTAINER_COLOR = new ConfigColor("materialListFetchContainerColor",    "#FF33B3FF", "The color of the containers overlay for Material List");
         public static final ConfigColor MATERIAL_LIST_HUD_ITEM_COUNTS       = new ConfigColor("materialListHudItemCountsColor",     "#FFFFAA00").apply(COLORS_KEY);
         public static final ConfigColor REBUILD_BREAK_OVERLAY_COLOR         = new ConfigColor("schematicRebuildBreakPlaceOverlayColor", "#4C33CC33").apply(COLORS_KEY);
         public static final ConfigColor REBUILD_BREAK_EXCEPT_OVERLAY_COLOR  = new ConfigColor("schematicRebuildBreakExceptPlaceOverlayColor", "#4CF03030").apply(COLORS_KEY);
@@ -380,12 +420,15 @@ public class Configs implements IConfigHandler
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_DIFF_BLOCK  = new ConfigColor("schematicOverlayColorDiffBlock",     "#30F8D650").apply(COLORS_KEY);
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_EXTRA       = new ConfigColor("schematicOverlayColorExtra",         "#4CFF4CE6").apply(COLORS_KEY);
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_MISSING     = new ConfigColor("schematicOverlayColorMissing",       "#2C33B3E6").apply(COLORS_KEY);
+        public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_MISSING_2   = new ConfigColor("schematicOverlayColorMissing2",      "#2C33E687").apply(COLORS_KEY);
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_WRONG_BLOCK = new ConfigColor("schematicOverlayColorWrongBlock",    "#4CFF3333").apply(COLORS_KEY);
         public static final ConfigColor SCHEMATIC_OVERLAY_COLOR_WRONG_STATE = new ConfigColor("schematicOverlayColorWrongState",    "#4CFF9010").apply(COLORS_KEY);
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 AREA_SELECTION_BOX_SIDE_COLOR,
                 HIGHTLIGHT_BLOCK_IN_INV_COLOR,
+                HIGHLIGHT_REFILL_IN_INV_COLOR,
+                MATERIAL_LIST_FETCH_CONTAINER_COLOR,
                 MATERIAL_LIST_HUD_ITEM_COUNTS,
                 REBUILD_BREAK_OVERLAY_COLOR,
                 REBUILD_BREAK_EXCEPT_OVERLAY_COLOR,
@@ -393,6 +436,7 @@ public class Configs implements IConfigHandler
                 SCHEMATIC_OVERLAY_COLOR_DIFF_BLOCK,
                 SCHEMATIC_OVERLAY_COLOR_EXTRA,
                 SCHEMATIC_OVERLAY_COLOR_MISSING,
+                SCHEMATIC_OVERLAY_COLOR_MISSING_2,
                 SCHEMATIC_OVERLAY_COLOR_WRONG_BLOCK,
                 SCHEMATIC_OVERLAY_COLOR_WRONG_STATE
         );
@@ -432,6 +476,8 @@ public class Configs implements IConfigHandler
         }
         InventoryUtils.setPickBlockableSlots(Generic.PICK_BLOCKABLE_SLOTS.getStringValue());
         DataManager.getSelectionManager().checkSelectionModeConfig();
+
+        AddonUtils.setSubstitutions(Generic.SUBSTITUTIONS.getStrings());
     }
 
     public static void saveToFile()

@@ -51,6 +51,7 @@ import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.MismatchRender
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
 import fi.dy.masa.litematica.selection.SelectionManager;
+import fi.dy.masa.litematica.util.AddonUtils;
 import fi.dy.masa.litematica.util.BlockInfoAlignment;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.ItemUtils;
@@ -711,27 +712,65 @@ public class OverlayRenderer
     {
         this.blockInfoLines.clear();
 
-        BlockPos pos = traceWrapper.getBlockHitResult().getBlockPos();
-        BlockState stateClient = mc.world.getBlockState(pos);
-        BlockState voidAir = Blocks.VOID_AIR.getDefaultState();
-
-        World worldSchematic = SchematicWorldHandler.getSchematicWorld();
-        BlockState stateSchematic = worldSchematic.getBlockState(pos);
         String ul = GuiBase.TXT_UNDERLINE;
+        boolean addSep = false;
 
-        if (stateSchematic != stateClient && stateClient.isAir() == false && stateSchematic.isAir() == false && stateSchematic != voidAir)
-        {
-            this.blockInfoLines.add(ul + "Schematic:");
-            this.addBlockInfoLines(stateSchematic);
+        final var ranOutItems = AddonUtils.getRanOutItems();
+        final var refillItems = AddonUtils.getRefillItems();
+        if (!ranOutItems.isEmpty() || !refillItems.isEmpty()) {
+            if (!ranOutItems.isEmpty()) {
+                this.blockInfoLines.add(ul + "Item to restock:");
+                for (var itemStack : ranOutItems) {
+                    this.blockInfoLines.add(Registries.ITEM.getId(itemStack.getItem()).toString());
+                }
 
-            this.blockInfoLines.add("");
-            this.blockInfoLines.add(ul + "Client:");
-            this.addBlockInfoLines(stateClient);
+                addSep = true;
+            }
+
+            if (!refillItems.isEmpty()) {
+                if (addSep)
+                    this.blockInfoLines.add("");
+
+                this.blockInfoLines.add(ul + "Item to refill:");
+                for (var itemStack : refillItems) {
+                    this.blockInfoLines.add(Registries.ITEM.getId(itemStack.getItem()).toString());
+                }
+
+                addSep = true;
+            }
         }
-        else if (traceWrapper.getHitType() == RayTraceWrapper.HitType.SCHEMATIC_BLOCK)
+
+        if (traceWrapper != null &&
+            (traceWrapper.getHitType() == RayTraceWrapper.HitType.VANILLA_BLOCK ||
+            traceWrapper.getHitType() == RayTraceWrapper.HitType.SCHEMATIC_BLOCK))
         {
-            this.blockInfoLines.add(ul + "Schematic:");
-            this.addBlockInfoLines(stateSchematic);
+            BlockPos pos = traceWrapper.getBlockHitResult().getBlockPos();
+            BlockState stateClient = mc.world.getBlockState(pos);
+            BlockState voidAir = Blocks.VOID_AIR.getDefaultState();
+
+            World worldSchematic = SchematicWorldHandler.getSchematicWorld();
+            BlockState stateSchematic = worldSchematic.getBlockState(pos);
+
+            if (stateSchematic != stateClient && stateClient.isAir() == false && stateSchematic.isAir() == false && stateSchematic != voidAir)
+            {
+                if (addSep)
+                    this.blockInfoLines.add("");
+
+                this.blockInfoLines.add(ul + "Schematic:");
+                this.addBlockInfoLines(stateSchematic);
+
+                this.blockInfoLines.add("");
+                this.blockInfoLines.add(ul + "Client:");
+                this.addBlockInfoLines(stateClient);
+            }
+            else if (traceWrapper.getHitType() == RayTraceWrapper.HitType.SCHEMATIC_BLOCK)
+            {
+                if (addSep)
+                    this.blockInfoLines.add("");
+                
+                this.blockInfoLines.add(ul + "Schematic:");
+                this.addBlockInfoLines(stateSchematic);
+            }
         }
     }
 

@@ -4,6 +4,8 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.text.Text;
+import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.util.AddonUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,5 +32,17 @@ public abstract class MixinHandledScreen extends Screen
     private void litematica_renderSlotHighlightsPost(DrawContext drawContext, int mouseX, int mouseY, float delta, CallbackInfo ci)
     {
         MaterialListHudRenderer.renderLookedAtBlockInInventory(drawContext, (HandledScreen<?>) (Object) this, this.client);
+
+        if (Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue())
+        {
+            final var color = Configs.Colors.HIGHLIGHT_REFILL_IN_INV_COLOR.getColor();
+            final var guiScreen = (HandledScreen<?>) (Object) this;
+
+            final var refillItems = AddonUtils.getRefillItems();
+            refillItems.forEach(itemStack -> MaterialListHudRenderer.highlightSlotsWithItem(drawContext, itemStack, guiScreen, color, this.client));
+
+            final var ranOutItem = AddonUtils.getRanOutItems();
+            ranOutItem.forEach(itemStack -> MaterialListHudRenderer.highlightSlotsWithItem(drawContext, itemStack, guiScreen, color, this.client));
+        }
     }
 }

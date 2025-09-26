@@ -15,6 +15,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
 
@@ -40,5 +42,9 @@ public abstract class MixinClientWorld extends World
         {
             SchematicWorldRefresher.INSTANCE.markSchematicChunkForRenderUpdate(pos);
         }
+
+        TaskScheduler.getInstanceClient().getAllTasks().stream()
+        .filter(task -> task instanceof TaskCountBlocksPlacementPersistent)
+        .forEach(task -> ((TaskCountBlocksPlacementPersistent)task).onBlockUpdate(pos, state));
     }
 }

@@ -46,8 +46,6 @@ Features:
 * EasyPlace: Addition of config 'easyPlaceUseInterval'
   * Useful when having high ping
   * Restricts right-clicking too fast on existing blocks (Repeaters, Note Blocks, etc.)
-* EasyPlace: Addition of hotkey 'easyPlaceFirstToggle'
-  * Toggles 'easyPlaceFirst'
 * EasyPlace: Addition of warning "Ran out of X" when using up the last item of a material including shulker boxes
   * If new config 'highlightRefillInInventory' is not disabled, lacking item in containers will be highlighted
   * Color may be controlled by new config 'highlightRefillInInventoryColor'

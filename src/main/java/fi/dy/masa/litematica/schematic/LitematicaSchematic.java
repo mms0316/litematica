@@ -1954,6 +1954,9 @@ public class LitematicaSchematic
             this.metadata.setName(metadata.contains("Name") ? metadata.getString("Name", "?") : name);
             this.metadata.setAuthor(metadata.contains("Author") ? metadata.getString("Author", "?") : "unknown");
             this.metadata.setTimeCreated(metadata.contains("Date") ? metadata.getLong("Date", System.currentTimeMillis()) : System.currentTimeMillis());
+
+            //Extension - ARGB square picture
+            metadata.getIntArray("PreviewImageData").ifPresent(this.metadata::setPreviewImagePixelData);
         }
         else
         {

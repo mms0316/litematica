@@ -255,19 +255,28 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
                 //y += 14;
                 y += 12;
 
-                int iconSize = pair.getRight().getImage().getWidth();
-                boolean needsScaling = height < this.infoHeight;
+                int textureSize = pair.getRight().getImage().getWidth();
 
-//                RenderUtils.color(1f, 1f, 1f, 1f);
+                // info panel origin
+                int infoX = this.posX + this.totalWidth - this.infoWidth;
+                int infoY = this.posY;
 
-                if (needsScaling)
-                {
-                    iconSize = height - y + this.posY - 6;
-                }
+                // explicit inner bounds with 3px/12px padding on each side
+                int innerLeft = infoX + 3;
+                int innerTop = infoY + 12;
+                int innerRight = infoX + this.infoWidth - 3;
+                int innerBottom = infoY + height - 12;
 
-                RenderUtils.drawOutlinedBox(drawContext, x + 4, y, iconSize, iconSize, 0xA0000000, COLOR_HORIZONTAL_BAR);
+                int availableWidth = Math.max(1, innerRight - innerLeft);
+                int availableHeight = Math.max(1, innerBottom - y);
 
-                drawContext.drawTexture(RenderPipelines.GUI_TEXTURED, pair.getLeft(), x + 4, y, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+                int scaledSize = Math.min(textureSize, Math.min(availableWidth, availableHeight));
+
+                int xWithMargin = innerLeft + (availableWidth - scaledSize) / 2;
+                int yWithMargin = y + (availableHeight - scaledSize) / 2;
+
+                RenderUtils.drawOutlinedBox(drawContext, xWithMargin, y, scaledSize, scaledSize, 0xA0000000, COLOR_HORIZONTAL_BAR);
+                drawContext.drawTexture(RenderPipelines.GUI_TEXTURED, pair.getLeft(), xWithMargin, yWithMargin, 0.0F, 0.0F, scaledSize, scaledSize, scaledSize, scaledSize);
             }
         }
     }

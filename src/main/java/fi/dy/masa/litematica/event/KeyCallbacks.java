@@ -5,6 +5,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction.Axis;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.litematica.data.DataManager;
@@ -41,6 +42,7 @@ import fi.dy.masa.malilib.hotkeys.KeybindMulti;
 import fi.dy.masa.malilib.interfaces.IValueChangeCallback;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.LayerMode;
+import fi.dy.masa.malilib.util.LayerRange;
 
 public class KeyCallbacks
 {
@@ -422,12 +424,16 @@ public class KeyCallbacks
             }
             else if (key == Hotkeys.LAYER_NEXT.getKeybind())
             {
-                DataManager.getRenderLayerRange().moveLayer(Configs.Generic.LAYER_MOVE_AMOUNT.getIntegerValue());
+                LayerRange range = DataManager.getRenderLayerRange();
+                int amount = (range.getAxis() == Axis.Y) ? Configs.Generic.LAYER_MOVE_AMOUNT_Y.getIntegerValue() : Configs.Generic.LAYER_MOVE_AMOUNT_XZ.getIntegerValue();
+                range.moveLayer(amount);
                 return true;
             }
             else if (key == Hotkeys.LAYER_PREVIOUS.getKeybind())
             {
-                DataManager.getRenderLayerRange().moveLayer(- Configs.Generic.LAYER_MOVE_AMOUNT.getIntegerValue());
+                LayerRange range = DataManager.getRenderLayerRange();
+                int amount = (range.getAxis() == Axis.Y) ? Configs.Generic.LAYER_MOVE_AMOUNT_Y.getIntegerValue() : Configs.Generic.LAYER_MOVE_AMOUNT_XZ.getIntegerValue();
+                range.moveLayer(-amount);
                 return true;
             }
             else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())

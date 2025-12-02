@@ -62,7 +62,7 @@ Features:
 * EasyPlace and Material List: Addition of configs 'easyPlaceAvoidBeacons' and 'materialListAvoidBeacons', and hotkeys 'beaconRegister', 'beaconUnregister' and 'beaconUnregisterAll'
   * First, register beacons by pointing to them and hitting the hotkey
   * Then, blocks that obstruct registered beacons won't be EasyPlaced or won't be counted in Material List
-* Render Layers: Addition of config 'layerMoveAmount'
+* Render Layers: Addition of configs 'layerMoveAmountXZ' and 'layerMoveAmountY'
   * Useful for map arts
   * If you have materials in your inventory for multiple layers, you could move that same amount of layers
 * Material List: Addition of config 'materialListWriteSplitMeasures'

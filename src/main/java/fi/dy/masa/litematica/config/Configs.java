@@ -96,7 +96,8 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       HIGHLIGHT_REFILL_IN_INV     = new ConfigBoolean("highlightRefillInInventory", true, "When enabled, highlights inventory slots that can be used for refilling");
         public static final ConfigBoolean       ITEM_USE_PACKET_CHECK_BYPASS= new ConfigBoolean("itemUsePacketCheckBypass", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       LAYER_MODE_DYNAMIC          = new ConfigBoolean("layerModeFollowsPlayer", false).apply(GENERIC_KEY);
-        public static final ConfigInteger       LAYER_MOVE_AMOUNT           = new ConfigInteger("layerMoveAmount", 1, 1, 128, "The amount of layers to move when using\nlayerNext or layerPrevious hotkeys.");
+        public static final ConfigInteger       LAYER_MOVE_AMOUNT_XZ        = new ConfigInteger("layerMoveAmountXZ", 1, 1, 128, "The amount of horizontal layers to move when using\nlayerNext or layerPrevious hotkeys.");
+        public static final ConfigInteger       LAYER_MOVE_AMOUNT_Y         = new ConfigInteger("layerMoveAmountY", 1, 1, 128, "The amount of vertical layers to move when using\nlayerNext or layerPrevious hotkeys.");
         public static final ConfigBoolean       LOAD_ENTIRE_SCHEMATICS      = new ConfigBoolean("loadEntireSchematics", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       MATERIAL_LIST_AVOID_BEACONS = new ConfigBoolean("materialListAvoidBeacons", false, "Skip counting materials that obstruct beacons (which were previously registered with 'beaconRegister' hotkey");
         public static final ConfigBoolean       MATERIAL_LIST_HOTKEY_AUTO_REFRESH = new ConfigBoolean("materialListHotkeyAutoRefresh", true, "When using openGuiMaterialList for the first time on a schematic placement, automatically starts counting materials");
@@ -155,7 +156,7 @@ public class Configs implements IConfigHandler
                 EASY_PLACE_LEAVE_ONE,
                 EASY_PLACE_MODE,
                 //EASY_PLACE_POST_REWRITE,
-EASY_PLACE_PICK_BLOCK_AFTER_USE,
+                EASY_PLACE_PICK_BLOCK_AFTER_USE,
                 EASY_PLACE_PICK_BLOCK_HALT,
                 EASY_PLACE_PROTOCOL,
                 EASY_PLACE_SKIP_INVENTORY_UPDATE_DURATION,
@@ -230,7 +231,8 @@ EASY_PLACE_PICK_BLOCK_AFTER_USE,
                 EASY_PLACE_PLACE_INTERVAL,
                 EASY_PLACE_SWAP_INTERVAL,
                 EASY_PLACE_USE_INTERVAL,
-                LAYER_MOVE_AMOUNT,
+                LAYER_MOVE_AMOUNT_XZ,
+                LAYER_MOVE_AMOUNT_Y,
                 PICK_BLOCKABLE_SLOTS,
                 SUBSTITUTIONS,
                 TOOL_ITEM,

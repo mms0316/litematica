@@ -44,7 +44,7 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
         this.browserEntryHeight = 22;
         this.guiSchematicVerifier = parent;
         this.allowMultiSelection = true;
-        this.widgetSearchBar = new WidgetSearchBar(x + 2, y + 8, width - 16, 14, 0, Icons.FILE_ICON_SEARCH, LeftRight.RIGHT);
+        this.widgetSearchBar = new WidgetSearchBarExtended(x + 2, y + 8, width - 16, 14, 0, Icons.FILE_ICON_SEARCH, LeftRight.RIGHT);
         this.widgetSearchBar.setZLevel(1);
         this.sorter = new VerifierResultSorter(parent.getPlacement().getSchematicVerifier());
     }
@@ -212,5 +212,20 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
     {
         return new WidgetSchematicVerificationResult(x, y, this.browserEntryWidth, this.getBrowserEntryHeightFor(entry),
                 isOdd, this, this.guiSchematicVerifier, entry, listIndex);
+    }
+
+    public void setSearchText(String text)
+    {
+        if (this.widgetSearchBar instanceof WidgetSearchBarExtended widget) {
+            widget.setText(text);
+        }
+    }
+
+    public String getSearchText()
+    {
+        if (this.widgetSearchBar instanceof WidgetSearchBarExtended widget) {
+            return widget.getText();
+        }
+        return "";
     }
 }

@@ -86,6 +86,7 @@ Features:
   * Related task is now always running
   * Considers block updates
   * Doesn't need all chunks to be loaded before showing results
+* Material List and Schematic Verifier GUI: Restores previous searched text when clicking on the search icon
 * Rendering: Addition of config 'schematicOverlayColorMissing2' to be alternated when using RenderLayers with axis
 * Schematic Placement: Addition of hotkey 'setSchematicOrigin'
   * This moves the active schematic placement to player's position

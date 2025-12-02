@@ -33,6 +33,7 @@ public class GuiSchematicVerifier   extends GuiListBase<BlockMismatchEntry, Widg
     private static SchematicVerifier verifierLast;
     // static to remember the mode over GUI close/open cycles
     private static MismatchType resultMode = MismatchType.ALL;
+    private static String lastSearchQuery = "";
 
     private final SchematicPlacement placement;
     private final SchematicVerifier verifier;
@@ -132,6 +133,25 @@ public class GuiSchematicVerifier   extends GuiListBase<BlockMismatchEntry, Widg
         x = this.getScreenWidth() - buttonWidth - 10;
         button = new ButtonGeneric(x, y, buttonWidth, 20, label);
         this.addButton(button, new ButtonListenerChangeMenu(type, this.getParent()));
+
+        // Restore the search query after creating the list widget
+        WidgetListSchematicVerificationResults listWidget = this.getListWidget();
+        if (listWidget != null && !lastSearchQuery.isEmpty())
+        {
+            listWidget.setSearchText(lastSearchQuery);
+        }
+    }
+
+    @Override
+    protected void closeGui(boolean showParent)
+    {
+        // Save the search query when closing
+        WidgetListSchematicVerificationResults listWidget = this.getListWidget();
+        if (listWidget != null)
+        {
+            lastSearchQuery = listWidget.getSearchText();
+        }
+        super.closeGui(showParent);
     }
 
     private int createButton(int x, int y, int width, ButtonListener.Type type)

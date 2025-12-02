@@ -53,6 +53,8 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
 {
     private final MaterialListBase materialList;
 
+    private static String lastSearchQuery = "";
+
     public GuiMaterialList(MaterialListBase materialList)
     {
         super(10, 44);
@@ -173,6 +175,25 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
         {
             this.addMessage(MessageType.WARNING, 3000, "litematica.message.warn.material_list.no_player_inv");
         }
+
+        // Restore the search query after creating the list widget
+        WidgetListMaterialList listWidget = this.getListWidget();
+        if (listWidget != null && !lastSearchQuery.isEmpty())
+        {
+            listWidget.setSearchText(lastSearchQuery);
+        }
+    }
+
+    @Override
+    public void closeGui(boolean showParent)
+    {
+        // Save the search query when closing
+        WidgetListMaterialList listWidget = this.getListWidget();
+        if (listWidget != null)
+        {
+            lastSearchQuery = listWidget.getSearchText();
+        }
+        super.closeGui(showParent);
     }
 
     private int createButton(int x, int y, int width, ButtonListener.Type type)

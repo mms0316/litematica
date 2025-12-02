@@ -54,6 +54,9 @@ Features:
   * Color may be controlled by new config 'highlightRefillInInventoryColor'
   * If config 'blockInfoLinesEnabled' is not disabled, lacking items will be shown as an Info Overlay
   * If hotkey 'refillListClear' is pressed, the list of lacking items will be cleared
+* EasyPlace: Addition of config 'easyPlacePickBlockAfterUse'
+  * Combine with config 'pickBlockShulkers'
+  * After running out of a material, pick block again
 * EasyPlace: Addition of config 'easyPlacePickBlockHalt'
   * Reduces player speed if Pick Block fails or picks a Shulker Box
 * EasyPlace and Material List: Addition of configs 'easyPlaceAvoidBeacons' and 'materialListAvoidBeacons', and hotkeys 'beaconRegister', 'beaconUnregister' and 'beaconUnregisterAll'

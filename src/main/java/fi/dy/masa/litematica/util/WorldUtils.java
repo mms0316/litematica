@@ -1013,6 +1013,14 @@ public class WorldUtils
                 }
 
                 InventoryUtils.refreshSlotTimeout(pickBlockResult.slot());
+
+                if (Configs.Generic.EASY_PLACE_PICK_BLOCK_AFTER_USE.getBooleanValue() &&
+                    EntityUtils.isCreativeMode(mc.player) == false &&
+                    mc.player.getStackInHand(hand).isEmpty())
+                {
+                    final var newPickBlockResult = InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+                    InventoryUtils.refreshSlotTimeout(newPickBlockResult.slot());
+                }
             }
             else
             {

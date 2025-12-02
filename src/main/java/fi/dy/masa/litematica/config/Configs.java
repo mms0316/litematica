@@ -92,7 +92,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       FIX_STAIRS_MIRROR           = new ConfigBoolean("fixStairsMirror", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       GENERATE_LOWERCASE_NAMES    = new ConfigBoolean("generateLowercaseNames", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       HIGHLIGHT_BLOCK_IN_INV      = new ConfigBoolean("highlightBlockInInventory", false).apply(GENERIC_KEY);
-        public static final ConfigBoolean       HIGHLIGHT_REFILL_IN_INV     = new ConfigBoolean("highlightRefillInInventory", true, "litematica.config.generic.comment.highlightRefillInInventory").translatedName("litematica.config.generic.name.highlightRefillInInventory");
+        public static final ConfigBoolean       HIGHLIGHT_REFILL_IN_INV     = new ConfigBoolean("highlightRefillInInventory", true, "When enabled, highlights inventory slots that can be used for refilling");
         public static final ConfigBoolean       ITEM_USE_PACKET_CHECK_BYPASS= new ConfigBoolean("itemUsePacketCheckBypass", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       LAYER_MODE_DYNAMIC          = new ConfigBoolean("layerModeFollowsPlayer", false).apply(GENERIC_KEY);
         public static final ConfigInteger       LAYER_MOVE_AMOUNT           = new ConfigInteger("layerMoveAmount", 1, 1, 128, "The amount of layers to move when using\nlayerNext or layerPrevious hotkeys.");

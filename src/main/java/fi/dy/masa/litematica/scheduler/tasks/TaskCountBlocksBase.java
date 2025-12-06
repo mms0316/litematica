@@ -3,10 +3,13 @@ package fi.dy.masa.litematica.scheduler.tasks;
 import java.util.List;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.block.BlockState;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import fi.dy.masa.malilib.util.IntBoundingBox;
+import fi.dy.masa.malilib.util.ItemType;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.materials.IMaterialList;
@@ -21,6 +24,9 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
     protected final Object2IntOpenHashMap<BlockState> countsTotal = new Object2IntOpenHashMap<>();
     protected final Object2IntOpenHashMap<BlockState> countsMissing = new Object2IntOpenHashMap<>();
     protected final Object2IntOpenHashMap<BlockState> countsMismatch = new Object2IntOpenHashMap<>();
+    protected final Object2IntOpenHashMap<ItemType> itemTypesTotal = new Object2IntOpenHashMap<>();
+    protected final Object2IntOpenHashMap<ItemType> itemTypesMissing = new Object2IntOpenHashMap<>();
+    protected final Object2IntOpenHashMap<ItemType> itemTypesMismatch = new Object2IntOpenHashMap<>();
     protected final IMaterialList materialList;
     protected final LayerRange layerRange;
 
@@ -49,12 +55,6 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
     @Override
     protected boolean processChunk(ChunkPos pos)
     {
-        this.countBlocksInChunk(pos);
-        return true;
-    }
-
-    protected void countBlocksInChunk(ChunkPos pos)
-    {
         LayerRange range = this.layerRange;
         Direction.Axis axis = range.getAxis();
         BlockPos.Mutable posMutable = new BlockPos.Mutable();
@@ -79,10 +79,15 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
                     }
                 }
             }
+
+            this.countAtBox(new Box(startX, startY, startZ, endX + 1, endY + 1, endZ + 1));
         }
+
+        return true;
     }
 
     protected abstract void countAtPosition(BlockPos pos);
+    protected abstract void countAtBox(Box box);
 
     @Override
     protected void onStop()
@@ -90,7 +95,10 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
         if (this.finished && this.isInWorld())
         {
             List<MaterialListEntry> list = MaterialListUtils.getMaterialList(
-                    this.countsTotal, this.countsMissing, this.countsMismatch, this.mc.player);
+                    MaterialListUtils.fromBlockStateCount(this.countsTotal, this.itemTypesTotal),
+                    MaterialListUtils.fromBlockStateCount(this.countsMissing, this.itemTypesMissing),
+                    MaterialListUtils.fromBlockStateCount(this.countsMismatch, this.itemTypesMismatch),
+                    this.mc.player);
             this.materialList.setMaterialListEntries(list);
         }
 
@@ -98,4 +106,13 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
 
         super.onStop();
     }
+
+    protected void addItemStackToCount(ItemStack itemStack, Object2IntOpenHashMap<ItemType> itemTypeCountMap)
+    {
+        if (itemStack == null || itemStack.isEmpty()) return;
+
+        ItemType itemType = new ItemType(itemStack, false, false);
+        itemTypeCountMap.addTo(itemType, itemStack.getCount());
+    }
+
 }

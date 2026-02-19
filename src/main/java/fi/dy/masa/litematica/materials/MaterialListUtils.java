@@ -3,6 +3,9 @@ package fi.dy.masa.litematica.materials;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import net.minecraft.block.BlockState;
@@ -14,8 +17,12 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.BundleItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
@@ -33,6 +40,7 @@ public class MaterialListUtils
     public static List<MaterialListEntry> createMaterialListFor(LitematicaSchematic schematic, Collection<String> subRegions)
     {
         Object2IntOpenHashMap<BlockState> countsTotal = new Object2IntOpenHashMap<>();
+        Object2IntOpenHashMap<ItemType> countsItemsTotal = new Object2IntOpenHashMap<>();
 
         for (String regionName : subRegions)
         {
@@ -57,32 +65,101 @@ public class MaterialListUtils
                     }
                 }
             }
+
+            List<LitematicaSchematic.EntityInfo> entityList = schematic.getEntityListForRegion(regionName);
+            if (entityList != null)
+            {
+                for (LitematicaSchematic.EntityInfo entityInfo : entityList)
+                {
+                    Optional<Identifier> entityIdOpt = Optional.ofNullable(entityInfo.nbt.get("id"))
+                        .flatMap(nbt -> nbt.asString())
+                        .map(id -> Identifier.of(id));
+
+                    if (entityIdOpt.isEmpty()) {
+                        continue;
+                    }
+
+                    if (entityIdOpt.map(id -> Registries.ENTITY_TYPE.get(id)).isEmpty()) {
+                        continue;
+                    }
+
+                    entityIdOpt.map(id -> Registries.ITEM.get(id)).ifPresent(item -> {
+                        countsItemsTotal.addTo(new ItemType(new ItemStack(item), false, false), 1);
+
+                        // Item Frame
+                        entityInfo.nbt.getCompound("Item")
+                            .flatMap(nbtItem -> fromNbtCompound(nbtItem))
+                            .ifPresent(pair -> countsItemsTotal.addTo(pair.getLeft(), pair.getRight()));
+
+                        // Boats and Minecarts
+                        entityInfo.nbt.getList("Items").ifPresent(nbtItems -> {
+                            for (var nbtItemElem : nbtItems) {
+                                nbtItemElem.asCompound()
+                                    .flatMap(nbtItem -> fromNbtCompound(nbtItem))
+                                    .ifPresent(pair -> countsItemsTotal.addTo(pair.getLeft(), pair.getRight()));
+                            }
+                        });
+
+                        // Armor Stand
+                        entityInfo.nbt.getCompound("equipment").ifPresent(equipmentNbt -> {
+                            equipmentNbt.forEach((key, nbtItem) -> {
+                                if (nbtItem instanceof NbtCompound nbtCompound) {
+                                    fromNbtCompound(nbtCompound).ifPresent(pair -> countsItemsTotal.addTo(pair.getLeft(), pair.getRight()));
+                                }
+                            });
+                        });
+                    });
+                }
+            }
+
+            Map<BlockPos, NbtCompound> blockEntities = schematic.getBlockEntityMapForRegion(regionName);
+            if (blockEntities != null) {
+                for (NbtCompound blockEntityNbt : blockEntities.values()) {
+                    // Chests
+                    blockEntityNbt.getList("Items").ifPresent(nbtItems -> {
+                        for (var nbtItemElem : nbtItems) {
+                            nbtItemElem.asCompound()
+                                .flatMap(nbtItem -> fromNbtCompound(nbtItem))
+                                .ifPresent(pair -> countsItemsTotal.addTo(pair.getLeft(), pair.getRight()));
+                        }
+                    });
+
+                    // Decorated Pots
+                    blockEntityNbt.getCompound("item")
+                        .flatMap(nbtItem -> fromNbtCompound(nbtItem))
+                        .ifPresent(pair -> countsItemsTotal.addTo(pair.getLeft(), pair.getRight()));
+                }
+            }
         }
 
         MinecraftClient mc = MinecraftClient.getInstance();
 
-        return getMaterialList(countsTotal, countsTotal.clone(), new Object2IntOpenHashMap<>(), mc.player);
+        Object2IntOpenHashMap<ItemType> itemTypesTotal = fromBlockStateCount(countsTotal, countsItemsTotal);
+        Object2IntOpenHashMap<ItemType> itemTypesMissing = itemTypesTotal.clone();
+
+        return getMaterialList(itemTypesTotal, itemTypesMissing, null, mc.player);
+    }
+
+    public static Optional<net.minecraft.util.Pair<ItemType, Integer>> fromNbtCompound(NbtCompound nbt) {
+        return nbt.getString("id")
+            .map(idString -> Identifier.of(idString))
+            .map(id -> Registries.ITEM.get(id))
+            .map(item -> {
+                int count = nbt.getInt("count").orElse(1);
+                return new net.minecraft.util.Pair<ItemType, Integer>(new ItemType(new ItemStack(item), false, false), count);
+            });
     }
 
     public static List<MaterialListEntry> getMaterialList(
-            Object2IntOpenHashMap<BlockState> countsTotal,
-            Object2IntOpenHashMap<BlockState> countsMissing,
-            Object2IntOpenHashMap<BlockState> countsMismatch,
+            Object2IntOpenHashMap<ItemType> itemTypesTotal,
+            Object2IntOpenHashMap<ItemType> itemTypesMissing,
+            Object2IntOpenHashMap<ItemType> itemTypesMismatch,
             PlayerEntity player)
     {
         List<MaterialListEntry> list = new ArrayList<>();
 
-        if (!countsTotal.isEmpty())
+        if (itemTypesTotal != null && !itemTypesTotal.isEmpty())
         {
-            MaterialCache cache = MaterialCache.getInstance();
-            Object2IntOpenHashMap<ItemType> itemTypesTotal = new Object2IntOpenHashMap<>();
-            Object2IntOpenHashMap<ItemType> itemTypesMissing = new Object2IntOpenHashMap<>();
-            Object2IntOpenHashMap<ItemType> itemTypesMismatch = new Object2IntOpenHashMap<>();
-
-            convertStatesToStacks(countsTotal, itemTypesTotal, cache);
-            convertStatesToStacks(countsMissing, itemTypesMissing, cache);
-            convertStatesToStacks(countsMismatch, itemTypesMismatch, cache);
-
             if (player != null)
             {
                 Object2IntOpenHashMap<ItemType> playerInvItems = getInventoryItemCounts(player.getInventory());
@@ -91,8 +168,8 @@ public class MaterialListUtils
                 {
                     list.add(new MaterialListEntry(type.getStack().copy(),
                                                    itemTypesTotal.getInt(type),
-                                                   itemTypesMissing.getInt(type),
-                                                   itemTypesMismatch.getInt(type),
+                                                   itemTypesMissing == null ? 0 : itemTypesMissing.getInt(type),
+                                                   itemTypesMismatch == null ? 0 : itemTypesMismatch.getInt(type),
                                                    playerInvItems.getInt(type)));
                 }
             }
@@ -102,8 +179,8 @@ public class MaterialListUtils
                 {
                     list.add(new MaterialListEntry(type.getStack().copy(),
                                                    itemTypesTotal.getInt(type),
-                                                   itemTypesMissing.getInt(type),
-                                                   itemTypesMismatch.getInt(type),
+                                                   itemTypesMissing == null ? 0 : itemTypesMissing.getInt(type),
+                                                   itemTypesMismatch == null ? 0 : itemTypesMismatch.getInt(type),
                                                    0));
                 }
             }
@@ -112,11 +189,26 @@ public class MaterialListUtils
         return list;
     }
 
-    private static void convertStatesToStacks(
-            Object2IntOpenHashMap<BlockState> blockStatesIn,
-            Object2IntOpenHashMap<ItemType> itemTypesOut,
-            MaterialCache cache)
+    public static Object2IntOpenHashMap<ItemType> fromBlockStateCount(Object2IntOpenHashMap<BlockState> blockStateCounts, Object2IntOpenHashMap<ItemType> additionalCounts)
     {
+        Object2IntOpenHashMap<ItemType> combinedCounts = additionalCounts == null ? new Object2IntOpenHashMap<>() : additionalCounts;
+
+        convertStatesToStacks(blockStateCounts, combinedCounts);
+
+        return combinedCounts;
+    }
+
+    public static Object2IntOpenHashMap<ItemType> fromBlockStateCount(Object2IntOpenHashMap<BlockState> blockStateCounts)
+    {
+        return fromBlockStateCount(blockStateCounts, null);
+    }
+
+    public static void convertStatesToStacks(
+            Object2IntOpenHashMap<BlockState> blockStatesIn,
+            Object2IntOpenHashMap<ItemType> itemTypesOut)
+    {
+        final MaterialCache cache = MaterialCache.getInstance();
+
         for (BlockState state : blockStatesIn.keySet())
         {
             int count = blockStatesIn.getInt(state);

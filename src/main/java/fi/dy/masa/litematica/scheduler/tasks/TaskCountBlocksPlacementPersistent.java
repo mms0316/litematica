@@ -4,12 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.profiler.Profiler;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.materials.IMaterialList;
@@ -18,11 +14,21 @@ import fi.dy.masa.litematica.materials.MaterialListUtils;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.Entity;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.profiler.Profiler;
 
 public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
 {
     private final Map<BlockPos, BlockState> schematicWorldView = new HashMap<>();
     private final Map<BlockPos, BlockState> clientWorldView = new HashMap<>();
+    private final Map<UUID, Entity> schematicEntities = new HashMap<>();
     private ArrayList<ChunkPos> schematicChunkPos;
 
     private long lastUpdateTime;
@@ -50,6 +56,12 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
         if (stateClient == null || stateClient.isAir()) return;
 
         this.clientWorldView.put(new BlockPos(pos), stateClient);
+    }
+
+    @Override
+    protected void countAtBox(net.minecraft.util.math.Box box)
+    {
+        // Done in execute()
     }
 
     @Override
@@ -104,6 +116,18 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
                         }
                     }
                 }
+
+                List<Entity> entities = this.schematicWorld.getOtherEntities(null, new Box(startX, startY, startZ, endX + 1, endY + 1, endZ + 1));
+                if (entities != null && !entities.isEmpty())
+                {
+                    for (Entity entity : entities)
+                    {
+                        // Mark entities processed, because they may reside in multiple chunks
+                        if (entity.getUuid() != null && this.schematicEntities.containsKey(entity.getUuid()))
+                            continue;
+                        this.schematicEntities.put(entity.getUuid(), entity);
+                    }
+                }
             }
         }
 
@@ -119,6 +143,9 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
             this.countsTotal.clear();
             this.countsMissing.clear();
             this.countsMismatch.clear();
+            this.itemTypesTotal.clear();
+            this.itemTypesMissing.clear();
+            this.itemTypesMismatch.clear();
     
             for (BlockPos pos : this.schematicWorldView.keySet())
             {
@@ -126,7 +153,7 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
                 BlockState stateClient = this.clientWorldView.get(pos);
     
                 this.countsTotal.addTo(stateSchematic, 1);
-    
+   
                 if (stateClient == null)
                 {
                     this.countsMissing.addTo(stateSchematic, 1);
@@ -137,10 +164,30 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
                     this.countsMissing.addTo(stateSchematic, 1);
                     this.countsMismatch.addTo(stateSchematic, 1);
                 }
+
+                BlockEntity schematicBlockEntity = this.schematicWorld.getBlockEntity(pos);
+                if (schematicBlockEntity instanceof Inventory schematicInventory)
+                {
+                    schematicInventory.forEach(itemStack -> this.addItemStackToCount(itemStack, this.itemTypesTotal));
+                    BlockEntity clientBlockEntity = this.clientWorld.getBlockEntity(pos);
+                    if (!(clientBlockEntity instanceof Inventory))
+                    {
+                        schematicInventory.forEach(itemStack -> this.addItemStackToCount(itemStack, this.itemTypesMissing));
+                    }
+                    // clientWorld has empty Inventory, so it's not possible to compare
+                }
+            }
+
+            for (Entity schematicEntity : this.schematicEntities.values())
+            {
+                this.countEntity(schematicEntity);
             }
     
             List<MaterialListEntry> list = MaterialListUtils.getMaterialList(
-                    this.countsTotal, this.countsMissing, this.countsMismatch, this.mc.player);
+                    MaterialListUtils.fromBlockStateCount(this.countsTotal, this.itemTypesTotal),
+                    MaterialListUtils.fromBlockStateCount(this.countsMissing, this.itemTypesMissing),
+                    MaterialListUtils.fromBlockStateCount(this.countsMismatch, this.itemTypesMismatch),
+                    this.mc.player);
             this.materialList.setMaterialListEntries(list);
 
             this.lastUpdateTime = System.currentTimeMillis();

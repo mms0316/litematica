@@ -57,8 +57,8 @@ public class RenderHandler implements IRenderer
                 OverlayRenderer.getInstance().renderSchematicRebuildTargetingOverlay(posMatrix, profiler);
             }
 
-            var containerManager = DataManager.getContainerManager();
-            containerManager.renderMatchingMaterials(DataManager.getMaterialList(), projMatrix);
+            //Custom Additions (easier to resolve future merge conflicts)
+            DataManager.getContainerManager().renderMatchingMaterials(DataManager.getMaterialList(), projMatrix);
 
             // Schematic Overlay Rendering
             profiler.swap("schematic_overlay");

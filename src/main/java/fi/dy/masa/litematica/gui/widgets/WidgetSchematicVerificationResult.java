@@ -261,6 +261,7 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
 
         if (this.header1 != null && this.header2 != null)
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             if (this.listWidget.getSearchBarWidget().isSearchOpen() == false)
             {
                 this.drawString(drawContext, x1, y, color, this.header1);

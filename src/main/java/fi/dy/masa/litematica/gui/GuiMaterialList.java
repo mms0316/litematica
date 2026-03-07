@@ -2,24 +2,9 @@ package fi.dy.masa.litematica.gui;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 
 import net.minecraft.client.MinecraftClient;
 
-import fi.dy.masa.litematica.Reference;
-import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.gui.GuiMainMenu.ButtonListenerChangeMenu;
-import fi.dy.masa.litematica.gui.widgets.WidgetListMaterialList;
-import fi.dy.masa.litematica.gui.widgets.WidgetMaterialListEntry;
-import fi.dy.masa.litematica.materials.MaterialCache;
-import fi.dy.masa.litematica.materials.MaterialListAreaAnalyzer;
-import fi.dy.masa.litematica.materials.MaterialListBase;
-import fi.dy.masa.litematica.materials.MaterialListEntry;
-import fi.dy.masa.litematica.materials.MaterialListHudRenderer;
-import fi.dy.masa.litematica.materials.MaterialListSorter;
-import fi.dy.masa.litematica.materials.MaterialListUtils;
-import fi.dy.masa.litematica.render.infohud.InfoHud;
-import fi.dy.masa.litematica.util.BlockInfoListType;
 import fi.dy.masa.malilib.data.DataDump;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.GuiListBase;
@@ -48,11 +33,26 @@ import fi.dy.masa.litematica.materials.json.MaterialListJsonCache;
 import fi.dy.masa.litematica.render.infohud.InfoHud;
 import fi.dy.masa.litematica.util.BlockInfoListType;
 
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.Reference;
+import fi.dy.masa.litematica.data.DataManager;
+import fi.dy.masa.litematica.gui.GuiMainMenu.ButtonListenerChangeMenu;
+import fi.dy.masa.litematica.gui.widgets.WidgetListMaterialList;
+import fi.dy.masa.litematica.gui.widgets.WidgetMaterialListEntry;
+import fi.dy.masa.litematica.materials.MaterialCache;
+import fi.dy.masa.litematica.materials.MaterialListAreaAnalyzer;
+import fi.dy.masa.litematica.materials.MaterialListBase;
+import fi.dy.masa.litematica.materials.MaterialListEntry;
+import fi.dy.masa.litematica.materials.MaterialListSorter;
+import fi.dy.masa.litematica.materials.MaterialListUtils;
+import fi.dy.masa.litematica.util.BlockInfoListType;
+
 public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMaterialListEntry, WidgetListMaterialList>
                              implements ICompletionListener
 {
     private final MaterialListBase materialList;
 
+    //Custom Additions (easier to resolve future merge conflicts)
     private static String lastSearchQuery = "";
 
     public GuiMaterialList(MaterialListBase materialList)
@@ -176,6 +176,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
             this.addMessage(MessageType.WARNING, 3000, "litematica.message.warn.material_list.no_player_inv");
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         // Restore the search query after creating the list widget
         WidgetListMaterialList listWidget = this.getListWidget();
         if (listWidget != null && !lastSearchQuery.isEmpty())
@@ -184,6 +185,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
         }
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     @Override
     public void closeGui(boolean showParent)
     {
@@ -312,7 +314,21 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                     break;
 
                 case TOGGLE_INFO_HUD:
+                    //Custom Additions (easier to resolve future merge conflicts)
                     materialList.toggleInfoHud();
+                    /* Before (not extracted):
+                    MaterialListHudRenderer renderer = this.getHudRenderer();
+                    renderer.toggleShouldRender();
+
+                    if (this.getHudRenderer().getShouldRenderCustom())
+                    {
+                        InfoHud.getInstance().addInfoHudRenderer(renderer, true);
+                    }
+                    else
+                    {
+                        InfoHud.getInstance().removeInfoHudRenderersOfType(renderer.getClass(), true);
+                    }
+                    */
                     break;
 
                 case CLEAR_IGNORED:
@@ -411,12 +427,13 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
 
         private DataDump getMaterialListDump(MaterialListBase materialList, boolean csv)
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             final boolean splitMeasures = Configs.Visuals.MATERIAL_LIST_WRITE_SPLIT_MEASURES.getBooleanValue();
 
             DataDump dump;
             if (csv)
             {
-                dump = new DataDump(splitMeasures ? 13 : 4, DataDump.Format.CSV);
+                dump = new DataDump(Configs.Visuals.MATERIAL_LIST_WRITE_SPLIT_MEASURES.getBooleanValue() ? 13 : 4, DataDump.Format.CSV);
             }
             else
             {
@@ -433,6 +450,8 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                 int total = entry.getCountTotal() * multiplier;
                 int missing = multiplier > 1 ? total : entry.getCountMissing();
                 int available = entry.getCountAvailable();
+
+                //Custom Additions (easier to resolve future merge conflicts)
                 int maxStackSize = entry.getStack().getMaxCount();
                 if (splitMeasures)
                 {
@@ -469,6 +488,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
             }
 
             String titleTotal = multiplier > 1 ? String.format("Total (x%d)", multiplier) : "Total";
+            //Custom Additions (easier to resolve future merge conflicts)
             if (splitMeasures && csv)
             {
                 dump.addTitle("Item",
@@ -503,6 +523,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                 dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // available - Stacks
                 dump.setColumnProperties(columnId++, DataDump.Alignment.RIGHT, true); // available - Units
             }
+
             dump.setSort(false);
             dump.setUseColumnSeparator(true);
 
@@ -521,6 +542,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
             }
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         private String getFormattedCountString(int total, int maxStackSize)
         {
             int stacks = total / maxStackSize;

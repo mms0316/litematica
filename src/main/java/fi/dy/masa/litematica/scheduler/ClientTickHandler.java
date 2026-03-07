@@ -7,8 +7,10 @@ import fi.dy.masa.malilib.util.EntityUtils;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.selection.SelectionManager;
-import fi.dy.masa.litematica.util.AddonUtils;
 import fi.dy.masa.litematica.util.WorldUtils;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.util.AddonUtils;
 
 public class ClientTickHandler implements IClientTickHandler
 {
@@ -46,6 +48,7 @@ public class ClientTickHandler implements IClientTickHandler
             DataManager.getSchematicPlacementManager().processQueuedChunks();
             TaskScheduler.getInstanceClient().runTasks();
 
+            //Custom Additions (easier to resolve future merge conflicts)
             AddonUtils.checkClearLastItems();
         }
     }

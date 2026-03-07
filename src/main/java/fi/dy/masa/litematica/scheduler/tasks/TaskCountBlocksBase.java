@@ -3,13 +3,10 @@ package fi.dy.masa.litematica.scheduler.tasks;
 import java.util.List;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import fi.dy.masa.malilib.util.IntBoundingBox;
-import fi.dy.masa.malilib.util.ItemType;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.materials.IMaterialList;
@@ -19,16 +16,23 @@ import fi.dy.masa.litematica.render.infohud.InfoHud;
 import fi.dy.masa.litematica.util.BlockInfoListType;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
 
+//Custom Additions (easier to resolve future merge conflicts)
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.Box;
+import fi.dy.masa.malilib.util.ItemType;
+
 public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
 {
     protected final Object2IntOpenHashMap<BlockState> countsTotal = new Object2IntOpenHashMap<>();
     protected final Object2IntOpenHashMap<BlockState> countsMissing = new Object2IntOpenHashMap<>();
     protected final Object2IntOpenHashMap<BlockState> countsMismatch = new Object2IntOpenHashMap<>();
+    protected final IMaterialList materialList;
+    protected final LayerRange layerRange;
+
+    //Custom Additions (easier to resolve future merge conflicts)
     protected final Object2IntOpenHashMap<ItemType> itemTypesTotal = new Object2IntOpenHashMap<>();
     protected final Object2IntOpenHashMap<ItemType> itemTypesMissing = new Object2IntOpenHashMap<>();
     protected final Object2IntOpenHashMap<ItemType> itemTypesMismatch = new Object2IntOpenHashMap<>();
-    protected final IMaterialList materialList;
-    protected final LayerRange layerRange;
 
     protected TaskCountBlocksBase(IMaterialList materialList, String nameOnHud)
     {
@@ -55,6 +59,9 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
     @Override
     protected boolean processChunk(ChunkPos pos)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
+        //Merged with countBlocksInChunk()
+
         LayerRange range = this.layerRange;
         Direction.Axis axis = range.getAxis();
         BlockPos.Mutable posMutable = new BlockPos.Mutable();
@@ -80,6 +87,7 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
                 }
             }
 
+            //Custom Additions (easier to resolve future merge conflicts)
             this.countAtBox(new Box(startX, startY, startZ, endX + 1, endY + 1, endZ + 1));
         }
 
@@ -87,6 +95,8 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
     }
 
     protected abstract void countAtPosition(BlockPos pos);
+
+    //Custom Additions (easier to resolve future merge conflicts)
     protected abstract void countAtBox(Box box);
 
     @Override
@@ -94,6 +104,7 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
     {
         if (this.finished && this.isInWorld())
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             List<MaterialListEntry> list = MaterialListUtils.getMaterialList(
                     MaterialListUtils.fromBlockStateCount(this.countsTotal, this.itemTypesTotal),
                     MaterialListUtils.fromBlockStateCount(this.countsMissing, this.itemTypesMissing),
@@ -107,6 +118,7 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
         super.onStop();
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     protected void addItemStackToCount(ItemStack itemStack, Object2IntOpenHashMap<ItemType> itemTypeCountMap)
     {
         if (itemStack == null || itemStack.isEmpty()) return;

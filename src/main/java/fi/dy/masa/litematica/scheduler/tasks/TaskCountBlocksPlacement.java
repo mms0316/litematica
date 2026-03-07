@@ -1,13 +1,21 @@
 package fi.dy.masa.litematica.scheduler.tasks;
 
 import java.util.Collection;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
+import fi.dy.masa.litematica.data.DataManager;
+import fi.dy.masa.litematica.materials.IMaterialList;
+import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
+import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement.RequiredEnabled;
+import fi.dy.masa.litematica.selection.Box;
+import fi.dy.masa.litematica.util.BlockInfoListType;
+
+//Custom Additions (easier to resolve future merge conflicts)
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
-
-import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -19,14 +27,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import fi.dy.masa.litematica.config.Configs;
-import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.materials.IMaterialList;
-import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
-import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement.RequiredEnabled;
-import fi.dy.masa.litematica.selection.Box;
-import fi.dy.masa.litematica.util.BlockInfoListType;
 import fi.dy.masa.malilib.util.InventoryUtils;
 
 public class TaskCountBlocksPlacement extends TaskCountBlocksBase
@@ -72,6 +73,8 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
 
         if (stateSchematic.isAir() == false)
         {
+
+            //Custom Additions (easier to resolve future merge conflicts)
             if (Configs.Generic.MATERIAL_LIST_AVOID_BEACONS.getBooleanValue() &&
                     DataManager.getBeaconManager().checkIfObstructs(pos, stateSchematic))
                 return;
@@ -91,6 +94,7 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
                 this.countsMismatch.addTo(stateSchematic, 1);
             }
 
+            //Custom Additions (easier to resolve future merge conflicts)
             BlockEntity schematicBlockEntity = this.schematicWorld.getBlockEntity(pos);
             if (schematicBlockEntity instanceof Inventory schematicInventory)
             {
@@ -105,6 +109,7 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
         }
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     @Override
     protected void countAtBox(net.minecraft.util.math.Box box)
     {

@@ -1,12 +1,7 @@
 package fi.dy.masa.litematica.util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,14 +16,12 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -41,10 +34,20 @@ import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.EntitiesDataStorage;
 import fi.dy.masa.litematica.world.WorldSchematic;
-import org.apache.commons.lang3.ArrayUtils;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 public class InventoryUtils
 {
+    //Custom Additions (easier to resolve future merge conflicts)
+    //Before:  List<Integer> 
     private static final Map<Integer, Long> PICK_BLOCKABLE_SLOTS = new HashMap<>();
     private static Pair<BlockPos, InventoryOverlay.Context> lastBlockEntityContext = null;
 
@@ -52,12 +55,15 @@ public class InventoryUtils
     {
         PICK_BLOCKABLE_SLOTS.clear();
         String[] parts = configStr.split(",");
+
+        //Custom Additions (easier to resolve future merge conflicts)
         Pattern patternRange = Pattern.compile("^(?<start>[0-9])-(?<end>[0-9])$");
 
         for (String str : parts)
         {
             try
             {
+                //Custom Additions (easier to resolve future merge conflicts)
                 Matcher matcher = patternRange.matcher(str);
 
                 if (matcher.matches())
@@ -89,6 +95,8 @@ public class InventoryUtils
         }
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
+    //Changed to return boolean
     public static boolean setPickedItemToHand(ItemStack stack, MinecraftClient mc)
     {
         if (mc.player == null) return false;
@@ -96,6 +104,8 @@ public class InventoryUtils
         return setPickedItemToHand(slotNum, stack, mc);
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
+    //Changed to return boolean
     public static boolean setPickedItemToHand(int sourceSlot, ItemStack stack, MinecraftClient mc)
     {
         if (mc.player == null) return false;
@@ -105,6 +115,7 @@ public class InventoryUtils
 
         if (PlayerInventory.isValidHotbarIndex(sourceSlot))
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             refreshSlotTimeout(sourceSlot);
 
             if (sourceSlot != inventory.getSelectedSlot())
@@ -118,6 +129,7 @@ public class InventoryUtils
             if (PICK_BLOCKABLE_SLOTS.size() == 0)
             {
                 InfoUtils.showGuiOrInGameMessage(MessageType.WARNING, "litematica.message.warn.pickblock.no_valid_slots_configured");
+                //Custom Additions (easier to resolve future merge conflicts)
                 return changed;
             }
 
@@ -135,6 +147,7 @@ public class InventoryUtils
 
             if (hotbarSlot != -1)
             {
+                //Custom Additions (easier to resolve future merge conflicts)
                 refreshSlotTimeout(hotbarSlot);
 
                 inventory.setSelectedSlot(hotbarSlot);
@@ -142,10 +155,13 @@ public class InventoryUtils
                 if (EntityUtils.isCreativeMode(player))
                 {
                     inventory.getMainStacks().set(hotbarSlot, stack.copy());
+
+                    //Custom Additions (easier to resolve future merge conflicts)
                     changed = true;
                 }
                 else
                 {
+                    //Custom Additions (easier to resolve future merge conflicts)
                     changed = fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack.copy(), mc) || changed;
                 }
             }
@@ -155,6 +171,7 @@ public class InventoryUtils
             }
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         return changed;
     }
 
@@ -267,19 +284,14 @@ public class InventoryUtils
 		}
 	}
 
-    public static void refreshSlotTimeout(int slot)
-    {
-        if (PICK_BLOCKABLE_SLOTS.containsKey(slot))
-        {
-            final long now = System.nanoTime();
-            final long nextTimeout = now + (20 + Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue()) * 1_000_000L;
-            PICK_BLOCKABLE_SLOTS.put(slot, nextTimeout);
-        }
-    }
-
+    //Custom Additions (easier to resolve future merge conflicts)
+    //Changed to return PickBlockResult
     public static PickBlockResult schematicWorldPickBlock(ItemStack stack, BlockPos pos,
                                                World schematicWorld, MinecraftClient mc)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
+        //Removed null checks
+
         if (stack.isEmpty() == false)
         {
             PlayerInventory inv = mc.player.getInventory();
@@ -302,12 +314,14 @@ public class InventoryUtils
                 setPickedItemToHand(stack, mc);
                 mc.interactionManager.clickCreativeStack(mc.player.getStackInHand(Hand.MAIN_HAND), 36 + inv.getSelectedSlot());
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 return new PickBlockResult(inv.getSelectedSlot(), false, true);
             }
             else
             {
                 int slot = inv.getSlotWithStack(stack);
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 var pickBlockResult = pickBlockSurvival(slot, stack, inv, mc);
 
                 // Pick block did not happen - try substitutions
@@ -372,6 +386,7 @@ public class InventoryUtils
 
     public record PickBlockResult(int slot, boolean pickedShulker, boolean changed) { }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     private static PickBlockResult pickBlockSurvival(int slot, ItemStack stack, PlayerInventory inv, MinecraftClient mc)
     {
         boolean shouldPick = inv.getSelectedSlot() != slot;
@@ -404,6 +419,7 @@ public class InventoryUtils
 
     private static boolean canPickToSlot(PlayerInventory inventory, int slotNum)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         if (!PICK_BLOCKABLE_SLOTS.containsKey(slotNum))
         {
             return false;
@@ -430,6 +446,7 @@ public class InventoryUtils
             return -1;
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         int slotNum = -1;
         long now = System.nanoTime();
 
@@ -457,6 +474,7 @@ public class InventoryUtils
 
     private static int getEmptyPickBlockableHotbarSlot(PlayerInventory inventory)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         for (int slotNum : PICK_BLOCKABLE_SLOTS.keySet())
         {
             if (PlayerInventory.isValidHotbarIndex(slotNum))
@@ -503,23 +521,6 @@ public class InventoryUtils
         return false;
     }
 
-    private static int getListAmount(DefaultedList<ItemStack> items, ItemStack referenceItem)
-    {
-        int amount = 0;
-        if (items.size() > 0)
-        {
-            for (ItemStack item : items)
-            {
-                if (fi.dy.masa.malilib.util.InventoryUtils.areStacksEqualIgnoreNbt(item, referenceItem))
-                {
-                    amount += item.getCount();
-                }
-            }
-        }
-
-        return amount;
-    }
-
     public static int findSlotWithBoxWithItem(ScreenHandler container, ItemStack stackReference, boolean reverse)
     {
         final int startSlot = reverse ? container.slots.size() - 1 : 0;
@@ -539,47 +540,6 @@ public class InventoryUtils
         }
 
         return -1;
-    }
-
-    public static int findBestPlayerSlotWithBoxWithItem(ScreenHandler container, ItemStack stackReference)
-    {
-        if (!(container instanceof PlayerScreenHandler))
-            return -1;
-
-        // Start looking at hotbar (slots 36 ~ 44)
-        for (int slotNum = 36; slotNum <= 44; ++slotNum)
-        {
-            Slot slot = container.slots.get(slotNum);
-
-            if (doesShulkerBoxContainItem(slot.getStack(), stackReference))
-            {
-                return slot.id;
-            }
-        }
-
-        // For slots 9 ~ 35, check which box has the least amount of items
-        int bestSlot = -1;
-        int bestCount = Integer.MAX_VALUE;
-
-        for (int slotNum = 9; slotNum <= 35; ++slotNum)
-        {
-            Slot slot = container.slots.get(slotNum);
-
-            if (slot.getStack().isEmpty())
-                continue;
-
-            int count = getListAmount(fi.dy.masa.malilib.util.InventoryUtils.getStoredItems(slot.getStack()), stackReference);
-            if (count == 0)
-                continue;
-
-            if (count < bestCount)
-            {
-                bestCount = count;
-                bestSlot = slot.id;
-            }
-        }
-
-        return bestSlot;
     }
 
     /**
@@ -834,6 +794,73 @@ public class InventoryUtils
                 }
             }
         }
+    }
+
+    //Custom Additions (easier to resolve future merge conflicts)
+    public static void refreshSlotTimeout(int slot)
+    {
+        if (PICK_BLOCKABLE_SLOTS.containsKey(slot))
+        {
+            final long now = System.nanoTime();
+            final long nextTimeout = now + (20 + Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue()) * 1_000_000L;
+            PICK_BLOCKABLE_SLOTS.put(slot, nextTimeout);
+        }
+    }
+    private static int getListAmount(DefaultedList<ItemStack> items, ItemStack referenceItem)
+    {
+        int amount = 0;
+        if (items.size() > 0)
+        {
+            for (ItemStack item : items)
+            {
+                if (fi.dy.masa.malilib.util.InventoryUtils.areStacksEqualIgnoreNbt(item, referenceItem))
+                {
+                    amount += item.getCount();
+                }
+            }
+        }
+
+        return amount;
+    }
+    public static int findBestPlayerSlotWithBoxWithItem(ScreenHandler container, ItemStack stackReference)
+    {
+        if (!(container instanceof PlayerScreenHandler))
+            return -1;
+
+        // Start looking at hotbar (slots 36 ~ 44)
+        for (int slotNum = 36; slotNum <= 44; ++slotNum)
+        {
+            Slot slot = container.slots.get(slotNum);
+
+            if (doesShulkerBoxContainItem(slot.getStack(), stackReference))
+            {
+                return slot.id;
+            }
+        }
+
+        // For slots 9 ~ 35, check which box has the least amount of items
+        int bestSlot = -1;
+        int bestCount = Integer.MAX_VALUE;
+
+        for (int slotNum = 9; slotNum <= 35; ++slotNum)
+        {
+            Slot slot = container.slots.get(slotNum);
+
+            if (slot.getStack().isEmpty())
+                continue;
+
+            int count = getListAmount(fi.dy.masa.malilib.util.InventoryUtils.getStoredItems(slot.getStack()), stackReference);
+            if (count == 0)
+                continue;
+
+            if (count < bestCount)
+            {
+                bestCount = count;
+                bestSlot = slot.id;
+            }
+        }
+
+        return bestSlot;
     }
 
     @ApiStatus.Experimental

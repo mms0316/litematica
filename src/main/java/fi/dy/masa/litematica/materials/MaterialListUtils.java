@@ -3,8 +3,6 @@ package fi.dy.masa.litematica.materials;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
@@ -17,18 +15,22 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.BundleItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
 import fi.dy.masa.litematica.schematic.container.LitematicaBlockStateContainer;
 import fi.dy.masa.malilib.util.InventoryUtils;
 import fi.dy.masa.malilib.util.ItemType;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import java.util.Map;
+import java.util.Optional;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 
 public class MaterialListUtils
 {
@@ -40,6 +42,8 @@ public class MaterialListUtils
     public static List<MaterialListEntry> createMaterialListFor(LitematicaSchematic schematic, Collection<String> subRegions)
     {
         Object2IntOpenHashMap<BlockState> countsTotal = new Object2IntOpenHashMap<>();
+
+        //Custom Additions (easier to resolve future merge conflicts)
         Object2IntOpenHashMap<ItemType> countsItemsTotal = new Object2IntOpenHashMap<>();
 
         for (String regionName : subRegions)
@@ -66,6 +70,7 @@ public class MaterialListUtils
                 }
             }
 
+            //Custom Additions (easier to resolve future merge conflicts)
             List<LitematicaSchematic.EntityInfo> entityList = schematic.getEntityListForRegion(regionName);
             if (entityList != null)
             {
@@ -150,6 +155,8 @@ public class MaterialListUtils
             });
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
+    //<BlockState> changed to <ItemType>
     public static List<MaterialListEntry> getMaterialList(
             Object2IntOpenHashMap<ItemType> itemTypesTotal,
             Object2IntOpenHashMap<ItemType> itemTypesMissing,
@@ -189,24 +196,12 @@ public class MaterialListUtils
         return list;
     }
 
-    public static Object2IntOpenHashMap<ItemType> fromBlockStateCount(Object2IntOpenHashMap<BlockState> blockStateCounts, Object2IntOpenHashMap<ItemType> additionalCounts)
-    {
-        Object2IntOpenHashMap<ItemType> combinedCounts = additionalCounts == null ? new Object2IntOpenHashMap<>() : additionalCounts;
-
-        convertStatesToStacks(blockStateCounts, combinedCounts);
-
-        return combinedCounts;
-    }
-
-    public static Object2IntOpenHashMap<ItemType> fromBlockStateCount(Object2IntOpenHashMap<BlockState> blockStateCounts)
-    {
-        return fromBlockStateCount(blockStateCounts, null);
-    }
-
+    //Custom Additions (easier to resolve future merge conflicts)
     public static void convertStatesToStacks(
             Object2IntOpenHashMap<BlockState> blockStatesIn,
             Object2IntOpenHashMap<ItemType> itemTypesOut)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         final MaterialCache cache = MaterialCache.getInstance();
 
         for (BlockState state : blockStatesIn.keySet())
@@ -370,4 +365,20 @@ public class MaterialListUtils
         }
         return state;
     }
+
+    //Custom Additions (easier to resolve future merge conflicts)
+    public static Object2IntOpenHashMap<ItemType> fromBlockStateCount(Object2IntOpenHashMap<BlockState> blockStateCounts, Object2IntOpenHashMap<ItemType> additionalCounts)
+    {
+        Object2IntOpenHashMap<ItemType> combinedCounts = additionalCounts == null ? new Object2IntOpenHashMap<>() : additionalCounts;
+
+        convertStatesToStacks(blockStateCounts, combinedCounts);
+
+        return combinedCounts;
+    }
+
+    public static Object2IntOpenHashMap<ItemType> fromBlockStateCount(Object2IntOpenHashMap<BlockState> blockStateCounts)
+    {
+        return fromBlockStateCount(blockStateCounts, null);
+    }
+
 }

@@ -8,11 +8,13 @@ import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import fi.dy.masa.litematica.render.infohud.InfoHud;
 import fi.dy.masa.litematica.util.BlockInfoListType;
 import fi.dy.masa.malilib.interfaces.ICompletionListener;
 import fi.dy.masa.malilib.util.JsonUtils;
 import net.minecraft.util.math.MathHelper;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.render.infohud.InfoHud;
 
 public abstract class MaterialListBase implements IMaterialList
 {
@@ -254,6 +256,8 @@ public abstract class MaterialListBase implements IMaterialList
         this.multiplier = JsonUtils.getIntegerOrDefault(obj, "multiplier", 1);
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
+    //Extracted from actionPerformedWithButton@GuiMaterialList.java
     public void toggleInfoHud()
     {
         MaterialListHudRenderer renderer = this.getHudRenderer();

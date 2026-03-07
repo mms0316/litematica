@@ -106,6 +106,7 @@ public class PlacementHandler
                 return EasyPlaceProtocol.V2;
             }
 
+            //Custom Additions (easier to resolve future merge conflicts)
             return EasyPlaceProtocol.RESTRICTED;
         }
 

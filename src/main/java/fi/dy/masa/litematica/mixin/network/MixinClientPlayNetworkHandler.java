@@ -1,6 +1,5 @@
 package fi.dy.masa.litematica.mixin.network;
 
-import fi.dy.masa.litematica.util.AddonUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -8,15 +7,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.s2c.play.*;
-import net.minecraft.util.math.ChunkPos;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntitiesDataStorage;
+import fi.dy.masa.litematica.util.SchematicWorldRefresher;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.util.AddonUtils;
+import net.minecraft.util.math.ChunkPos;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
 import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
-import fi.dy.masa.litematica.util.SchematicWorldRefresher;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
+
 
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class MixinClientPlayNetworkHandler
@@ -33,6 +36,7 @@ public abstract class MixinClientPlayNetworkHandler
         {
             SchematicWorldRefresher.INSTANCE.markSchematicChunksForRenderUpdate(chunkX, chunkZ);
 
+            //Custom Additions (easier to resolve future merge conflicts)
             if (Configs.Generic.SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD.getBooleanValue())
             {
                 SchematicVerifier.markVerifierChunkChanges(chunkX, chunkZ);
@@ -41,6 +45,7 @@ public abstract class MixinClientPlayNetworkHandler
 
         DataManager.getSchematicPlacementManager().onClientChunkLoad(chunkX, chunkZ);
 
+        //Custom Additions (easier to resolve future merge conflicts)
         TaskScheduler.getInstanceClient().getAllTasks().stream()
         .filter(task -> task instanceof TaskCountBlocksPlacementPersistent)
         .forEach(task -> ((TaskCountBlocksPlacementPersistent)task).onChunkData(new ChunkPos(chunkX, chunkZ)));
@@ -98,6 +103,19 @@ public abstract class MixinClientPlayNetworkHandler
         }
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
+    //Mixin at
+    /*
+    public void onInventory(InventoryS2CPacket packet) {
+      NetworkThreadUtils.forceMainThread(packet, this, this.client);
+      PlayerEntity playerEntity = this.client.player;
+      if (packet.syncId() == 0) {
+         playerEntity.playerScreenHandler.updateSlotStacks(packet.revision(), packet.contents(), packet.cursorStack());
+      } else if (packet.syncId() == playerEntity.currentScreenHandler.syncId) {
+         playerEntity.currentScreenHandler.updateSlotStacks(packet.revision(), packet.contents(), packet.cursorStack());
+      }
+    }
+     */
     @Inject(method = "onInventory", at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/PlayerScreenHandler;updateSlotStacks(ILjava/util/List;Lnet/minecraft/item/ItemStack;)V"), cancellable = true)
     private void litematica_onPlayerInventoryUpdate(InventoryS2CPacket packet, CallbackInfo ci)
     {

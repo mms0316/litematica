@@ -349,6 +349,7 @@ public class SchematicPlacement
     {
         if (this.materialList == null)
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             this.materialList = new MaterialListPlacement(this, Configs.Generic.MATERIAL_LIST_HOTKEY_AUTO_REFRESH.getBooleanValue());
         }
 

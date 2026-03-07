@@ -1,3 +1,4 @@
+//Custom Additions (easier to resolve future merge conflicts)
 package fi.dy.masa.litematica.util;
 
 import fi.dy.masa.litematica.Litematica;
@@ -259,7 +260,7 @@ public class AddonUtils {
         {
             MinecraftClient mc = MinecraftClient.getInstance();
             ScreenHandler container = player.playerScreenHandler;
-            //mc.interactionManager.clickSlot() considers these slot numbers: https://wiki.vg/Inventory#Player_Inventory
+            //mc.interactionManager.clickSlot() considers these slot numbers: https://minecraft.wiki/w/Java_Edition_protocol/Inventory
             //36 - 44: hotbar
             //9 - 35: main inventory
             //45: offhand
@@ -378,7 +379,9 @@ public class AddonUtils {
     @SuppressWarnings("deprecation")
     public static OverlayType getOverlayType(BlockState stateSchematic, BlockState stateClient, IgnoreBlockRegistry ignoreBlockRegistry)
     {
+        //Extracted + adapted from: getOverlayType@ChunkRendererSchematicVbo.java
         boolean ignoreClientWorldFluids = Configs.Visuals.IGNORE_EXISTING_FLUIDS.getBooleanValue();
+
         if (stateSchematic == stateClient)
         {
             return OverlayType.NONE;
@@ -413,7 +416,7 @@ public class AddonUtils {
                 {
                     return OverlayType.MISSING;
                 }
-
+                // Wrong block
                 if (stateSchematic.getBlock() != stateClient.getBlock())
                 {
                     if (Configs.Generic.ENABLE_DIFFERENT_BLOCKS.getBooleanValue() &&
@@ -430,7 +433,8 @@ public class AddonUtils {
                         }
                     }
                 }
-
+                // Wrong state
+                //Custom Additions (easier to resolve future merge conflicts)
                 final Block schematicBlock = stateSchematic.getBlock();
                 final Block clientBlock = stateClient.getBlock();
                 final Identifier schematicBlockName = Registries.BLOCK.getId(schematicBlock);
@@ -459,6 +463,7 @@ public class AddonUtils {
             try {
                 var methods = block.getClass().getDeclaredMethods();
                 for (var method : methods) {
+                    //protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit)
                     if (method.getName().equals("method_55766")) {
                         val = !(method.getDeclaringClass().equals(AbstractBlock.class));
                         break;

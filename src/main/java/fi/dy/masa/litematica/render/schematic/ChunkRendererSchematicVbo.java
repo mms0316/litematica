@@ -12,6 +12,7 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.systems.VertexSorter;
+import fi.dy.masa.litematica.util.IgnoreBlockRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -27,7 +28,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.random.Random;
@@ -37,7 +37,6 @@ import net.minecraft.world.chunk.WorldChunk;
 
 import fi.dy.masa.malilib.util.EntityUtils;
 import fi.dy.masa.malilib.util.IntBoundingBox;
-import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.data.Color4f;
 import fi.dy.masa.malilib.util.game.BlockUtils;
@@ -46,11 +45,14 @@ import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.render.RenderUtils;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacementManager.PlacementPart;
-import fi.dy.masa.litematica.util.AddonUtils;
-import fi.dy.masa.litematica.util.IgnoreBlockRegistry;
 import fi.dy.masa.litematica.util.OverlayType;
 import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.world.WorldSchematic;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import net.minecraft.util.math.Direction.Axis;
+import fi.dy.masa.malilib.util.LayerMode;
+import fi.dy.masa.litematica.util.AddonUtils;
 
 public class ChunkRendererSchematicVbo implements AutoCloseable
 {
@@ -77,6 +79,7 @@ public class ChunkRendererSchematicVbo implements AutoCloseable
     private net.minecraft.util.math.Box boundingBox;
     protected Color4f overlayColor;
     protected boolean hasOverlay = false;
+
     private IgnoreBlockRegistry ignoreBlockRegistry;
 
     protected ChunkCacheSchematic schematicWorldView;
@@ -603,6 +606,8 @@ public class ChunkRendererSchematicVbo implements AutoCloseable
         {
             this.getProfiler().swap("render_build_overlays");
             OverlayType type = this.getOverlayType(stateSchematic, stateClient);
+
+            //Custom Additions (easier to resolve future merge conflicts)
             boolean secondaryColor = false;
 
             LayerRange layerRange = DataManager.getRenderLayerRange();
@@ -992,10 +997,81 @@ public class ChunkRendererSchematicVbo implements AutoCloseable
         //System.out.printf("typeSelf: %s, pos: %s, lines: %d\n", typeSelf, pos, lines);
     }
 
+    @SuppressWarnings("deprecation")
     protected OverlayType getOverlayType(BlockState stateSchematic, BlockState stateClient)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
+        //Extracted to
         return AddonUtils.getOverlayType(stateSchematic, stateClient, this.ignoreBlockRegistry);
+
+        //Before:
+        /* In class variables:      private boolean ignoreClientWorldFluids;
+         * in rebuildWorldView:     this.ignoreClientWorldFluids = Configs.Visuals.IGNORE_EXISTING_FLUIDS.getBooleanValue();
+         */
+
+        /*
+        if (stateSchematic == stateClient)
+        {
+            return OverlayType.NONE;
+        }
+        else
+        {
+            boolean clientHasAir = stateClient.isAir();
+            boolean schematicHasAir = stateSchematic.isAir();
+
             // TODO --> Maybe someday Mojang will add something to replace isLiquid(), and isSolid()
+            if (schematicHasAir)
+            {
+                if (clientHasAir)
+                {
+                    return OverlayType.NONE;
+                }
+                else if (this.ignoreClientWorldFluids && stateClient.isLiquid())
+                {
+                    return OverlayType.NONE;
+                }
+                else if (this.ignoreBlockRegistry.hasBlock(stateClient.getBlock()))
+                {
+                    return OverlayType.NONE;
+                }
+                else
+                {
+                    return OverlayType.EXTRA;
+                }
+            }
+            else
+            {
+                if (clientHasAir || (this.ignoreClientWorldFluids && stateClient.isLiquid()))
+                {
+                    return OverlayType.MISSING;
+                }
+                // Wrong block
+                else if (stateSchematic.getBlock() != stateClient.getBlock())
+                {
+                    if (Configs.Generic.ENABLE_DIFFERENT_BLOCKS.getBooleanValue() &&
+                        BlockUtils.isInSameGroup(stateSchematic, stateClient))
+                    {
+                        if (BlockUtils.matchPropertiesOnly(stateSchematic, stateClient))
+                        {
+                            // Different block of a common BlockTags Group, and same state
+                            return OverlayType.DIFF_BLOCK;
+                        }
+                        else
+                        {
+                            return OverlayType.WRONG_STATE;
+                        }
+                    }
+
+                    return OverlayType.WRONG_BLOCK;
+                }
+                // Wrong state
+                else
+                {
+                    return OverlayType.WRONG_STATE;
+                }
+            }
+        }
+         */
     }
 
     @Nullable
@@ -1014,6 +1090,7 @@ public class ChunkRendererSchematicVbo implements AutoCloseable
             case MISSING:
                 if (Configs.Visuals.SCHEMATIC_OVERLAY_TYPE_MISSING.getBooleanValue())
                 {
+                    //Custom Additions (easier to resolve future merge conflicts)
                     if (useSecondaryColor)
                     {
                         overlayColor = Configs.Colors.SCHEMATIC_OVERLAY_COLOR_MISSING_2.getColor();

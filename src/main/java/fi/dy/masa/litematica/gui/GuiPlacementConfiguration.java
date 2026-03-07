@@ -22,7 +22,6 @@ import fi.dy.masa.malilib.gui.widgets.WidgetCheckBox;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.position.PositionUtils.CoordinateType;
-import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.gui.GuiMainMenu.ButtonListenerChangeMenu;
 import fi.dy.masa.litematica.gui.widgets.WidgetListPlacementSubRegions;
@@ -31,6 +30,9 @@ import fi.dy.masa.litematica.materials.MaterialListBase;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
 import fi.dy.masa.litematica.util.PositionUtils;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.config.Configs;
 
 public class GuiPlacementConfiguration  extends GuiListBase<SubRegionPlacement, WidgetPlacementSubRegion, WidgetListPlacementSubRegions>
                                         implements ISelectionListener<SubRegionPlacement>
@@ -437,8 +439,10 @@ public class GuiPlacementConfiguration  extends GuiListBase<SubRegionPlacement, 
                 {
                     MaterialListBase materialList = this.placement.getMaterialList();
 
+                    //Custom Additions (easier to resolve future merge conflicts)
                     if (Configs.Generic.MATERIAL_LIST_HOTKEY_AUTO_REFRESH.getBooleanValue())
                         materialList.reCreateMaterialList();
+
                     GuiMaterialList gui = new GuiMaterialList(materialList);
                     DataManager.setMaterialList(materialList); // Remember the last opened material list for the hotkey to (re-) open it
                     gui.setParent(this.parent);

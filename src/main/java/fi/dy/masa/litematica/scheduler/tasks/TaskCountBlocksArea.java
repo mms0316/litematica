@@ -1,6 +1,11 @@
 package fi.dy.masa.litematica.scheduler.tasks;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
+import fi.dy.masa.litematica.materials.IMaterialList;
+import fi.dy.masa.litematica.selection.AreaSelection;
+
+//Custom Additions (easier to resolve future merge conflicts)
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
@@ -10,12 +15,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.List;
-
-import fi.dy.masa.litematica.materials.IMaterialList;
-import fi.dy.masa.litematica.selection.AreaSelection;
 
 public class TaskCountBlocksArea extends TaskCountBlocksBase
 {
@@ -35,6 +35,7 @@ public class TaskCountBlocksArea extends TaskCountBlocksBase
         // clientWorld has empty Inventory, so it's not possible to count Block Entities' inventories
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     @Override
     protected void countAtBox(net.minecraft.util.math.Box box)
     {

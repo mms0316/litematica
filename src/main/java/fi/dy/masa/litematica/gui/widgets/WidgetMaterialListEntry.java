@@ -4,7 +4,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.joml.Matrix3x2fStack;
 
-import fi.dy.masa.litematica.util.AddonUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.item.ItemStack;
 
@@ -19,6 +18,9 @@ import fi.dy.masa.litematica.gui.Icons;
 import fi.dy.masa.litematica.materials.MaterialListBase;
 import fi.dy.masa.litematica.materials.MaterialListBase.SortCriteria;
 import fi.dy.masa.litematica.materials.MaterialListEntry;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.util.AddonUtils;
 
 public class WidgetMaterialListEntry extends WidgetListEntrySortable<MaterialListEntry>
 {
@@ -323,6 +325,7 @@ public class WidgetMaterialListEntry extends WidgetListEntrySortable<MaterialLis
 
     private String getFormattedCountString(int total, int maxStackSize)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         return AddonUtils.getFormattedCountString(total, maxStackSize, true);
     }
 

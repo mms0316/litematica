@@ -16,7 +16,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -38,6 +37,9 @@ import fi.dy.masa.litematica.mixin.entity.IMixinEntity;
 import fi.dy.masa.litematica.mixin.world.IMixinWorld;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import net.minecraft.registry.Registries;
 
 public class EntityUtils
 {
@@ -93,6 +95,7 @@ public class EntityUtils
     @Nullable
     public static Hand getUsedHandForItem(PlayerEntity player, ItemStack stack)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         final var mainHandStack = player.getMainHandStack();
         final Identifier stackId = Registries.ITEM.getId(stack.getItem());
 

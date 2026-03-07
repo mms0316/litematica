@@ -4,14 +4,16 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.text.Text;
-import fi.dy.masa.litematica.config.Configs;
-import fi.dy.masa.litematica.util.AddonUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import fi.dy.masa.litematica.materials.MaterialListHudRenderer;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.util.AddonUtils;
 
 @Mixin(HandledScreen.class)
 public abstract class MixinHandledScreen extends Screen
@@ -33,6 +35,7 @@ public abstract class MixinHandledScreen extends Screen
     {
         MaterialListHudRenderer.renderLookedAtBlockInInventory(drawContext, (HandledScreen<?>) (Object) this, this.client);
 
+        //Custom Additions (easier to resolve future merge conflicts)
         if (Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue())
         {
             final var color = Configs.Colors.HIGHLIGHT_REFILL_IN_INV_COLOR.getColor();

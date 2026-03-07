@@ -342,6 +342,7 @@ public class PositionUtils
         return builder.build();
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     public static boolean hasBoxWithinChunk(int chunkX, int chunkZ, ImmutableMap<String, Box> subRegions)
     {
         boolean has = false;

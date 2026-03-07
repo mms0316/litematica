@@ -1,8 +1,8 @@
+//Custom Additions (easier to resolve future merge conflicts)
 package fi.dy.masa.litematica.materials;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.systems.RenderSystem;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;

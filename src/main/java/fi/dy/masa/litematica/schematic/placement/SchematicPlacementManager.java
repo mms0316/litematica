@@ -36,7 +36,6 @@ import fi.dy.masa.litematica.render.LitematicaRenderer;
 import fi.dy.masa.litematica.render.OverlayRenderer;
 import fi.dy.masa.litematica.render.infohud.StatusInfoRenderer;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
-import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkBase;
 import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkCommand;
 import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkDirect;
@@ -61,6 +60,9 @@ import fi.dy.masa.malilib.util.JsonUtils;
 import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.StringUtils;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 
 public class SchematicPlacementManager
 {
@@ -111,6 +113,7 @@ public class SchematicPlacementManager
 
     protected boolean canHandleChunk(ClientWorld clientWorld, int chunkX, int chunkZ)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         return Configs.Generic.LOAD_ENTIRE_SCHEMATICS.getBooleanValue() ||
                WorldUtils.isClientChunkLoaded(clientWorld, chunkX, chunkZ) ||
                TaskScheduler.getInstanceClient().getAllTasks().stream()
@@ -889,13 +892,11 @@ public class SchematicPlacementManager
 
     public void clear()
     {
+
+        //Custom Additions (easier to resolve future merge conflicts)
         for (SchematicPlacement placement : schematicPlacements)
-        {
             if (placement.hasVerifier())
-            {
                 placement.getSchematicVerifier().reset();
-            }
-        }
 
         this.schematicPlacements.clear();
         this.selectedPlacement = null;

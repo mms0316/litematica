@@ -184,12 +184,14 @@ public class TaskScheduler
 
     public ImmutableList<ITask> getAllTasks()
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         synchronized (this)
         {
             return ImmutableList.copyOf(this.tasks);
         }
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     public boolean removeTasks(Class <? extends ITask> clazz)
     {
         synchronized (this)
@@ -228,6 +230,7 @@ public class TaskScheduler
     {
         synchronized (this)
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             int index = this.tasks.indexOf(task);
 
             if (index >= 0)

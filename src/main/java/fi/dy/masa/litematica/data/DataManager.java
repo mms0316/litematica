@@ -24,8 +24,6 @@ import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.Reference;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.gui.GuiConfigs.ConfigGuiTab;
-import fi.dy.masa.litematica.materials.BeaconManager;
-import fi.dy.masa.litematica.materials.ContainerManager;
 import fi.dy.masa.litematica.materials.MaterialListBase;
 import fi.dy.masa.litematica.materials.MaterialListHudRenderer;
 import fi.dy.masa.litematica.render.infohud.InfoHud;
@@ -40,6 +38,11 @@ import fi.dy.masa.litematica.tool.ToolMode;
 import fi.dy.masa.litematica.tool.ToolModeData;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
 import fi.dy.masa.litematica.util.ToBooleanFunction;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.materials.BeaconManager;
+import fi.dy.masa.litematica.materials.ContainerManager;
+
 
 public class DataManager implements IDirectoryCache
 {
@@ -67,6 +70,8 @@ public class DataManager implements IDirectoryCache
     private AreaSelectionSimple areaSimple = new AreaSelectionSimple(true);
     @Nullable
     private MaterialListBase materialList;
+
+    //Custom Additions (easier to resolve future merge conflicts)
     private final BeaconManager beaconManager = new BeaconManager();
     private final ContainerManager containerManager = new ContainerManager();
 
@@ -225,6 +230,7 @@ public class DataManager implements IDirectoryCache
         return getInstance().schematicBufferManager;
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     public static BeaconManager getBeaconManager()
     {
         return getInstance().beaconManager;
@@ -410,6 +416,8 @@ public class DataManager implements IDirectoryCache
         this.selectionManager.clear();
         this.schematicPlacementManager.clear();
         this.schematicProjectsManager.clear();
+
+        //Custom Additions (easier to resolve future merge conflicts)
         //this.materialList = null; //edit: no longer loses reference when changing dimensions
 
         Path file = getCurrentStorageFile(false);
@@ -473,6 +481,7 @@ public class DataManager implements IDirectoryCache
             this.toolModeDataFromJson(obj.get("tool_mode_data").getAsJsonObject());
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         if (JsonUtils.hasObject(obj, "beacon_manager"))
         {
             this.beaconManager.loadFromJson(obj.get("beacon_manager").getAsJsonObject());
@@ -495,6 +504,8 @@ public class DataManager implements IDirectoryCache
         obj.add("render_range", this.renderRange.toJson());
         obj.add("area_simple", this.areaSimple.toJson());
         obj.add("tool_mode_data", this.toolModeDataToJson());
+
+        //Custom Additions (easier to resolve future merge conflicts)
         obj.add("beacon_manager", this.beaconManager.toJson());
         obj.add("container_manager", this.containerManager.toJson());
 

@@ -1,3 +1,4 @@
+//Custom Additions (easier to resolve future merge conflicts)
 package fi.dy.masa.litematica.gui.widgets;
 
 import fi.dy.masa.malilib.gui.LeftRight;

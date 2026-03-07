@@ -3,9 +3,13 @@ package fi.dy.masa.litematica.materials;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
 import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacement;
-import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
+import fi.dy.masa.malilib.gui.Message.MessageType;
+import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.StringUtils;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 
 public class MaterialListPlacement extends MaterialListBase
 {
@@ -49,10 +53,13 @@ public class MaterialListPlacement extends MaterialListBase
     @Override
     public void reCreateMaterialList()
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         TaskScheduler.getInstanceClient().removeTasks(TaskCountBlocksPlacement.class);
         TaskScheduler.getInstanceClient().removeTasks(TaskCountBlocksPlacementPersistent.class);
 
         boolean ignoreState = Configs.Generic.MATERIAL_LIST_IGNORE_STATE.getBooleanValue();
+
+        //Custom Additions (easier to resolve future merge conflicts)
         TaskCountBlocksPlacement task;
 
         if (Configs.Generic.MATERIAL_LIST_PLACEMENT_PERSISTENT.getBooleanValue())

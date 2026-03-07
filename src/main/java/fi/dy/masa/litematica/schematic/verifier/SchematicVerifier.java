@@ -2,12 +2,8 @@ package fi.dy.masa.litematica.schematic.verifier;
 
 import java.util.*;
 import javax.annotation.Nullable;
-
-import fi.dy.masa.litematica.util.AddonUtils;
-import fi.dy.masa.litematica.util.OverlayType;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -28,28 +24,33 @@ import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.interfaces.ICompletionListener;
 import fi.dy.masa.malilib.util.IntBoundingBox;
-import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.data.Color4f;
 import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.render.infohud.IInfoHudRenderer;
 import fi.dy.masa.litematica.render.infohud.InfoHud;
 import fi.dy.masa.litematica.render.infohud.RenderPhase;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
 import fi.dy.masa.litematica.scheduler.tasks.TaskBase;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
-import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
-import fi.dy.masa.litematica.selection.Box;
 import fi.dy.masa.litematica.util.BlockInfoListType;
 import fi.dy.masa.litematica.util.ItemUtils;
 import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.util.IgnoreBlockRegistry;
 import fi.dy.masa.litematica.util.WorldUtils;
 import fi.dy.masa.litematica.world.WorldSchematic;
+
+
+import fi.dy.masa.litematica.util.AddonUtils;
+import fi.dy.masa.litematica.util.OverlayType;
+import com.google.common.collect.ImmutableMap;
+import fi.dy.masa.malilib.util.LayerMode;
+import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
+import fi.dy.masa.litematica.selection.Box;
 
 public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 {
@@ -62,7 +63,11 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     private final ArrayListMultimap<Pair<BlockState, BlockState>, BlockPos> wrongBlocksPositions = ArrayListMultimap.create();
     private final ArrayListMultimap<Pair<BlockState, BlockState>, BlockPos> wrongStatesPositions = ArrayListMultimap.create();
     private final ArrayListMultimap<Pair<BlockState, BlockState>, BlockPos> diffBlocksPositions = ArrayListMultimap.create();
-    private final Object2ObjectOpenHashMap<BlockPos, BlockMismatch> verifiedPositions = new Object2ObjectOpenHashMap<>();
+
+    //Custom Additions (easier to resolve future merge conflicts)
+    //Changed from correctStateCounts + clientBlocks + correctStatesCount
+    private final Object2ObjectOpenHashMap<BlockPos, BlockMismatch> blockMismatches = new Object2ObjectOpenHashMap<>();
+
     private final HashSet<Pair<BlockState, BlockState>> ignoredMismatches = new HashSet<>();
     private final List<BlockPos> missingBlocksPositionsClosest = new ArrayList<>();
     private final List<BlockPos> extraBlocksPositionsClosest = new ArrayList<>();
@@ -73,7 +78,10 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     private final HashMultimap<MismatchType, BlockMismatch> selectedEntries = HashMultimap.create();
     private final Set<ChunkPos> requiredChunks = new HashSet<>();
     private final Set<BlockPos> recheckQueue = new HashSet<>();
+
+    //Custom Additions (easier to resolve future merge conflicts)
     private final Set<ChunkPos> recheckChunkQueue = new HashSet<>();
+
     private final MinecraftClient mc = MinecraftClient.getInstance();
     private ClientWorld worldClient;
     private WorldSchematic worldSchematic;
@@ -87,11 +95,13 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     private boolean shouldRenderInfoHud = true;
     private int totalRequiredChunks;
     private int schematicBlocks;
+
+    //Custom Additions (easier to resolve future merge conflicts)
     private ImmutableMap<String, Box> subRegions;
     private boolean updateRequiredChunksStringList;
     private boolean updateMismatchOverlays;
-
     private ChunkPos lastPlayerPos;
+
     private IgnoreBlockRegistry ignoreBlockRegistry;
 
     public SchematicVerifier()
@@ -112,6 +122,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         }
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     public static void markVerifierChunkChanges(int cx, int cz)
     {
         for (int i = 0; i < ACTIVE_VERIFIERS.size(); ++i)
@@ -162,6 +173,14 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         return this.schematicBlocks;
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
+    /*
+    public int getRealWorldTotalBlocks()
+    {
+        return this.clientBlocks;
+    }
+    */
+
     public int getMissingBlocks()
     {
         return this.missingBlocksPositions.size();
@@ -189,9 +208,12 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     public int getCorrectStatesCount()
     {
+        //Custom Additions (easier to resolve future merge conflicts)
+        //Substituted from correctStatesCount
+
         int count = 0;
 
-        for (BlockMismatch mismatchType : this.verifiedPositions.values())
+        for (BlockMismatch mismatchType : this.blockMismatches.values())
         {
             if (mismatchType.mismatchType == MismatchType.CORRECT_STATE)
             {
@@ -314,6 +336,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     @Override
     public boolean execute(Profiler profiler)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         int chunksBefore = 0;
         int recheckBlocksBefore = 0;
         int recheckChunksBefore = 0;
@@ -327,7 +350,41 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
         this.verifyChunks(profiler);
         this.checkChangedPositions(profiler);
-        this.checkChangedChunks();
+
+        //Custom Additions (easier to resolve future merge conflicts)
+        if ((this.finished || this.verificationActive) && this.recheckChunkQueue.isEmpty() == false)
+        {
+            Iterator<ChunkPos> iter = this.recheckChunkQueue.iterator();
+
+            while (iter.hasNext())
+            {
+                if ((System.nanoTime() - DataManager.getClientTickStartTime()) >= 50000000L)
+                {
+                    break;
+                }
+
+                ChunkPos pos = iter.next();
+
+                if (this.requiredChunks.contains(pos))
+                {
+                    //must be handled by the first pass (verifyChunks)
+                    iter.remove();
+                    continue;
+                }
+
+                if (!PositionUtils.hasBoxWithinChunk(pos.x, pos.z, this.subRegions))
+                {
+                    iter.remove();
+                    continue;
+                }
+
+                if (this.verifyChunk(pos, false))
+                {
+                    this.updateMismatchOverlays = true;
+                    iter.remove();
+                }
+            }
+        }
 
         //Updates infohud
         if (mc.player != null && !mc.player.getChunkPos().equals(lastPlayerPos) &&
@@ -389,10 +446,14 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         this.ignoreBlockRegistry = new IgnoreBlockRegistry();
 
         this.setCompletionListener(completionListener);
+
+        //Custom Additions (easier to resolve future merge conflicts)
         prepareRequiredChunks(schematicPlacement);
+
         this.totalRequiredChunks = this.requiredChunks.size();
         this.verificationStarted = true;
 
+        //Custom Additions (easier to resolve future merge conflicts)
         this.subRegions = this.schematicPlacement.getSubRegionBoxes(SubRegionPlacement.RequiredEnabled.PLACEMENT_ENABLED);
 
         TaskScheduler.getInstanceClient().scheduleTask(this, 10);
@@ -403,10 +464,12 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
         this.updateRequiredChunksStringList();
 
+        //Custom Additions (easier to resolve future merge conflicts)
         this.updateRequiredChunksStringList = false;
         this.updateMismatchOverlays = false;
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     private void prepareRequiredChunks(SchematicPlacement schematicPlacement)
     {
         Collection<Box> boxes = schematicPlacement.getSubRegionBoxes(SubRegionPlacement.RequiredEnabled.PLACEMENT_ENABLED).values();
@@ -426,6 +489,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         }
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     private void clampToWorldHeightAndAddBox(ChunkPos chunkPos, IntBoundingBox box)
     {
         box = PositionUtils.clampBoxToWorldHeightRange(box, this.worldClient);
@@ -461,8 +525,10 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     {
         this.worldClient = null;
         this.worldSchematic = null;
-        this.subRegions = null;
         this.schematicPlacement = null;
+
+        //Custom Additions (easier to resolve future merge conflicts)
+        this.subRegions = null;
     }
 
     private void clearData()
@@ -474,6 +540,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         this.schematicBlocks = 0;
         this.requiredChunks.clear();
         this.recheckQueue.clear();
+
+        //Custom Additions (easier to resolve future merge conflicts)
         this.recheckChunkQueue.clear();
 
         this.missingBlocksPositions.clear();
@@ -481,7 +549,11 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         this.extraBlocksPositions.clear();
         this.wrongBlocksPositions.clear();
         this.wrongStatesPositions.clear();
-        this.verifiedPositions.clear();
+
+        //Custom Additions (easier to resolve future merge conflicts)
+        //Substituted from blockMismatches and correctStateCounts
+        this.blockMismatches.clear();
+
         this.selectedCategories.clear();
         this.selectedEntries.clear();
         this.mismatchBlockPositionsForRender.clear();
@@ -496,16 +568,20 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     public void markBlockChanged(BlockPos pos)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         if (this.finished || this.verificationActive)
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             //Check if block has been handled in the first pass (chunk load)
-            //Note: verifiedPositions does not keep correct Air entries
-            BlockMismatch mismatch = this.verifiedPositions.get(pos);
+            //Note: blockMismatches does not keep correct Air entries
+            BlockMismatch mismatch = this.blockMismatches.get(pos);
 
             if (mismatch != null)
             {
                 this.recheckQueue.add(pos.toImmutable());
             }
+
+            //Custom Additions (easier to resolve future merge conflicts)
             //Detect extra blocks when going from Air to something else (edge case)
             else if (this.worldSchematic.getBlockState(pos).isAir() &&
                      this.worldClient.getBlockState(pos).isAir() == false)
@@ -523,6 +599,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         }
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     public void markChunkChanged(int cx, int cz)
     {
         if (this.finished || this.verificationActive)
@@ -538,6 +615,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     private void checkChangedPositions(Profiler profiler)
     {
         profiler.push("verify_check_pos");
+
+        //Custom Additions (easier to resolve future merge conflicts)
         if ((this.finished || this.verificationActive) && this.recheckQueue.isEmpty() == false)
         {
             Iterator<BlockPos> iter = this.recheckQueue.iterator();
@@ -552,25 +631,32 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
                 if (isLoadedClient && isLoadedSchematic)
                 {
-                    BlockMismatch mismatch = this.verifiedPositions.get(pos);
+                    //Custom Additions (easier to resolve future merge conflicts)
+                    //Changed from blockMismatches
+                    BlockMismatch mismatch = this.blockMismatches.get(pos);
 
                     if (mismatch != null)
                     {
-                        this.verifiedPositions.remove(pos);
+                        //Custom Additions (easier to resolve future merge conflicts)
+                        this.blockMismatches.remove(pos);
 
                         BlockState stateFound = this.worldClient.getBlockState(pos);
                         MUTABLE_PAIR.setLeft(mismatch.stateExpected);
                         MUTABLE_PAIR.setRight(mismatch.stateFound);
 
+                        //Custom Additions (easier to resolve future merge conflicts)
                         var map = this.getMapForMismatchType(mismatch.mismatchType);
                         if (map != null)
-                        {
                             map.remove(MUTABLE_PAIR, pos);
-                        }
+
                         this.checkBlockStates(pos.getX(), pos.getY(), pos.getZ(), mismatch.stateExpected, stateFound);
+                        
+                        //Custom Additions (easier to resolve future merge conflicts)
+                        //Removed usage of clientBlocks++
                     }
                     else
                     {
+                        //Custom Additions (easier to resolve future merge conflicts)
                         //Detect extra blocks when going from Air to something else
                         //Check if this block is actually from the schematic (edge case)
                         Map<String, IntBoundingBox> boxes = PositionUtils.getBoxesWithinChunk(pos.getX() / 16, pos.getZ() / 16, this.subRegions);
@@ -605,6 +691,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                     }
 
                     iter.remove();
+
+                    //Custom Additions (easier to resolve future merge conflicts)
                     this.updateMismatchOverlays = true;
                 }
             }
@@ -626,6 +714,73 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         };
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
+    /* Before:
+    private boolean verifyChunks(Profiler profiler)
+    {
+        profiler.push("verify_chunks");
+        if (this.verificationActive)
+        {
+            Iterator<ChunkPos> iter = this.requiredChunks.iterator();
+            boolean checkedSome = false;
+
+            while (iter.hasNext())
+            {
+                if ((System.nanoTime() - DataManager.getClientTickStartTime()) >= 50000000L)
+                {
+                    break;
+                }
+
+                ChunkPos pos = iter.next();
+                int count = 0;
+
+                for (int cx = pos.x - 1; cx <= pos.x + 1; ++cx)
+                {
+                    for (int cz = pos.z - 1; cz <= pos.z + 1; ++cz)
+                    {
+                        if (WorldUtils.isClientChunkLoaded(this.worldClient, cx, cz))
+                        {
+                            ++count;
+                        }
+                    }
+                }
+
+                // Require the surrounding chunks in the client world to be loaded as well
+                if (count == 9 && this.worldSchematic.getChunkProvider().isChunkLoaded(pos.x, pos.z))
+                {
+                    Chunk chunkClient = this.worldClient.getChunk(pos.x, pos.z);
+                    Chunk chunkSchematic = this.worldSchematic.getChunk(pos.x, pos.z);
+                    Map<String, IntBoundingBox> boxes = this.schematicPlacement.getBoxesWithinChunk(pos.x, pos.z);
+
+                    for (IntBoundingBox box : boxes.values())
+                    {
+                        this.verifyChunk(chunkClient, chunkSchematic, box);
+                    }
+
+                    iter.remove();
+                    checkedSome = true;
+                }
+            }
+
+            if (checkedSome)
+            {
+                this.updateRequiredChunksStringList();
+            }
+
+            if (this.requiredChunks.isEmpty())
+            {
+                this.verificationActive = false;
+                this.verificationStarted = false;
+                this.finished = true;
+
+                this.notifyListener();
+            }
+        }
+
+        profiler.pop();
+        return this.verificationActive == false; // finished or stopped
+    }
+     */
     private void verifyChunks(Profiler profiler)
     {
         profiler.push("verify_chunks");
@@ -642,6 +797,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
                 ChunkPos pos = iter.next();
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 if (this.verifyChunk(pos, true))
                 {
                     this.updateRequiredChunksStringList = true;
@@ -661,44 +817,6 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         profiler.pop();
     }
 
-
-    private void checkChangedChunks()
-    {
-        if ((this.finished || this.verificationActive) && this.recheckChunkQueue.isEmpty() == false)
-        {
-            Iterator<ChunkPos> iter = this.recheckChunkQueue.iterator();
-
-            while (iter.hasNext())
-            {
-                if ((System.nanoTime() - DataManager.getClientTickStartTime()) >= 50000000L)
-                {
-                    break;
-                }
-
-                ChunkPos pos = iter.next();
-
-                if (this.requiredChunks.contains(pos))
-                {
-                    //must be handled by the first pass (verifyChunks)
-                    iter.remove();
-                    continue;
-                }
-
-                if (!PositionUtils.hasBoxWithinChunk(pos.x, pos.z, this.subRegions))
-                {
-                    iter.remove();
-                    continue;
-                }
-
-                if (this.verifyChunk(pos, false))
-                {
-                    this.updateMismatchOverlays = true;
-                    iter.remove();
-                }
-            }
-        }
-    }
-
     public void ignoreStateMismatch(BlockMismatch mismatch)
     {
         this.ignoreStateMismatch(mismatch, true);
@@ -712,7 +830,9 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         {
             this.ignoredMismatches.add(ignore);
             this.getMapForMismatchType(mismatch.mismatchType).removeAll(ignore);
-            this.verifiedPositions.entrySet().removeIf(entry -> entry.getValue().equals(mismatch));
+
+            //Custom Additions (easier to resolve future merge conflicts)
+            this.blockMismatches.entrySet().removeIf(entry -> entry.getValue().equals(mismatch));
         }
 
         if (updateOverlay)
@@ -743,9 +863,10 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     public Object2IntOpenHashMap<BlockState> getCorrectStates()
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         Object2IntOpenHashMap<BlockState> map = new Object2IntOpenHashMap<>();
 
-        for (var entry : verifiedPositions.entrySet())
+        for (var entry : blockMismatches.entrySet())
         {
             if (entry.getValue().mismatchType == MismatchType.CORRECT_STATE)
             {
@@ -759,7 +880,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     @Nullable
     public BlockMismatch getMismatchForPosition(BlockPos pos)
     {
-        return this.verifiedPositions.get(pos);
+        //Custom Additions (easier to resolve future merge conflicts)
+        return this.blockMismatches.get(pos);
     }
 
     public List<BlockMismatch> getMismatchOverviewFor(MismatchType type)
@@ -838,6 +960,81 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         return list;
     }
 
+    private void verifyChunk(Chunk chunkClient, Chunk chunkSchematic, IntBoundingBox box, boolean firstPass)
+    {
+        LayerRange range = DataManager.getRenderLayerRange();
+        Direction.Axis axis = range.getAxis();
+        boolean ranged = this.schematicPlacement.getSchematicVerifierType() == BlockInfoListType.RENDER_LAYERS;
+
+        final int startX = ranged && axis == Direction.Axis.X ? Math.max(box.minX, range.getLayerMin()) : box.minX;
+        final int startY = ranged && axis == Direction.Axis.Y ? Math.max(box.minY, range.getLayerMin()) : box.minY;
+        final int startZ = ranged && axis == Direction.Axis.Z ? Math.max(box.minZ, range.getLayerMin()) : box.minZ;
+        final int endX = ranged && axis == Direction.Axis.X ? Math.min(box.maxX, range.getLayerMax()) : box.maxX;
+        final int endY = ranged && axis == Direction.Axis.Y ? Math.min(box.maxY, range.getLayerMax()) : box.maxY;
+        final int endZ = ranged && axis == Direction.Axis.Z ? Math.min(box.maxZ, range.getLayerMax()) : box.maxZ;
+
+        for (int y = startY; y <= endY; ++y)
+        {
+            for (int z = startZ; z <= endZ; ++z)
+            {
+                for (int x = startX; x <= endX; ++x)
+                {
+                    MUTABLE_POS.set(x, y, z);
+
+                    //Custom Additions (easier to resolve future merge conflicts)
+                    if (firstPass)
+                    {
+                        BlockState stateClient = chunkClient.getBlockState(MUTABLE_POS);
+                        BlockState stateSchematic = chunkSchematic.getBlockState(MUTABLE_POS);
+
+                        this.checkBlockStates(x, y, z, stateSchematic, stateClient);
+
+                        if (stateSchematic.isAir() == false)
+                        {
+                            this.schematicBlocks++;
+                        }
+                    }
+                    else
+                    {
+                        //Custom Additions (easier to resolve future merge conflicts)
+                        BlockMismatch mismatch = this.blockMismatches.get(MUTABLE_POS);
+
+                        if (mismatch != null)
+                        {
+                            this.blockMismatches.remove(MUTABLE_POS);
+
+                            BlockState stateFound = chunkClient.getBlockState(MUTABLE_POS);
+                            MUTABLE_PAIR.setLeft(mismatch.stateExpected);
+                            MUTABLE_PAIR.setRight(mismatch.stateFound);
+
+                            var map = this.getMapForMismatchType(mismatch.mismatchType);
+                            if (map != null)
+                            {
+                                map.remove(MUTABLE_PAIR, MUTABLE_POS);
+                            }
+                            this.checkBlockStates(x, y, z, mismatch.stateExpected, stateFound);
+                        }
+                        else
+                        {
+                            //Could be an extra block on air
+                            BlockState stateExpected = chunkSchematic.getBlockState(MUTABLE_POS);
+                            if (stateExpected.isAir())
+                            {
+                                BlockState stateFound = chunkClient.getBlockState(MUTABLE_POS);
+
+                                if (stateExpected != stateFound)
+                                {
+                                    this.checkBlockStates(x, y, z, stateExpected, stateFound);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //Custom Additions (easier to resolve future merge conflicts)
     private boolean verifyChunk(ChunkPos pos, boolean firstPass)
     {
         if (firstPass)
@@ -881,82 +1078,11 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         return checkedSome;
     }
 
-    private void verifyChunk(Chunk chunkClient, Chunk chunkSchematic, IntBoundingBox box, boolean firstPass)
-    {
-        LayerRange range = DataManager.getRenderLayerRange();
-        Direction.Axis axis = range.getAxis();
-        boolean ranged = this.schematicPlacement.getSchematicVerifierType() == BlockInfoListType.RENDER_LAYERS;
-
-        final int startX = ranged && axis == Direction.Axis.X ? Math.max(box.minX, range.getLayerMin()) : box.minX;
-        final int startY = ranged && axis == Direction.Axis.Y ? Math.max(box.minY, range.getLayerMin()) : box.minY;
-        final int startZ = ranged && axis == Direction.Axis.Z ? Math.max(box.minZ, range.getLayerMin()) : box.minZ;
-        final int endX = ranged && axis == Direction.Axis.X ? Math.min(box.maxX, range.getLayerMax()) : box.maxX;
-        final int endY = ranged && axis == Direction.Axis.Y ? Math.min(box.maxY, range.getLayerMax()) : box.maxY;
-        final int endZ = ranged && axis == Direction.Axis.Z ? Math.min(box.maxZ, range.getLayerMax()) : box.maxZ;
-
-        for (int y = startY; y <= endY; ++y)
-        {
-            for (int z = startZ; z <= endZ; ++z)
-            {
-                for (int x = startX; x <= endX; ++x)
-                {
-                    MUTABLE_POS.set(x, y, z);
-
-                    if (firstPass)
-                    {
-                        BlockState stateClient = chunkClient.getBlockState(MUTABLE_POS);
-                        BlockState stateSchematic = chunkSchematic.getBlockState(MUTABLE_POS);
-
-                        this.checkBlockStates(x, y, z, stateSchematic, stateClient);
-
-                        if (stateSchematic.isAir() == false)
-                        {
-                            this.schematicBlocks++;
-                        }
-                    }
-                    else
-                    {
-                        BlockMismatch mismatch = this.verifiedPositions.get(MUTABLE_POS);
-
-                        if (mismatch != null)
-                        {
-                            this.verifiedPositions.remove(MUTABLE_POS);
-
-                            BlockState stateFound = chunkClient.getBlockState(MUTABLE_POS);
-                            MUTABLE_PAIR.setLeft(mismatch.stateExpected);
-                            MUTABLE_PAIR.setRight(mismatch.stateFound);
-
-                            var map = this.getMapForMismatchType(mismatch.mismatchType);
-                            if (map != null)
-                            {
-                                map.remove(MUTABLE_PAIR, MUTABLE_POS);
-                            }
-                            this.checkBlockStates(x, y, z, mismatch.stateExpected, stateFound);
-                        }
-                        else
-                        {
-                            //Could be an extra block on air
-                            BlockState stateExpected = chunkSchematic.getBlockState(MUTABLE_POS);
-                            if (stateExpected.isAir())
-                            {
-                                BlockState stateFound = chunkClient.getBlockState(MUTABLE_POS);
-
-                                if (stateExpected != stateFound)
-                                {
-                                    this.checkBlockStates(x, y, z, stateExpected, stateFound);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private void checkBlockStates(int x, int y, int z, BlockState stateSchematic, BlockState stateClient)
     {
         BlockPos pos = new BlockPos(x, y, z);
 
+        //Custom Additions (easier to resolve future merge conflicts)
         OverlayType overlayType = AddonUtils.getOverlayType(stateSchematic, stateClient, this.ignoreBlockRegistry);
 
         if (overlayType == OverlayType.NONE)
@@ -965,7 +1091,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
             if (stateSchematic.isAir() == false)
             {
-                this.verifiedPositions.put(pos, new BlockMismatch(MismatchType.CORRECT_STATE, stateSchematic, stateClient, 1));
+                this.blockMismatches.put(pos, new BlockMismatch(MismatchType.CORRECT_STATE, stateSchematic, stateClient, 1));
             }
         }
         else
@@ -1003,7 +1129,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
                 if (mismatch != null)
                 {
-                    this.verifiedPositions.put(pos, mismatch);
+                    this.blockMismatches.put(pos, mismatch);
 
                     ItemUtils.setItemForBlock(this.worldClient, pos, stateClient);
                     ItemUtils.setItemForBlock(this.worldSchematic, pos, stateSchematic);
@@ -1152,6 +1278,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
             final int count = Math.min(positionList.size(), Configs.InfoOverlays.INFO_HUD_MAX_LINES.getIntegerValue());
 
+            //Custom Additions (easier to resolve future merge conflicts)
             BlockPos playerPos = mc.player != null ? mc.player.getBlockPos() : null;
 
             for (int i = 0; i < count; ++i)
@@ -1160,6 +1287,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 BlockPos pos = entry.pos;
                 String pre = entry.type.getColorCode();
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 String direction = "";
                 String distance = "";
                 if (playerPos != null)

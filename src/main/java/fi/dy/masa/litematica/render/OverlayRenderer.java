@@ -51,7 +51,6 @@ import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.MismatchRender
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
 import fi.dy.masa.litematica.selection.SelectionManager;
-import fi.dy.masa.litematica.util.AddonUtils;
 import fi.dy.masa.litematica.util.BlockInfoAlignment;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.ItemUtils;
@@ -59,6 +58,9 @@ import fi.dy.masa.litematica.util.PositionUtils.Corner;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.util.AddonUtils;
 
 public class OverlayRenderer
 {
@@ -712,6 +714,7 @@ public class OverlayRenderer
     {
         this.blockInfoLines.clear();
 
+        //Custom Additions (easier to resolve future merge conflicts)
         String ul = GuiBase.TXT_UNDERLINE;
         boolean addSep = false;
 
@@ -740,6 +743,7 @@ public class OverlayRenderer
             }
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         if (traceWrapper != null &&
             (traceWrapper.getHitType() == RayTraceWrapper.HitType.VANILLA_BLOCK ||
             traceWrapper.getHitType() == RayTraceWrapper.HitType.SCHEMATIC_BLOCK))
@@ -753,6 +757,7 @@ public class OverlayRenderer
 
             if (stateSchematic != stateClient && stateClient.isAir() == false && stateSchematic.isAir() == false && stateSchematic != voidAir)
             {
+                //Custom Additions (easier to resolve future merge conflicts)
                 if (addSep)
                     this.blockInfoLines.add("");
 
@@ -765,6 +770,7 @@ public class OverlayRenderer
             }
             else if (traceWrapper.getHitType() == RayTraceWrapper.HitType.SCHEMATIC_BLOCK)
             {
+                //Custom Additions (easier to resolve future merge conflicts)
                 if (addSep)
                     this.blockInfoLines.add("");
                 

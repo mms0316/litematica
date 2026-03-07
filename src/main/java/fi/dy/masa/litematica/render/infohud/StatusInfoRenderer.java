@@ -59,6 +59,7 @@ public class StatusInfoRenderer implements IInfoHudRenderer
 
         if (Configs.Generic.EASY_PLACE_MODE.getBooleanValue())
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             String easyPlace = StringUtils.translate("litematica.hud.misc.easy_place_mode_enabled");
 
             if (Configs.Generic.EASY_PLACE_FIRST.getBooleanValue())

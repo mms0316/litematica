@@ -18,7 +18,6 @@ import net.minecraft.client.world.ClientChunkManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BucketItem;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
@@ -39,7 +38,6 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 
 import fi.dy.masa.malilib.gui.Message.MessageType;
-import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.interfaces.IStringConsumer;
 import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.malilib.util.*;
@@ -67,10 +65,16 @@ import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper.HitType;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.litematica.world.WorldSchematic;
 
+//Custom Additions (easier to resolve future merge conflicts)
+import net.minecraft.item.BucketItem;
+import fi.dy.masa.malilib.gui.GuiBase;
+
 public class WorldUtils
 {
     private static final List<PositionCache> EASY_PLACE_POSITIONS = new ArrayList<>();
     private static long easyPlaceLastPickBlockTime = System.nanoTime();
+
+    //Custom Additions (easier to resolve future merge conflicts)
     private static long easyPlaceNextSwap = 0;
     private static boolean easyPlaceShowFailMessage;
     private static final Property<?>[] CHECKED_PROPERTIES = new Property<?>[] {
@@ -682,6 +686,8 @@ public class WorldUtils
             Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
             //&& Configs.Generic.EASY_PLACE_POST_REWRITE.getBooleanValue() == false)
         {
+            //Custom Additions (easier to resolve future merge conflicts)
+            //Changed from WorldUtils.doEasyPlaceAction
             ActionResult result = doEasyPlaceAction(mc);
             if (result == ActionResult.SUCCESS)
             {
@@ -696,31 +702,33 @@ public class WorldUtils
             //Configs.Generic.EASY_PLACE_POST_REWRITE.getBooleanValue() == false &&
             DataManager.getToolMode() != ToolMode.REBUILD)
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             easyPlaceShowFailMessage = true;
+
             ActionResult result = doEasyPlaceAction(mc);
 
-            if (result == ActionResult.FAIL)
+            //Custom Additions (easier to resolve future merge conflicts)
+            if (result == ActionResult.FAIL && easyPlaceShowFailMessage)
             {
-                if (easyPlaceShowFailMessage)
-                {
-                    MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
+                MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
 
-                    if (type == MessageOutputType.MESSAGE)
-                    {
-                        InfoUtils.showGuiOrInGameMessage(MessageType.WARNING, "litematica.message.easy_place_fail");
-                    }
-                    else if (type == MessageOutputType.ACTIONBAR)
-                    {
-                        InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
-                    }
+                if (type == MessageOutputType.MESSAGE)
+                {
+                    InfoUtils.showGuiOrInGameMessage(MessageType.WARNING, "litematica.message.easy_place_fail");
+                }
+                else if (type == MessageOutputType.ACTIONBAR)
+                {
+                    InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
                 }
 
                 return true;
             }
-            else
-            {
-                AddonUtils.skipInventoryUpdate();
-            }
+
+            if (result == ActionResult.FAIL)
+                return true;
+
+            //Custom Additions (easier to resolve future merge conflicts)
+            AddonUtils.skipInventoryUpdate();
 
             return result != ActionResult.PASS;
         }
@@ -733,6 +741,7 @@ public class WorldUtils
         RayTraceWrapper traceWrapper;
         double traceMaxRange = getValidBlockRange(mc);
 
+        //Custom Additions (easier to resolve future merge conflicts)
         final boolean ignoreEnderChest = Configs.Generic.EASY_PLACE_IGNORE_ENDER_CHEST.getBooleanValue();
         final boolean ignoreShulkerBox = Configs.Generic.EASY_PLACE_IGNORE_SHULKER_BOX.getBooleanValue();
         if (ignoreEnderChest || ignoreShulkerBox)
@@ -779,12 +788,20 @@ public class WorldUtils
             World world = SchematicWorldHandler.getSchematicWorld();
             BlockState stateSchematic = world.getBlockState(pos);
             ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic);
+
+            //Custom Additions (easier to resolve future merge conflicts)
             final boolean alreadyPlacedOnPosition = easyPlaceIsPositionCached(pos);
 
-            if (stack.isEmpty() == false)
+            //Custom Additions (easier to resolve future merge conflicts)
+            if (stack.isEmpty())
+            {
+                return alreadyPlacedOnPosition ? ActionResult.FAIL : ActionResult.SUCCESS;
+            }
+            else // to keep indentation levels
             {
                 boolean mayPlace = false;
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 if (ignoreEnderChest || ignoreShulkerBox)
                 {
                     final Block blockInHand = Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem());
@@ -797,6 +814,7 @@ public class WorldUtils
 
                 if (alreadyPlacedOnPosition)
                 {
+                    //Custom Additions (easier to resolve future merge conflicts)
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
@@ -804,9 +822,11 @@ public class WorldUtils
 
                 if (stateSchematic == stateClient)
                 {
+                    //Custom Additions (easier to resolve future merge conflicts)
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 final boolean hasUseAction = AddonUtils.hasUseAction(stateSchematic.getBlock());
 
                 // Abort if there is already a block in the target position
@@ -815,6 +835,7 @@ public class WorldUtils
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 if (Configs.Generic.EASY_PLACE_AVOID_BEACONS.getBooleanValue() &&
                         DataManager.getBeaconManager().checkIfObstructs(pos, stateSchematic))
                 {
@@ -823,6 +844,7 @@ public class WorldUtils
                     return ActionResult.FAIL;
                 }
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 final var pickBlockResult = InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
                 final var swapInterval = Configs.Generic.EASY_PLACE_SWAP_INTERVAL.getIntegerValue();
 
@@ -838,6 +860,7 @@ public class WorldUtils
                     }
                 }
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 if (pickBlockResult.changed() && swapInterval > 0 && EntityUtils.isCreativeMode(mc.player) == false)
                 {
                     final var now = System.nanoTime();
@@ -856,9 +879,11 @@ public class WorldUtils
                 // Abort if a wrong item is in the player's hand
                 if (hand == null)
                 {
+                    //Custom Additions (easier to resolve future merge conflicts)
                     return mayPlace ? ActionResult.PASS : ActionResult.FAIL;
                 }
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 // Check if it's the last remaining item
                 if (Configs.Generic.EASY_PLACE_LEAVE_ONE.getBooleanValue() && EntityUtils.isCreativeMode(mc.player) == false)
                 {
@@ -879,6 +904,8 @@ public class WorldUtils
                 {
                     // If there is a block in the world right behind the targeted schematic block, then use
                     // that block as the click position
+
+                    //Custom Additions (easier to resolve future merge conflicts)
                     HitResult.Type type = traceVanilla.getType();
                     if (type == HitResult.Type.BLOCK || type == HitResult.Type.MISS)
                     {
@@ -902,6 +929,7 @@ public class WorldUtils
                     }
                 }
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 if (stack.getItem() instanceof BucketItem)
                 {
                     ActionResult result = AddonUtils.checkEasyPlaceFluidBucket(mc);
@@ -921,6 +949,7 @@ public class WorldUtils
                 //System.out.printf("doEasyPlaceAction - stateSchematic [%s] // sideOrig [%s]\n", stateSchematic.toString(), sideOrig.getName());
 
                 Direction side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
+
                 // Support for special cases
                 PlacementProtocolData placementData = applyPlacementProtocolAll(pos, stateSchematic, hitPos);
 
@@ -935,6 +964,7 @@ public class WorldUtils
                     side = placementData.side;
                     hitPos = placementData.hitVec;
 
+                    //Custom Additions (easier to resolve future merge conflicts)
                     if (protocol == EasyPlaceProtocol.RESTRICTED)
                     {
                         //Check for blocks that have rotation property (Banners, Signs, Skulls)
@@ -961,6 +991,7 @@ public class WorldUtils
                         // Slab support only
                         hitPos = applyBlockSlabProtocol(pos, stateSchematic, hitPos);
                     }
+                    //Custom Additions (easier to resolve future merge conflicts)
                     else if (protocol == EasyPlaceProtocol.RESTRICTED)
                     {
                         //Use vanilla / Paper restrictions
@@ -1012,6 +1043,7 @@ public class WorldUtils
                     }
                 }
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 InventoryUtils.refreshSlotTimeout(pickBlockResult.slot());
 
                 if (Configs.Generic.EASY_PLACE_PICK_BLOCK_AFTER_USE.getBooleanValue() &&
@@ -1022,16 +1054,12 @@ public class WorldUtils
                     InventoryUtils.refreshSlotTimeout(newPickBlockResult.slot());
                 }
             }
-            else
-            {
-                if (alreadyPlacedOnPosition)
-                    return ActionResult.FAIL;
-            }
 
             return ActionResult.SUCCESS;
         }
         else if (traceWrapper.getHitType() == HitType.VANILLA_BLOCK)
         {
+            //Custom Additions (easier to resolve future merge conflicts)
             if (ignoreEnderChest || ignoreShulkerBox)
             {
                 final Block blockInHand = Block.getBlockFromItem(mc.player.getStackInHand(Hand.MAIN_HAND).getItem());
@@ -1041,6 +1069,7 @@ public class WorldUtils
                     return ActionResult.PASS;
                 }
             }
+
             return placementRestrictionInEffect(mc) ? ActionResult.FAIL : ActionResult.PASS;
         }
 
@@ -1061,6 +1090,7 @@ public class WorldUtils
                 return blockSchematic != blockClient;
             }
         }
+        //Custom Additions (easier to resolve future merge conflicts)
         else if (player.isSneaking() == false)
         {
             boolean checkedProperty = false;
@@ -1079,6 +1109,7 @@ public class WorldUtils
                 return false;
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         HitResult.Type type = trace.getType();
         if (type != HitResult.Type.BLOCK && type != HitResult.Type.MISS)
         {
@@ -1379,7 +1410,9 @@ public class WorldUtils
 
             if (type == MessageOutputType.MESSAGE)
             {
-                InfoUtils.showGuiOrInGameMessage(MessageType.WARNING, 1000, "litematica.message.placement_restriction_fail");
+                //Custom Additions (easier to resolve future merge conflicts)
+                final int lifeTime = 1000;
+                InfoUtils.showGuiOrInGameMessage(MessageType.WARNING, lifeTime, "litematica.message.placement_restriction_fail");
             }
             else if (type == MessageOutputType.ACTIONBAR)
             {
@@ -1414,6 +1447,7 @@ public class WorldUtils
             return false;
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         // Check for placing fluid on fluid
         if (stack.getItem() instanceof BucketItem)
         {
@@ -1479,6 +1513,7 @@ public class WorldUtils
                     return true;
             }
 
+            //Custom Additions (easier to resolve future merge conflicts)
             // Sculk Vein and Glow Lichen
             if (schematicBlock instanceof MultifaceGrowthBlock)
             {
@@ -1733,18 +1768,19 @@ public class WorldUtils
 
     private static void cacheEasyPlacePosition(BlockPos pos, boolean hasUseAction)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         long timeout;
 
         if (hasUseAction)
         {
-            timeout = Configs.Generic.EASY_PLACE_USE_INTERVAL.getIntegerValue() * 1_000_000L;
+            timeout = Configs.Generic.EASY_PLACE_USE_INTERVAL.getIntegerValue();
         }
         else
         {
-            timeout = Configs.Generic.EASY_PLACE_PLACE_INTERVAL.getIntegerValue() * 1_000_000L;
+            timeout = Configs.Generic.EASY_PLACE_PLACE_INTERVAL.getIntegerValue();
         }
 
-        EASY_PLACE_POSITIONS.add(new PositionCache(pos, System.nanoTime(), timeout));
+        EASY_PLACE_POSITIONS.add(new PositionCache(pos, System.nanoTime(), timeout * 1_000_000L));
     }
 
     public static class PositionCache
@@ -1770,7 +1806,6 @@ public class WorldUtils
             return currentTime - this.time > this.timeout;
         }
     }
-
 
     private static boolean easyPlaceIsTooFast()
     {

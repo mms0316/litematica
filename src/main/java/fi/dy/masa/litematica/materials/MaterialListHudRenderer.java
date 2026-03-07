@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import org.joml.Matrix3x2fStack;
 
-import fi.dy.masa.litematica.util.AddonUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -25,11 +24,15 @@ import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.mixin.screen.IMixinHandledScreen;
 import fi.dy.masa.litematica.render.infohud.IInfoHudRenderer;
 import fi.dy.masa.litematica.render.infohud.RenderPhase;
-import fi.dy.masa.litematica.scheduler.TaskScheduler;
-import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.util.AddonUtils;
+import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
+
 
 public class MaterialListHudRenderer implements IInfoHudRenderer
 {
@@ -182,6 +185,7 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
             y += lineHeight;
         }
 
+        //Custom Additions (easier to resolve future merge conflicts)
         String titleIncomplete = "";
         if (this.materialList instanceof MaterialListPlacement &&
             TaskScheduler.getInstanceClient().getAllTasks().stream()
@@ -226,6 +230,7 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
 
     protected String getFormattedCountString(int count, int maxStackSize)
     {
+        //Custom Additions (easier to resolve future merge conflicts)
         return AddonUtils.getFormattedCountString(count, maxStackSize, false);
     }
 
@@ -283,6 +288,7 @@ public class MaterialListHudRenderer implements IInfoHudRenderer
         RenderUtils.drawOutline(drawContext, x, y, width, height, 1, colorBorder);    // zLevel
     }
 
+    //Custom Additions (easier to resolve future merge conflicts)
     public void clearUpdateTime()
     {
         this.lastUpdateTime = 0;

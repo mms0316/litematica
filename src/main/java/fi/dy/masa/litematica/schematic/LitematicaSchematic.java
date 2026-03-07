@@ -68,9 +68,7 @@ import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
-import fi.dy.masa.litematica.util.BlockUtils;
 import fi.dy.masa.litematica.util.EntityUtils;
-import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.util.WorldUtils;
 import fi.dy.masa.litematica.util.*;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
@@ -1955,6 +1953,7 @@ public class LitematicaSchematic
             this.metadata.setAuthor(metadata.contains("Author") ? metadata.getString("Author", "?") : "unknown");
             this.metadata.setTimeCreated(metadata.contains("Date") ? metadata.getLong("Date", System.currentTimeMillis()) : System.currentTimeMillis());
 
+            //Custom Additions (easier to resolve future merge conflicts)
             //Extension - ARGB square picture
             metadata.getIntArray("PreviewImageData").ifPresent(this.metadata::setPreviewImagePixelData);
         }
@@ -2032,6 +2031,7 @@ public class LitematicaSchematic
             this.metadata.setAuthor(metadata.contains("Author") ? metadata.getString("Author", "?") : "unknown");
             this.metadata.setTimeCreated(metadata.contains("Date") ? metadata.getLong("Date", System.currentTimeMillis()) : System.currentTimeMillis());
 
+            //Custom Additions (easier to resolve future merge conflicts)
             //Extension - ARGB square picture
             metadata.getIntArray("PreviewImageData").ifPresent(array -> this.metadata.setPreviewImagePixelData(array));
         }
@@ -2249,6 +2249,7 @@ public class LitematicaSchematic
             this.metadata.setTotalBlocks(totalBlocks);
             this.entities.put(name, this.readEntitiesFromVanillaStructure(tag, minecraftDataVersion));
 
+            //Custom Additions (easier to resolve future merge conflicts)
             //Extension - ARGB square picture
             var imgData = tag.getIntArray("PreviewImageData");
             if (imgData.isEmpty()) {

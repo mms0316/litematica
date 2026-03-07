@@ -130,6 +130,7 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
             this.drawString(drawContext, str, x, y, textColor);
             y += 12;
 
+            //Custom Additions (easier to resolve future merge conflicts)
             long timeCreated = meta.getTimeCreated();
             if (timeCreated > 0)
             {
@@ -147,6 +148,7 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
                 }
             }
 
+            //Custom Additions (easier to resolve future merge conflicts)
             int regionCount = meta.getRegionCount();
             if (regionCount > 0)
             {
@@ -255,7 +257,8 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
                 //y += 14;
                 y += 12;
 
-                int textureSize = pair.getRight().getImage().getWidth();
+                //Custom Additions (easier to resolve future merge conflicts)
+                int iconSize = pair.getRight().getImage().getWidth();
 
                 // info panel origin
                 int infoX = this.posX + this.totalWidth - this.infoWidth;
@@ -263,19 +266,20 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
 
                 // explicit inner bounds with 3px/12px padding on each side
                 int innerLeft = infoX + 3;
-                int innerTop = infoY + 12;
+                //int innerTop = infoY + 12;
                 int innerRight = infoX + this.infoWidth - 3;
                 int innerBottom = infoY + height - 12;
 
                 int availableWidth = Math.max(1, innerRight - innerLeft);
                 int availableHeight = Math.max(1, innerBottom - y);
 
-                int scaledSize = Math.min(textureSize, Math.min(availableWidth, availableHeight));
+                int scaledSize = Math.min(iconSize, Math.min(availableWidth, availableHeight));
 
                 int xWithMargin = innerLeft + (availableWidth - scaledSize) / 2;
                 int yWithMargin = y + (availableHeight - scaledSize) / 2;
 
                 RenderUtils.drawOutlinedBox(drawContext, xWithMargin, y, scaledSize, scaledSize, 0xA0000000, COLOR_HORIZONTAL_BAR);
+
                 drawContext.drawTexture(RenderPipelines.GUI_TEXTURED, pair.getLeft(), xWithMargin, yWithMargin, 0.0F, 0.0F, scaledSize, scaledSize, scaledSize, scaledSize);
             }
         }
@@ -330,6 +334,7 @@ public class WidgetSchematicBrowser extends WidgetFileBrowserBase
                 meta = pair.getRight();
                 version = pair.getLeft();
 
+                //Custom Additions (easier to resolve future merge conflicts)
                 this.createPreviewImage(file, meta);
 
                 this.cachedMetadata.put(file, meta);

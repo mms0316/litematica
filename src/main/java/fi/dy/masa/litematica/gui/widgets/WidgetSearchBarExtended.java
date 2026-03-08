@@ -15,11 +15,11 @@ public class WidgetSearchBarExtended extends WidgetSearchBar
 
     public void setText(String text)
     {
-        this.searchBox.setText(text);
+        this.searchBox.setTextWrapper(text);
     }
 
     public String getText()
     {
-        return this.searchBox.getText();
+        return this.searchBox.getTextWrapper();
     }
 }

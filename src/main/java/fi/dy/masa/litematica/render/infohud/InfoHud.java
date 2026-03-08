@@ -2,19 +2,17 @@ package fi.dy.masa.litematica.render.infohud;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-
-import fi.dy.masa.litematica.config.Configs;
+import net.minecraft.client.Minecraft;
 import fi.dy.masa.malilib.config.HudAlignment;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.util.GuiUtils;
+import fi.dy.masa.litematica.config.Configs;
 
 public class InfoHud
 {
     private static final InfoHud INSTANCE = new InfoHud();
 
-    protected final MinecraftClient mc;
+    protected final Minecraft mc;
     protected final List<String> lineList = new ArrayList<>();
     protected final List<IInfoHudRenderer> renderers = new ArrayList<>();
     protected boolean enabled = true;
@@ -26,7 +24,7 @@ public class InfoHud
 
     protected InfoHud()
     {
-        this.mc = MinecraftClient.getInstance();
+        this.mc = Minecraft.getInstance();
     }
 
     public boolean isEnabled()
@@ -60,7 +58,7 @@ public class InfoHud
         return Configs.InfoOverlays.INFO_HUD_OFFSET_Y.getIntegerValue();
     }
 
-    public void renderHud(DrawContext drawContext)
+    public void renderHud(GuiContext ctx)
     {
         if (this.mc.player != null && this.shouldRender())
         {
@@ -78,7 +76,7 @@ public class InfoHud
 
             if (this.lineList.isEmpty() == false)
             {
-                int ySize = fi.dy.masa.malilib.render.RenderUtils.renderText(drawContext, xOffset, yOffset, scale, 0xFFFFFFFF, 0x80000000, this.getHudAlignment(), true, true, this.lineList);
+                int ySize = fi.dy.masa.malilib.render.RenderUtils.renderText(ctx, xOffset, yOffset, scale, 0xFFFFFFFF, 0x80000000, this.getHudAlignment(), true, true, this.lineList);
                 yOffset += (int) Math.ceil(ySize * scale);
             }
 
@@ -89,7 +87,7 @@ public class InfoHud
                     if (renderer.getShouldRenderCustom() && (isGui == false || renderer.shouldRenderInGuis()))
                     {
                         // FIXME: This is technically wrong, the yOffset should be separate per hud alignment
-                        yOffset += renderer.render(drawContext, xOffset, yOffset, this.getHudAlignment());
+                        yOffset += renderer.render(ctx, xOffset, yOffset, this.getHudAlignment());
                     }
                 }
             }

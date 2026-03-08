@@ -2,10 +2,9 @@ package fi.dy.masa.litematica.gui.widgets;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.BlockPos;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.litematica.gui.GuiAreaSelectionEditorSubRegion;
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
@@ -55,45 +54,43 @@ public class WidgetSelectionSubRegion extends WidgetListEntryBase<String>
     }
 
     @Override
-    public boolean canSelectAt(int mouseX, int mouseY, int mouseButton)
+    public boolean canSelectAt(MouseButtonEvent click)
     {
-        return mouseX < this.buttonsStartX && super.canSelectAt(mouseX, mouseY, mouseButton);
+        return click.x() < this.buttonsStartX && super.canSelectAt(click);
     }
 
     @Override
-    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void render(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
-//        RenderUtils.color(1f, 1f, 1f, 1f);
-
         selected = this.entry.equals(this.selection.getCurrentSubRegionBoxName());
 
         // Draw a lighter background for the hovered and the selected entry
         if (selected || this.isMouseOver(mouseX, mouseY))
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0707070);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0707070);
         }
         else if (this.isOdd)
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0101010);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0101010);
         }
         // Draw a slightly lighter background for even entries
         else
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0303030);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0303030);
         }
 
         if (selected)
         {
-            RenderUtils.drawOutline(drawContext, this.x, this.y, this.width, this.height, 0xFFE0E0E0); // 0.001f (zLevel), false (depthMask)
+            RenderUtils.drawOutline(ctx, this.x, this.y, this.width, this.height, 0xFFE0E0E0); // 0.001f (zLevel), false (depthMask)
         }
 
-        this.drawString(drawContext, this.x + 2, this.y + 7, 0xFFFFFFFF, this.entry);
+        this.drawString(ctx, this.x + 2, this.y + 7, 0xFFFFFFFF, this.entry);
 
-        super.render(drawContext, mouseX, mouseY, selected);
+        super.render(ctx, mouseX, mouseY, selected);
     }
 
     @Override
-    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void postRenderHovered(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
         List<String> text = new ArrayList<>();
 
@@ -126,79 +123,63 @@ public class WidgetSelectionSubRegion extends WidgetListEntryBase<String>
 
         if (GuiBase.isMouseOver(mouseX, mouseY, this.x, this.y, this.buttonsStartX - offset, this.height))
         {
-            RenderUtils.drawHoverText(drawContext, mouseX, mouseY, text);
+            RenderUtils.drawHoverText(ctx, mouseX, mouseY, text);
         }
     }
 
-    private static class ButtonListener implements IButtonActionListener
-    {
-        private final WidgetSelectionSubRegion widget;
-        private final ButtonType type;
+	private record ButtonListener(ButtonType type, WidgetSelectionSubRegion widget) implements IButtonActionListener
+	{
+		@Override
+		public void actionPerformedWithButton(ButtonBase button, int mouseButton)
+		{
+			if (this.type == ButtonType.RENAME)
+			{
+				String title = "litematica.gui.title.rename_area_sub_region";
+				String name = this.widget.box != null ? this.widget.box.getName() : "<error>";
+				BoxRenamer renamer = new BoxRenamer(this.widget.selection, this.widget);
+				GuiBase.openGui(new GuiTextInputFeedback(160, title, name, this.widget.parent.getEditorGui(), renamer));
+			}
+			else if (this.type == ButtonType.REMOVE)
+			{
+				this.widget.selection.removeSubRegionBox(this.widget.entry);
+				this.widget.parent.refreshEntries();
+			}
+			else if (this.type == ButtonType.CONFIGURE)
+			{
+				GuiAreaSelectionEditorSubRegion gui
+						= new GuiAreaSelectionEditorSubRegion(this.widget.selection, this.widget.box);
+				gui.setParent(GuiUtils.getCurrentScreen());
+				GuiBase.openGui(gui);
+			}
+		}
 
-        public ButtonListener(ButtonType type, WidgetSelectionSubRegion widget)
-        {
-            this.type = type;
-            this.widget = widget;
-        }
+		public enum ButtonType
+		{
+			RENAME("litematica.gui.button.rename"),
+			CONFIGURE("litematica.gui.button.configure"),
+			REMOVE(GuiBase.TXT_RED + "-");
 
-        @Override
-        public void actionPerformedWithButton(ButtonBase button, int mouseButton)
-        {
-            if (this.type == ButtonType.RENAME)
-            {
-                String title = "litematica.gui.title.rename_area_sub_region";
-                String name = this.widget.box != null ? this.widget.box.getName() : "<error>";
-                BoxRenamer renamer = new BoxRenamer(this.widget.selection, this.widget);
-                GuiBase.openGui(new GuiTextInputFeedback(160, title, name, this.widget.parent.getEditorGui(), renamer));
-            }
-            else if (this.type == ButtonType.REMOVE)
-            {
-                this.widget.selection.removeSubRegionBox(this.widget.entry);
-                this.widget.parent.refreshEntries();
-            }
-            else if (this.type == ButtonType.CONFIGURE)
-            {
-                GuiAreaSelectionEditorSubRegion gui = new GuiAreaSelectionEditorSubRegion(this.widget.selection, this.widget.box);
-                gui.setParent(GuiUtils.getCurrentScreen());
-                GuiBase.openGui(gui);
-            }
-        }
+			private final String labelKey;
 
-        public enum ButtonType
-        {
-            RENAME          ("litematica.gui.button.rename"),
-            CONFIGURE       ("litematica.gui.button.configure"),
-            REMOVE          (GuiBase.TXT_RED + "-");
+			ButtonType(String labelKey)
+			{
+				this.labelKey = labelKey;
+			}
 
-            private final String labelKey;
+			public String getDisplayName()
+			{
+				return StringUtils.translate(this.labelKey);
+			}
+		}
+	}
 
-            ButtonType(String labelKey)
-            {
-                this.labelKey = labelKey;
-            }
-
-            public String getDisplayName()
-            {
-                return StringUtils.translate(this.labelKey);
-            }
-        }
-    }
-
-    private static class BoxRenamer implements IStringConsumerFeedback
-    {
-        private final WidgetSelectionSubRegion widget;
-        private final AreaSelection selection;
-
-        public BoxRenamer(AreaSelection selection, WidgetSelectionSubRegion widget)
-        {
-            this.widget = widget;
-            this.selection = selection;
-        }
-
-        @Override
-        public boolean setString(String string)
-        {
-            return this.selection.renameSubRegionBox(this.widget.entry, string, this.widget.parent.getEditorGui());
-        }
-    }
+	private record BoxRenamer(AreaSelection selection, WidgetSelectionSubRegion widget)
+			implements IStringConsumerFeedback
+	{
+		@Override
+		public boolean setString(String string)
+		{
+			return this.selection.renameSubRegionBox(this.widget.entry, string, this.widget.parent.getEditorGui());
+		}
+	}
 }

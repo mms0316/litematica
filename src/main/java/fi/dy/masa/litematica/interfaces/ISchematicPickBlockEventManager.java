@@ -1,8 +1,7 @@
 package fi.dy.masa.litematica.interfaces;
 
-import net.minecraft.item.ItemStack;
-
 import fi.dy.masa.litematica.schematic.pickblock.SchematicPickBlockEventResult;
+import net.minecraft.world.item.ItemStack;
 
 public interface ISchematicPickBlockEventManager
 {

@@ -1,6 +1,7 @@
 package fi.dy.masa.litematica.schematic.projects;
 
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
@@ -9,7 +10,6 @@ import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import fi.dy.masa.malilib.util.JsonUtils;
-import net.minecraft.util.math.BlockPos;
 
 public class SchematicVersion
 {

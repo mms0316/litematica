@@ -2,10 +2,9 @@ package fi.dy.masa.litematica.gui.widgets;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.BlockPos;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.litematica.gui.GuiAreaSelectionEditorNormal;
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.SelectionManager;
@@ -45,7 +44,7 @@ public class WidgetAreaSelectionEntry extends WidgetDirectoryEntry
 
         // Note: These are placed from right to left
 
-        if (entry.getType() == DirectoryEntryType.FILE && FileType.fromFile(entry.getFullPath()) == FileType.JSON)
+        if (entry.type() == DirectoryEntryType.FILE && FileType.fromFile(entry.getFullPath()) == FileType.JSON)
         {
             posX = this.createButton(posX, posY, ButtonListener.ButtonType.REMOVE);
             posX = this.createButton(posX, posY, ButtonListener.ButtonType.RENAME);
@@ -67,29 +66,29 @@ public class WidgetAreaSelectionEntry extends WidgetDirectoryEntry
     }
 
     @Override
-    public boolean canSelectAt(int mouseX, int mouseY, int mouseButton)
+    public boolean canSelectAt(MouseButtonEvent click)
     {
-        return mouseX < this.buttonsStartX && super.canSelectAt(mouseX, mouseY, mouseButton);
+        return click.x() < this.buttonsStartX && super.canSelectAt(click);
     }
 
     @Override
-    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void render(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
-        if (this.entry.getType() == DirectoryEntryType.FILE && FileType.fromFile(this.entry.getFullPath()) == FileType.JSON)
+        if (this.entry.type() == DirectoryEntryType.FILE && FileType.fromFile(this.entry.getFullPath()) == FileType.JSON)
         {
             selected = this.entry.getFullPath().toAbsolutePath().toString().equals(this.selectionManager.getCurrentNormalSelectionId());
-            super.render(drawContext, mouseX, mouseY, selected);
+            super.render(ctx, mouseX, mouseY, selected);
         }
         else
         {
-            super.render(drawContext, mouseX, mouseY, selected);
+            super.render(ctx, mouseX, mouseY, selected);
         }
     }
 
     @Override
     protected String getDisplayName()
     {
-        if (this.entry.getType() == DirectoryEntryType.FILE && FileType.fromFile(this.entry.getFullPath()) == FileType.JSON)
+        if (this.entry.type() == DirectoryEntryType.FILE && FileType.fromFile(this.entry.getFullPath()) == FileType.JSON)
         {
             AreaSelection selection = this.selectionManager.getOrLoadSelectionReadOnly(this.getDirectoryEntry().getFullPath().toAbsolutePath().toString());
             String prefix = this.entry.getDisplayNamePrefix();
@@ -100,7 +99,7 @@ public class WidgetAreaSelectionEntry extends WidgetDirectoryEntry
     }
 
     @Override
-    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void postRenderHovered(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
         List<String> text = new ArrayList<>();
         AreaSelection selection = this.selectionManager.getOrLoadSelectionReadOnly(this.getDirectoryEntry().getFullPath().toAbsolutePath().toString());
@@ -131,110 +130,91 @@ public class WidgetAreaSelectionEntry extends WidgetDirectoryEntry
 
         if (GuiBase.isMouseOver(mouseX, mouseY, this.x, this.y, this.buttonsStartX - offset, this.height))
         {
-            RenderUtils.drawHoverText(drawContext, mouseX, mouseY, text);
+            RenderUtils.drawHoverText(ctx, mouseX, mouseY, text);
         }
     }
 
-    private static class ButtonListener implements IButtonActionListener
-    {
-        private final WidgetAreaSelectionEntry widget;
-        private final SelectionManager selectionManager;
-        private final ButtonType type;
+	private record ButtonListener(ButtonType type, SelectionManager selectionManager, WidgetAreaSelectionEntry widget)
+			implements IButtonActionListener
+	{
+		@Override
+		public void actionPerformedWithButton(ButtonBase button, int mouseButton)
+		{
+			String selectionId = this.widget.getDirectoryEntry().getFullPath().toAbsolutePath().toString();
 
-        public ButtonListener(ButtonType type, SelectionManager selectionManager, WidgetAreaSelectionEntry widget)
-        {
-            this.type = type;
-            this.selectionManager = selectionManager;
-            this.widget = widget;
-        }
+			if (this.type == ButtonType.RENAME)
+			{
+				String title = "litematica.gui.title.rename_area_selection";
+				AreaSelection selection = this.selectionManager.getOrLoadSelection(selectionId);
+				String name = selection != null ? selection.getName() : "<error>";
+				SelectionRenamer renamer = new SelectionRenamer(this.selectionManager, this.widget, false);
+				GuiBase.openGui(new GuiTextInputFeedback(160, title, name, this.widget.parent.getSelectionManagerGui(), renamer));
+			}
+			else if (this.type == ButtonType.COPY)
+			{
+				AreaSelection selection = this.selectionManager.getOrLoadSelection(selectionId);
 
-        @Override
-        public void actionPerformedWithButton(ButtonBase button, int mouseButton)
-        {
-            String selectionId = this.widget.getDirectoryEntry().getFullPath().toAbsolutePath().toString();
+				if (selection != null)
+				{
+					String title = StringUtils.translate("litematica.gui.title.copy_area_selection", selection.getName());
+					SelectionRenamer renamer = new SelectionRenamer(this.selectionManager, this.widget, true);
+					GuiBase.openGui(new GuiTextInputFeedback(160, title, selection.getName(), this.widget.parent.getSelectionManagerGui(), renamer));
+				}
+				else
+				{
+					this.widget.parent.getSelectionManagerGui().addMessage(MessageType.ERROR, "litematica.error.area_selection.failed_to_load");
+				}
+			}
+			else if (this.type == ButtonType.REMOVE)
+			{
+				this.selectionManager.removeSelection(selectionId);
+			}
+			else if (this.type == ButtonType.CONFIGURE)
+			{
+				AreaSelection selection = this.selectionManager.getOrLoadSelection(selectionId);
 
-            if (this.type == ButtonType.RENAME)
-            {
-                String title = "litematica.gui.title.rename_area_selection";
-                AreaSelection selection = this.selectionManager.getOrLoadSelection(selectionId);
-                String name = selection != null ? selection.getName() : "<error>";
-                SelectionRenamer renamer = new SelectionRenamer(this.selectionManager, this.widget, false);
-                GuiBase.openGui(new GuiTextInputFeedback(160, title, name, this.widget.parent.getSelectionManagerGui(), renamer));
-            }
-            else if (this.type == ButtonType.COPY)
-            {
-                AreaSelection selection = this.selectionManager.getOrLoadSelection(selectionId);
+				if (selection != null)
+				{
+					GuiAreaSelectionEditorNormal gui = new GuiAreaSelectionEditorNormal(selection);
+					gui.setParent(GuiUtils.getCurrentScreen());
+					gui.setSelectionId(selectionId);
+					GuiBase.openGui(gui);
+				}
+			}
 
-                if (selection != null)
-                {
-                    String title = StringUtils.translate("litematica.gui.title.copy_area_selection", selection.getName());
-                    SelectionRenamer renamer = new SelectionRenamer(this.selectionManager, this.widget, true);
-                    GuiBase.openGui(new GuiTextInputFeedback(160, title, selection.getName(), this.widget.parent.getSelectionManagerGui(), renamer));
-                }
-                else
-                {
-                    this.widget.parent.getSelectionManagerGui().addMessage(MessageType.ERROR, "litematica.error.area_selection.failed_to_load");
-                }
-            }
-            else if (this.type == ButtonType.REMOVE)
-            {
-                this.selectionManager.removeSelection(selectionId);
-            }
-            else if (this.type == ButtonType.CONFIGURE)
-            {
-                AreaSelection selection = this.selectionManager.getOrLoadSelection(selectionId);
+			this.widget.parent.refreshEntries();
+		}
 
-                if (selection != null)
-                {
-                    GuiAreaSelectionEditorNormal gui = new GuiAreaSelectionEditorNormal(selection);
-                    gui.setParent(GuiUtils.getCurrentScreen());
-                    gui.setSelectionId(selectionId);
-                    GuiBase.openGui(gui);
-                }
-            }
+		public enum ButtonType
+		{
+			RENAME("litematica.gui.button.rename"),
+			COPY("litematica.gui.button.copy"),
+			CONFIGURE("litematica.gui.button.configure"),
+			REMOVE(GuiBase.TXT_RED + "-");
 
-            this.widget.parent.refreshEntries();
-        }
+			private final String labelKey;
 
-        public enum ButtonType
-        {
-            RENAME          ("litematica.gui.button.rename"),
-            COPY            ("litematica.gui.button.copy"),
-            CONFIGURE       ("litematica.gui.button.configure"),
-            REMOVE          (GuiBase.TXT_RED + "-");
+			ButtonType(String labelKey)
+			{
+				this.labelKey = labelKey;
+			}
 
-            private final String labelKey;
+			public String getLabelKey()
+			{
+				return this.labelKey;
+			}
+		}
+	}
 
-            ButtonType(String labelKey)
-            {
-                this.labelKey = labelKey;
-            }
-
-            public String getLabelKey()
-            {
-                return this.labelKey;
-            }
-        }
-    }
-
-    private static class SelectionRenamer implements IStringConsumerFeedback
-    {
-        private final WidgetAreaSelectionEntry widget;
-        private final SelectionManager selectionManager;
-        private final boolean copy;
-
-        public SelectionRenamer(SelectionManager selectionManager, WidgetAreaSelectionEntry widget, boolean copy)
-        {
-            this.widget = widget;
-            this.selectionManager = selectionManager;
-            this.copy = copy;
-        }
-
-        @Override
-        public boolean setString(String string)
-        {
-            String selectionId = this.widget.getDirectoryEntry().getFullPath().toAbsolutePath().toString();
-            return this.selectionManager.renameSelection(this.widget.getDirectoryEntry().getDirectory(), selectionId, string, this.copy, this.widget.parent.getSelectionManagerGui());
-        }
-    }
+	private record SelectionRenamer(SelectionManager selectionManager, WidgetAreaSelectionEntry widget, boolean copy)
+			implements IStringConsumerFeedback
+	{
+		@Override
+		public boolean setString(String string)
+		{
+			String selectionId = this.widget.getDirectoryEntry().getFullPath().toAbsolutePath().toString();
+			return this.selectionManager.renameSelection(this.widget.getDirectoryEntry()
+																	.getDirectory(), selectionId, string, this.copy, this.widget.parent.getSelectionManagerGui());
+		}
+	}
 }

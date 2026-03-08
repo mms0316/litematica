@@ -1,11 +1,11 @@
 package fi.dy.masa.litematica.scheduler.tasks;
 
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.state.BlockState;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.litematica.data.DataManager;
@@ -17,8 +17,8 @@ import fi.dy.masa.litematica.util.BlockInfoListType;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
 
 //Custom Additions (easier to resolve future merge conflicts)
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Box;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import fi.dy.masa.malilib.util.ItemType;
 
 public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
@@ -64,16 +64,16 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
 
         LayerRange range = this.layerRange;
         Direction.Axis axis = range.getAxis();
-        BlockPos.Mutable posMutable = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos posMutable = new BlockPos.MutableBlockPos();
 
         for (IntBoundingBox bb : this.getBoxesInChunk(pos))
         {
-            final int startX = axis == Direction.Axis.X ? Math.max(bb.minX, range.getLayerMin()) : bb.minX;
-            final int startY = axis == Direction.Axis.Y ? Math.max(bb.minY, range.getLayerMin()) : bb.minY;
-            final int startZ = axis == Direction.Axis.Z ? Math.max(bb.minZ, range.getLayerMin()) : bb.minZ;
-            final int endX = axis == Direction.Axis.X ? Math.min(bb.maxX, range.getLayerMax()) : bb.maxX;
-            final int endY = axis == Direction.Axis.Y ? Math.min(bb.maxY, range.getLayerMax()) : bb.maxY;
-            final int endZ = axis == Direction.Axis.Z ? Math.min(bb.maxZ, range.getLayerMax()) : bb.maxZ;
+            final int startX = axis == Direction.Axis.X ? Math.max(bb.minX(), range.getLayerMin()) : bb.minX();
+            final int startY = axis == Direction.Axis.Y ? Math.max(bb.minY(), range.getLayerMin()) : bb.minY();
+            final int startZ = axis == Direction.Axis.Z ? Math.max(bb.minZ(), range.getLayerMin()) : bb.minZ();
+            final int endX = axis == Direction.Axis.X ? Math.min(bb.maxX(), range.getLayerMax()) : bb.maxX();
+            final int endY = axis == Direction.Axis.Y ? Math.min(bb.maxY(), range.getLayerMax()) : bb.maxY();
+            final int endZ = axis == Direction.Axis.Z ? Math.min(bb.maxZ(), range.getLayerMax()) : bb.maxZ();
 
             for (int y = startY; y <= endY; ++y)
             {
@@ -88,7 +88,7 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
             }
 
             //Custom Additions (easier to resolve future merge conflicts)
-            this.countAtBox(new Box(startX, startY, startZ, endX + 1, endY + 1, endZ + 1));
+            this.countAtBox(new AABB(startX, startY, startZ, endX + 1, endY + 1, endZ + 1));
         }
 
         return true;
@@ -97,7 +97,7 @@ public abstract class TaskCountBlocksBase extends TaskProcessChunkBase
     protected abstract void countAtPosition(BlockPos pos);
 
     //Custom Additions (easier to resolve future merge conflicts)
-    protected abstract void countAtBox(Box box);
+    protected abstract void countAtBox(AABB box);
 
     @Override
     protected void onStop()

@@ -1,14 +1,16 @@
 package fi.dy.masa.litematica.schematic.conversion;
 
 import java.util.*;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.util.InfoUtils;
@@ -85,7 +87,7 @@ public class SchematicConverter
     public BlockState[] getBlockStatePaletteForBlockPalette(String[] blockPalette)
     {
         BlockState[] palette = new BlockState[blockPalette.length * 16];
-        Arrays.fill(palette, Blocks.AIR.getDefaultState());
+        Arrays.fill(palette, Blocks.AIR.defaultBlockState());
 
         for (int schematicBlockId = 0; schematicBlockId < blockPalette.length; ++schematicBlockId)
         {
@@ -98,7 +100,7 @@ public class SchematicConverter
 
     /**
      * Creates the post process state filter array.
-     * @param palette
+     * @param palette ()
      * @return true if there are at least some states that need post processing
      */
     public boolean createPostProcessStateFilter(BlockState[] palette)
@@ -108,7 +110,7 @@ public class SchematicConverter
 
     /**
      * Creates the post process state filter array.
-     * @param palette
+     * @param palette ()
      * @return true if there are at least some states that need post processing
      */
     public boolean createPostProcessStateFilter(Collection<BlockState> palette)
@@ -147,7 +149,7 @@ public class SchematicConverter
         return this.fixersPerBlock.get(state.getBlock().getClass());
     }
 
-    public NbtCompound fixTileEntityNBT(NbtCompound tag, BlockState state)
+    public CompoundTag fixTileEntityNBT(CompoundTag tag, BlockState state)
     {
         /*
         try
@@ -164,14 +166,14 @@ public class SchematicConverter
         return tag;
     }
 
-    public static void postProcessBlocks(LitematicaBlockStateContainer container, @Nullable Map<BlockPos, NbtCompound> tiles,
+    public static void postProcessBlocks(LitematicaBlockStateContainer container, @Nullable Map<BlockPos, CompoundTag> tiles,
                                          IdentityHashMap<BlockState, IStateFixer> postProcessingFilter)
     {
         final int sizeX = container.getSize().getX();
         final int sizeY = container.getSize().getY();
         final int sizeZ = container.getSize().getZ();
         BlockReaderLitematicaContainer reader = new BlockReaderLitematicaContainer(container, tiles);
-        BlockPos.Mutable posMutable = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos posMutable = new BlockPos.MutableBlockPos();
 
         for (int y = 0; y < sizeY; ++y)
         {
@@ -200,7 +202,7 @@ public class SchematicConverter
     private void addPostUpdateBlocksLitematica()
     {
         // Fixers to fix the state according to the adjacent blocks
-        this.fixersPerBlock.put(RedstoneWireBlock.class,            SchematicConversionFixers.FIXER_REDSTONE_WIRE);
+        this.fixersPerBlock.put(RedStoneWireBlock.class,            SchematicConversionFixers.FIXER_REDSTONE_WIRE);
         this.fixersPerBlock.put(WallBlock.class,                    WallStateFixer.INSTANCE);
 
         // Fixers to get values from old TileEntity data
@@ -209,7 +211,7 @@ public class SchematicConverter
         this.fixersPerBlock.put(BedBlock.class,                     SchematicConversionFixers.FIXER_BED);
         this.fixersPerBlock.put(FlowerPotBlock.class,               SchematicConversionFixers.FIXER_FLOWER_POT);
         this.fixersPerBlock.put(NoteBlock.class,                    SchematicConversionFixers.FIXER_NOTE_BLOCK);
-        this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
+        this.fixersPerBlock.put(StandingSignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(SkullBlock.class,                   SchematicConversionFixers.FIXER_SKULL);
         this.fixersPerBlock.put(WallSignBlock.class,                SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(WallSkullBlock.class,               SchematicConversionFixers.FIXER_SKULL_WALL);
@@ -225,16 +227,16 @@ public class SchematicConverter
         this.fixersPerBlock.put(FireBlock.class,                    SchematicConversionFixers.FIXER_FIRE);
         this.fixersPerBlock.put(GrassBlock.class,                   SchematicConversionFixers.FIXER_DIRT_SNOWY);
         this.fixersPerBlock.put(MyceliumBlock.class,                SchematicConversionFixers.FIXER_DIRT_SNOWY);
-        this.fixersPerBlock.put(PaneBlock.class,                    SchematicConversionFixers.FIXER_PANE); // Iron Bars & Glass Pane
+        this.fixersPerBlock.put(IronBarsBlock.class,                    SchematicConversionFixers.FIXER_PANE); // Iron Bars & Glass Pane
         this.fixersPerBlock.put(RepeaterBlock.class,                SchematicConversionFixers.FIXER_REDSTONE_REPEATER);
-        this.fixersPerBlock.put(RedstoneWireBlock.class,            SchematicConversionFixers.FIXER_REDSTONE_WIRE);
-        this.fixersPerBlock.put(SnowyBlock.class,                   SchematicConversionFixers.FIXER_DIRT_SNOWY); // Podzol
+        this.fixersPerBlock.put(RedStoneWireBlock.class,            SchematicConversionFixers.FIXER_REDSTONE_WIRE);
+        this.fixersPerBlock.put(SnowyDirtBlock.class,                   SchematicConversionFixers.FIXER_DIRT_SNOWY); // Podzol
         this.fixersPerBlock.put(StemBlock.class,                    SchematicConversionFixers.FIXER_STEM);
         this.fixersPerBlock.put(StainedGlassPaneBlock.class,        SchematicConversionFixers.FIXER_PANE);
-        this.fixersPerBlock.put(StairsBlock.class,                  SchematicConversionFixers.FIXER_STAIRS);
+        this.fixersPerBlock.put(StairBlock.class,                  SchematicConversionFixers.FIXER_STAIRS);
         this.fixersPerBlock.put(TallFlowerBlock.class,              SchematicConversionFixers.FIXER_DOUBLE_PLANT);
-        this.fixersPerBlock.put(TallPlantBlock.class,               SchematicConversionFixers.FIXER_DOUBLE_PLANT);
-        this.fixersPerBlock.put(TripwireBlock.class,                SchematicConversionFixers.FIXER_TRIPWIRE);
+        this.fixersPerBlock.put(DoublePlantBlock.class,               SchematicConversionFixers.FIXER_DOUBLE_PLANT);
+        this.fixersPerBlock.put(TripWireBlock.class,                SchematicConversionFixers.FIXER_TRIPWIRE);
         this.fixersPerBlock.put(VineBlock.class,                    SchematicConversionFixers.FIXER_VINE);
         this.fixersPerBlock.put(WallBlock.class,                    WallStateFixer.INSTANCE);
 
@@ -244,7 +246,7 @@ public class SchematicConverter
         this.fixersPerBlock.put(BedBlock.class,                     SchematicConversionFixers.FIXER_BED);
         this.fixersPerBlock.put(FlowerPotBlock.class,               SchematicConversionFixers.FIXER_FLOWER_POT);
         this.fixersPerBlock.put(NoteBlock.class,                    SchematicConversionFixers.FIXER_NOTE_BLOCK);
-        this.fixersPerBlock.put(SignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
+        this.fixersPerBlock.put(StandingSignBlock.class,                    SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(SkullBlock.class,                   SchematicConversionFixers.FIXER_SKULL);
         this.fixersPerBlock.put(WallSignBlock.class,                SchematicConversionFixers.FIXER_SIGN);
         this.fixersPerBlock.put(WallSkullBlock.class,               SchematicConversionFixers.FIXER_SKULL_WALL);
@@ -253,20 +255,20 @@ public class SchematicConverter
     public static class BlockReaderLitematicaContainer implements IBlockReaderWithData
     {
         private final LitematicaBlockStateContainer container;
-        private final Map<BlockPos, NbtCompound> blockEntityData;
+        private final Map<BlockPos, CompoundTag> blockEntityData;
         private final Vec3i size;
         private final BlockState air;
 
-        public BlockReaderLitematicaContainer(LitematicaBlockStateContainer container, @Nullable Map<BlockPos, NbtCompound> blockEntityData)
+        public BlockReaderLitematicaContainer(LitematicaBlockStateContainer container, @Nullable Map<BlockPos, CompoundTag> blockEntityData)
         {
             this.container = container;
             this.blockEntityData = blockEntityData != null ? blockEntityData : new HashMap<>();
             this.size = container.getSize();
-            this.air = Blocks.AIR.getDefaultState();
+            this.air = Blocks.AIR.defaultBlockState();
         }
 
         @Override
-        public BlockState getBlockState(BlockPos pos)
+        public @Nonnull BlockState getBlockState(BlockPos pos)
         {
             if (pos.getX() >= 0 && pos.getX() < this.size.getX() &&
                 pos.getY() >= 0 && pos.getY() < this.size.getY() &&
@@ -279,7 +281,7 @@ public class SchematicConverter
         }
 
         @Override
-        public FluidState getFluidState(BlockPos pos)
+        public @Nonnull FluidState getFluidState(@Nonnull BlockPos pos)
         {
             // FIXME change when fluids become completely separate
             return this.getBlockState(pos).getFluidState();
@@ -287,14 +289,14 @@ public class SchematicConverter
 
         @Override
         @Nullable
-        public BlockEntity getBlockEntity(BlockPos pos)
+        public BlockEntity getBlockEntity(@Nonnull BlockPos pos)
         {
             return null;
         }
 
         @Override
         @Nullable
-        public NbtCompound getBlockEntityData(BlockPos pos)
+        public CompoundTag getBlockEntityData(BlockPos pos)
         {
             return this.blockEntityData.get(pos);
         }

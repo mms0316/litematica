@@ -4,31 +4,35 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.network.packet.s2c.play.*;
+
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntitiesDataStorage;
-import fi.dy.masa.litematica.util.SchematicWorldRefresher;
-
-//Custom Additions (easier to resolve future merge conflicts)
-import fi.dy.masa.litematica.util.AddonUtils;
-import net.minecraft.util.math.ChunkPos;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
 import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.util.AddonUtils;
+import fi.dy.masa.litematica.util.SchematicWorldRefresher;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
+import net.minecraft.network.protocol.game.ClientboundForgetLevelChunkPacket;
+import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
+import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
+import net.minecraft.network.protocol.game.ClientboundTagQueryPacket;
+import net.minecraft.world.level.ChunkPos;
 
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 public abstract class MixinClientPlayNetworkHandler
 {
-    @Inject(method = "onChunkData", at = @At("RETURN"))
-    private void litematica_onUpdateChunk(ChunkDataS2CPacket packet, CallbackInfo ci)
+    @Inject(method = "handleLevelChunkWithLight", at = @At("RETURN"))
+    private void litematica_onUpdateChunk(ClientboundLevelChunkWithLightPacket packet, CallbackInfo ci)
     {
-        int chunkX = packet.getChunkX();
-        int chunkZ = packet.getChunkZ();
+        int chunkX = packet.getX();
+        int chunkZ = packet.getZ();
         //Litematica.debugLog("MixinClientPlayNetworkHandler#litematica_onUpdateChunk({}, {})", chunkX, chunkZ);
 
         if (Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
@@ -51,8 +55,8 @@ public abstract class MixinClientPlayNetworkHandler
         .forEach(task -> ((TaskCountBlocksPlacementPersistent)task).onChunkData(new ChunkPos(chunkX, chunkZ)));
     }
 
-    @Inject(method = "onUnloadChunk", at = @At("RETURN"))
-    private void litematica_onChunkUnload(UnloadChunkS2CPacket packet, CallbackInfo ci)
+    @Inject(method = "handleForgetLevelChunk", at = @At("RETURN"))
+    private void litematica_onChunkUnload(ClientboundForgetLevelChunkPacket packet, CallbackInfo ci)
     {
         if (Configs.Generic.LOAD_ENTIRE_SCHEMATICS.getBooleanValue() == false)
         {
@@ -61,9 +65,9 @@ public abstract class MixinClientPlayNetworkHandler
         }
     }
 
-    @Inject(method = "onGameMessage", cancellable = true, at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/network/message/MessageHandler;onGameMessage(Lnet/minecraft/text/Text;Z)V"))
-    private void litematica_onGameMessage(GameMessageS2CPacket packet, CallbackInfo ci)
+    @Inject(method = "handleSystemChat", cancellable = true, at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/multiplayer/chat/ChatListener;handleSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"))
+    private void litematica_onGameMessage(ClientboundSystemChatPacket packet, CallbackInfo ci)
     {
         if (DataManager.onChatMessage(packet.content()))
         {
@@ -74,26 +78,30 @@ public abstract class MixinClientPlayNetworkHandler
     /**
      * They keep moving where the effective onCustomPayload handling is... keeping them both
      */
-    @Inject(method = "onCustomPayload", at = @At("HEAD"))
-    private void litematica_onCustomPayload(CustomPayload payload, CallbackInfo ci)
+    @Inject(method = "handleCustomPayload", at = @At("HEAD"))
+    private void litematica_onCustomPayload(CustomPacketPayload payload, CallbackInfo ci)
     {
-        if (payload.getId().id().equals(DataManager.CARPET_HELLO))
+        if (payload.type().id().equals(DataManager.CARPET_HELLO))
         {
             Litematica.debugLog("MixinClientPlayNetworkHandler#litematica_onCustomPayload(): received carpet hello packet");
             DataManager.setIsCarpetServer(true);
         }
-    }
-
-    @Inject(method = "onNbtQueryResponse", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/DataQueryHandler;handleQueryResponse(ILnet/minecraft/nbt/NbtCompound;)Z"))
-    private void litematica_onQueryResponse(NbtQueryResponseS2CPacket packet, CallbackInfo ci)
-    {
-        if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
+        else if (payload.type().id().getNamespace().equals("servux"))
         {
-            EntitiesDataStorage.getInstance().handleVanillaQueryNbt(packet.getTransactionId(), packet.getNbt());
+            DataManager.setHasServuxServer(true);
         }
     }
 
-    @Inject(method = "onCommandTree", at = @At("RETURN"))
+    @Inject(method = "handleTagQueryPacket", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/DebugQueryHandler;handleResponse(ILnet/minecraft/nbt/CompoundTag;)Z"))
+    private void litematica_onQueryResponse(ClientboundTagQueryPacket packet, CallbackInfo ci)
+    {
+        if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
+        {
+            EntitiesDataStorage.getInstance().handleVanillaQueryNbt(packet.getTransactionId(), packet.getTag());
+        }
+    }
+
+    @Inject(method = "handleCommands", at = @At("RETURN"))
     private void minihud_onCommandTree(CallbackInfo ci)
     {
         if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
@@ -116,8 +124,22 @@ public abstract class MixinClientPlayNetworkHandler
       }
     }
      */
-    @Inject(method = "onInventory", at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/PlayerScreenHandler;updateSlotStacks(ILjava/util/List;Lnet/minecraft/item/ItemStack;)V"), cancellable = true)
-    private void litematica_onPlayerInventoryUpdate(InventoryS2CPacket packet, CallbackInfo ci)
+
+    // Mixin 1.21.11:
+    /*
+    public void handleContainerContent(ClientboundContainerSetContentPacket clientboundContainerSetContentPacket) {
+      PacketUtils.ensureRunningOnSameThread(clientboundContainerSetContentPacket, this, this.minecraft.packetProcessor());
+      Player player = this.minecraft.player;
+      if (clientboundContainerSetContentPacket.containerId() == 0) {
+         player.inventoryMenu.initializeContents(clientboundContainerSetContentPacket.stateId(), clientboundContainerSetContentPacket.items(), clientboundContainerSetContentPacket.carriedItem());
+      } else if (clientboundContainerSetContentPacket.containerId() == player.containerMenu.containerId) {
+         player.containerMenu.initializeContents(clientboundContainerSetContentPacket.stateId(), clientboundContainerSetContentPacket.items(), clientboundContainerSetContentPacket.carriedItem());
+      }
+
+    }
+     */
+    @Inject(method = "handleContainerContent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/InventoryMenu;initializeContents(ILjava/util/List;Lnet/minecraft/world/item/ItemStack;)V"), cancellable = true)
+    private void litematica_onPlayerInventoryUpdate(ClientboundContainerSetContentPacket clientboundContainerSetContentPacket, CallbackInfo ci)
     {
         if (AddonUtils.isInventoryUpdateSkipped()) {
             ci.cancel();

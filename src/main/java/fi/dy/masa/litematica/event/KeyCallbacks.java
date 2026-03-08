@@ -1,10 +1,5 @@
 package fi.dy.masa.litematica.event;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.BlockMirror;
-import net.minecraft.util.BlockRotation;
-import net.minecraft.util.math.BlockPos;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.litematica.data.DataManager;
@@ -41,14 +36,20 @@ import fi.dy.masa.malilib.hotkeys.KeybindMulti;
 import fi.dy.masa.malilib.interfaces.IValueChangeCallback;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.LayerMode;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 
 //Custom Additions (easier to resolve future merge conflicts)
-import net.minecraft.util.math.Direction.Axis;
+import net.minecraft.core.Direction.Axis;
+import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.LayerRange;
 
 public class KeyCallbacks
 {
-    public static void init(MinecraftClient mc)
+    public static void init(Minecraft mc)
     {
         IHotkeyCallback callbackHotkeys = new KeyCallbackHotkeys(mc);
         IHotkeyCallback callbackMessage = new KeyCallbackToggleMessage(mc);
@@ -118,6 +119,7 @@ public class KeyCallbacks
         Hotkeys.TOGGLE_TRANSLUCENT_RENDERING.getKeybind().setCallback(new RenderToggle(Configs.Visuals.RENDER_BLOCKS_AS_TRANSLUCENT));
         Hotkeys.TOGGLE_VERIFIER_OVERLAY_RENDERING.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.InfoOverlays.VERIFIER_OVERLAY_ENABLED));
         Hotkeys.TOOL_ENABLED_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.TOOL_ITEM_ENABLED));
+		Hotkeys.SCHEMATIC_EDIT_REPLACE_SELECTION.getKeybind().setCallback(callbackMessage);
 
         //Custom Additions (easier to resolve future merge conflicts)
         Hotkeys.BEACON_REGISTER.getKeybind().setCallback(callbackHotkeys);
@@ -170,9 +172,9 @@ public class KeyCallbacks
 
     private static class KeyCallbackHotkeys implements IHotkeyCallback
     {
-        private final MinecraftClient mc;
+        private final Minecraft mc;
 
-        public KeyCallbackHotkeys(MinecraftClient mc)
+        public KeyCallbackHotkeys(Minecraft mc)
         {
             this.mc = mc;
         }
@@ -180,7 +182,7 @@ public class KeyCallbacks
         @Override
         public boolean onKeyAction(KeyAction action, IKeybind key)
         {
-            if (this.mc.player == null || this.mc.world == null)
+            if (this.mc.player == null || this.mc.level == null)
             {
                 return false;
             }
@@ -223,7 +225,7 @@ public class KeyCallbacks
                         if (grabModifier && mode == ToolMode.MOVE)
                         {
                             Entity entity = fi.dy.masa.malilib.util.EntityUtils.getCameraEntity();
-                            BlockPos pos = RayTraceUtils.getTargetedPosition(this.mc.world, entity, maxDistance, false);
+                            BlockPos pos = RayTraceUtils.getTargetedPosition(this.mc.level, entity, maxDistance, false);
 
                             if (pos != null)
                             {
@@ -267,13 +269,13 @@ public class KeyCallbacks
                         else
                         {
                             Entity entity = fi.dy.masa.malilib.util.EntityUtils.getCameraEntity();
-                            sm.changeSelection(this.mc.world, entity, maxDistance);
+                            sm.changeSelection(this.mc.level, entity, maxDistance);
                         }
                     }
                     else if (mode.getUsesSchematic())
                     {
                         Entity entity = fi.dy.masa.malilib.util.EntityUtils.getCameraEntity();
-                        DataManager.getSchematicPlacementManager().changeSelection(this.mc.world, entity, maxDistance);
+                        DataManager.getSchematicPlacementManager().changeSelection(this.mc.level, entity, maxDistance);
                     }
 
                     return true;
@@ -282,16 +284,14 @@ public class KeyCallbacks
 
             if (key == Hotkeys.EASY_PLACE_ACTIVATION.getKeybind())
             {
-                /*
-                if (Configs.Generic.EASY_PLACE_POST_REWRITE.getBooleanValue())
+                if (Configs.Generic.EASY_PLACE_POST_REWRITE.getBooleanValue() == false)
                 {
-                    return EasyPlaceUtils.handleEasyPlaceWithMessage();
-                }
-                else
-                {
-                 */
+//                    return EasyPlaceUtils.handleEasyPlaceWithMessage();
+//                }
+//                else
+//                {
                     return WorldUtils.handleEasyPlace(this.mc);
-                //}
+                }
             }
             else if (key == Hotkeys.OPEN_GUI_MAIN_MENU.getKeybind())
             {
@@ -477,7 +477,7 @@ public class KeyCallbacks
                 {
                     // Only do the pick block here, if it's not bound to the use button.
                     // If it's bound to the use button, then it will be done from the input handling.
-                    if (KeybindMulti.hotkeyMatchesKeybind(Hotkeys.PICK_BLOCK_LAST, this.mc.options.useKey) == false)
+                    if (KeybindMulti.hotkeyMatchesKeybind(Hotkeys.PICK_BLOCK_LAST, this.mc.options.keyUse) == false)
                     {
                         WorldUtils.doSchematicWorldPickBlock(false, this.mc);
                     }
@@ -643,9 +643,9 @@ public class KeyCallbacks
 
     private static class KeyCallbackToggleMessage implements IHotkeyCallback
     {
-        private final MinecraftClient mc;
+        private final Minecraft mc;
 
-        public KeyCallbackToggleMessage(MinecraftClient mc)
+        public KeyCallbackToggleMessage(Minecraft mc)
         {
             this.mc = mc;
         }
@@ -692,6 +692,8 @@ public class KeyCallbacks
             }
             else if (key == Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind())
             {
+                if (this.mc.player == null) return false;
+
                 if (mode.getUsesAreaSelection())
                 {
                     SelectionManager sm = DataManager.getSelectionManager();
@@ -699,7 +701,7 @@ public class KeyCallbacks
 
                     if (selection != null)
                     {
-                        BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
+                        BlockPos pos = BlockPos.containing(this.mc.player.position());
 
                         if (mode == ToolMode.MOVE)
                         {
@@ -715,7 +717,7 @@ public class KeyCallbacks
                 }
                 else if (mode.getUsesSchematic())
                 {
-                    BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
+                    BlockPos pos = BlockPos.containing(this.mc.player.position());
                     DataManager.getSchematicPlacementManager().setPositionOfCurrentSelectionTo(pos, this.mc);
                     return true;
                 }
@@ -723,7 +725,7 @@ public class KeyCallbacks
             else if (key == Hotkeys.SCHEMATIC_PLACEMENT_ROTATION.getKeybind()) {
                 SchematicPlacement placement = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
                 if(placement != null) {
-                    BlockRotation rotation = PositionUtils.cycleRotation(placement.getRotation(), false);
+                    Rotation rotation = PositionUtils.cycleRotation(placement.getRotation(), false);
                     if(placement.isLocked()) {
                         InfoUtils.showGuiOrActionBarMessage(MessageType.ERROR, "litematica.message.placement.cant_modify_is_locked");
                     }
@@ -737,7 +739,7 @@ public class KeyCallbacks
             else if (key == Hotkeys.SCHEMATIC_PLACEMENT_MIRROR.getKeybind()) {
                 SchematicPlacement placement = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
                 if(placement != null) {
-                    BlockMirror mirror = PositionUtils.cycleMirror(placement.getMirror(), false);
+                    Mirror mirror = PositionUtils.cycleMirror(placement.getMirror(), false);
                     if(placement.isLocked()) {
                         InfoUtils.showGuiOrActionBarMessage(MessageType.ERROR, "litematica.message.placement.cant_modify_is_locked");
                     }
@@ -767,14 +769,14 @@ public class KeyCallbacks
             }
             else if (key == Hotkeys.SET_AREA_ORIGIN.getKeybind())
             {
-                if (mode.getUsesAreaSelection())
+                if (mode.getUsesAreaSelection() && this.mc.player != null)
                 {
                     SelectionManager sm = DataManager.getSelectionManager();
                     AreaSelection area = sm.getCurrentSelection();
 
                     if (area != null)
                     {
-                        BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
+                        BlockPos pos = BlockPos.containing(this.mc.player.position());
                         area.setExplicitOrigin(pos);
                         String posStr = String.format("x: %d, y: %d, z: %d", pos.getX(), pos.getY(), pos.getZ());
                         InfoUtils.printActionbarMessage("litematica.message.set_area_origin", posStr);
@@ -785,14 +787,14 @@ public class KeyCallbacks
             else if (key == Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind() ||
                      key == Hotkeys.SET_SELECTION_BOX_POSITION_2.getKeybind())
             {
-                if (mode.getUsesAreaSelection())
+                if (mode.getUsesAreaSelection() && this.mc.player != null)
                 {
                     SelectionManager sm = DataManager.getSelectionManager();
                     AreaSelection area = sm.getCurrentSelection();
 
                     if (area != null && area.getSelectedSubRegionBox() != null)
                     {
-                        BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
+                        BlockPos pos = BlockPos.containing(this.mc.player.position());
                         Corner corner = key == Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind() ? Corner.CORNER_1 : Corner.CORNER_2;
                         area.setSelectedSubRegionCornerPos(pos, corner);
 
@@ -802,6 +804,22 @@ public class KeyCallbacks
                     }
                 }
             }
+			// Requested to be added by Earthcomputer; from Litemoretica
+			else if (key == Hotkeys.SCHEMATIC_EDIT_REPLACE_SELECTION.getKeybind())
+			{
+				AreaSelection selection = DataManager.getSelectionManager().getCurrentSelection();
+
+				if (SchematicUtils.saveAreaSelectionToSchematic(selection, this.mc.level))
+				{
+					BlockPos pos = selection.getEffectiveOrigin();
+
+					String posStr = String.format("x: %d, y: %d, z: %d", pos.getX(), pos.getY(), pos.getZ());
+					InfoUtils.showInGameMessage(MessageType.SUCCESS,
+												"litematica.message.schematic_edit_replace_selection", posStr
+					);
+					return true;
+				}
+			}
 
             //Custom Additions (easier to resolve future merge conflicts)
             else if (key == Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getKeybind())
@@ -813,7 +831,7 @@ public class KeyCallbacks
 
                     // If hotkey is configured to work on GUIs, and Material List GUI is opened,
                     // also update the Info Hud button, even if the search filter may also be updated
-                    if (mc.currentScreen instanceof GuiMaterialList guiMaterialList)
+                    if (GuiUtils.getCurrentScreen() instanceof GuiMaterialList guiMaterialList)
                         guiMaterialList.initGui();
 
                     InfoUtils.printBooleanConfigToggleMessage(Hotkeys.MATERIAL_LIST_TOGGLE_INFO_HUD.getPrettyName(),
@@ -835,7 +853,7 @@ public class KeyCallbacks
                 }
             }
 
-            return false;
+			return false;
         }
     }
 }

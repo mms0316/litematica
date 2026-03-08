@@ -3,24 +3,28 @@ package fi.dy.masa.litematica.render.schematic;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.rendertype.RenderType;
 
 public class GpuBufferCache implements AutoCloseable
 {
-    private final ConcurrentHashMap<BlockRenderLayer, ChunkRenderObjectBuffers> blockBuffers = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<RenderLayer, ChunkRenderObjectBuffers> layerBuffers = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<OverlayRenderType, ChunkRenderObjectBuffers> overlayBuffers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ChunkSectionLayer, ChunkRenderObjectBuffers> blockBuffers;
+    private final ConcurrentHashMap<RenderType, ChunkRenderObjectBuffers> layerBuffers;
+    private final ConcurrentHashMap<OverlayRenderType, ChunkRenderObjectBuffers> overlayBuffers;
 
-    protected GpuBufferCache() { }
+    protected GpuBufferCache()
+    {
+	    this.blockBuffers = new ConcurrentHashMap<>();
+	    this.layerBuffers = new ConcurrentHashMap<>();
+	    this.overlayBuffers = new ConcurrentHashMap<>();
+    }
 
-    protected boolean hasBuffersByBlockLayer(BlockRenderLayer layer)
+    protected boolean hasBuffersByBlockLayer(ChunkSectionLayer layer)
     {
         return this.blockBuffers.containsKey(layer);
     }
 
-    protected boolean hasBuffersByLayer(RenderLayer layer)
+    protected boolean hasBuffersByLayer(RenderType layer)
     {
         return this.layerBuffers.containsKey(layer);
     }
@@ -30,7 +34,7 @@ public class GpuBufferCache implements AutoCloseable
         return this.overlayBuffers.containsKey(type);
     }
 
-    protected void storeBuffersByBlockLayer(BlockRenderLayer layer, @Nonnull ChunkRenderObjectBuffers newBuffer)
+    protected void storeBuffersByBlockLayer(ChunkSectionLayer layer, @Nonnull ChunkRenderObjectBuffers newBuffer)
     {
         if (this.hasBuffersByBlockLayer(layer))
         {
@@ -42,7 +46,7 @@ public class GpuBufferCache implements AutoCloseable
             }
             catch (Exception err)
             {
-                throw new RuntimeException("Exception closing Block Layer "+layer.getName()+" Buffers; "+ err.getMessage());
+                throw new RuntimeException("Exception closing Block Layer "+layer.label()+" Buffers; "+ err.getMessage());
             }
         }
 
@@ -52,7 +56,7 @@ public class GpuBufferCache implements AutoCloseable
         }
     }
 
-    protected void storeBuffersByLayer(RenderLayer layer, @Nonnull ChunkRenderObjectBuffers newBuffer)
+    protected void storeBuffersByLayer(RenderType layer, @Nonnull ChunkRenderObjectBuffers newBuffer)
     {
         if (this.hasBuffersByLayer(layer))
         {
@@ -97,13 +101,13 @@ public class GpuBufferCache implements AutoCloseable
     }
 
     @Nullable
-    protected ChunkRenderObjectBuffers getBuffersByBlockLayer(BlockRenderLayer layer)
+    protected ChunkRenderObjectBuffers getBuffersByBlockLayer(ChunkSectionLayer layer)
     {
         return this.blockBuffers.get(layer);
     }
 
     @Nullable
-    protected ChunkRenderObjectBuffers getBuffersByLayer(RenderLayer layer)
+    protected ChunkRenderObjectBuffers getBuffersByLayer(RenderType layer)
     {
         return this.layerBuffers.get(layer);
     }
@@ -129,7 +133,7 @@ public class GpuBufferCache implements AutoCloseable
                         }
                         catch (Exception err)
                         {
-                            throw new RuntimeException("Exception closing Block Layer "+layer.getName()+" Buffers; "+ err.getMessage());
+                            throw new RuntimeException("Exception closing Block Layer "+layer.label()+" Buffers; "+ err.getMessage());
                         }
                     }
             );

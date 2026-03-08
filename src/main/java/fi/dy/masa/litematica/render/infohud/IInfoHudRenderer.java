@@ -1,9 +1,7 @@
 package fi.dy.masa.litematica.render.infohud;
 
 import java.util.List;
-
-import net.minecraft.client.gui.DrawContext;
-
+import net.minecraft.client.gui.GuiGraphics;
 import fi.dy.masa.malilib.config.HudAlignment;
 
 public interface IInfoHudRenderer
@@ -44,7 +42,7 @@ public interface IInfoHudRenderer
      * @param alignment the screen position to render at
      * @return the required y height used up for the rendered content
      */
-    default int render(DrawContext drawContext, int xOffset, int yOffset, HudAlignment alignment)
+    default int render(GuiGraphics drawContext, int xOffset, int yOffset, HudAlignment alignment)
     {
         return 0;
     }

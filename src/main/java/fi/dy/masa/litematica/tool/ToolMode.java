@@ -1,18 +1,18 @@
 package fi.dy.masa.litematica.tool;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
 import com.google.common.collect.ImmutableList;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.StringIdentifiable;
-
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.util.EntityUtils;
 
-public enum ToolMode implements StringIdentifiable
+public enum ToolMode implements StringRepresentable
 {
     AREA_SELECTION      ("area_selection",      "litematica.tool_mode.name.area_selection",        false, false),
     SCHEMATIC_PLACEMENT ("schematic_placement", "litematica.tool_mode.name.schematic_placement",   false, true),
@@ -24,7 +24,7 @@ public enum ToolMode implements StringIdentifiable
     DELETE              ("delete",              "litematica.tool_mode.name.delete",                true, false),
     REBUILD             ("rebuild",             "litematica.tool_mode.name.rebuild",               false, true, true, false);
 
-    public static final StringIdentifiable.EnumCodec<ToolMode> CODEC = StringIdentifiable.createCodec(ToolMode::values);
+    public static final StringRepresentable.EnumCodec<ToolMode> CODEC = StringRepresentable.fromEnum(ToolMode::values);
     public static final ImmutableList<ToolMode> VALUES = ImmutableList.copyOf(values());
 
     private final String configString;
@@ -58,7 +58,7 @@ public enum ToolMode implements StringIdentifiable
     }
 
     @Override
-    public String asString()
+    public @Nonnull String getSerializedName()
     {
         return this.configString;
     }
@@ -115,7 +115,7 @@ public enum ToolMode implements StringIdentifiable
         return StringUtils.translate(this.unlocName);
     }
 
-    public ToolMode cycle(PlayerEntity player, boolean forward)
+    public ToolMode cycle(Player player, boolean forward)
     {
         ToolMode[] values = ToolMode.values();
         final boolean isCreative = EntityUtils.isCreativeMode(player);

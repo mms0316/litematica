@@ -3,12 +3,10 @@ package fi.dy.masa.litematica.config;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import net.minecraft.client.Minecraft;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import net.minecraft.client.MinecraftClient;
-
 import fi.dy.masa.malilib.config.ConfigUtils;
 import fi.dy.masa.malilib.config.HudAlignment;
 import fi.dy.masa.malilib.config.IConfigBase;
@@ -20,8 +18,8 @@ import fi.dy.masa.malilib.util.JsonUtils;
 import fi.dy.masa.malilib.util.MessageOutputType;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.Reference;
-import fi.dy.masa.litematica.compat.lwgl.RenderCompat;
 import fi.dy.masa.litematica.data.DataManager;
+import fi.dy.masa.litematica.render.LitematicaDebugHud;
 import fi.dy.masa.litematica.selection.CornerSelectionMode;
 import fi.dy.masa.litematica.selection.SelectionMode;
 import fi.dy.masa.litematica.util.*;
@@ -33,6 +31,7 @@ public class Configs implements IConfigHandler
     private static final String GENERIC_KEY = Reference.MOD_ID+".config.generic";
     public static class Generic
     {
+	    public static final ConfigOptionList    DEBUG_HUD_MODE              = new ConfigOptionList("debugHudMode", DebugHudMode.DEFAULT).apply(GENERIC_KEY);
         public static final ConfigOptionList    EASY_PLACE_PROTOCOL         = new ConfigOptionList("easyPlaceProtocolVersion", EasyPlaceProtocol.RESTRICTED, "The type of \"accurate placement protocol\" to use.\n- Auto: Uses v3 in single player, and by default Restricted in multiplayer,\n  unless the server has Carpet mod that sends a 'carpet:hello'\n  packet, in which case v2 is used on that server.\n- Version 3: Only supported by Litematica itself (in single player) for now.\n- Version 2: Compatible with servers with the Carpet mod\n  (either QuickCarpet by skyrising and DeadlyMC,\n  or CarpetExtra in addition to FabricCarpet.\n  And in both cases the 'accurateBlockPlacement' Carpet rule needs\n  to be enabled on the server).\n- Slabs only: Only fixes top slabs. Compatible with Paper servers.\n- Restricted: Places what is possible in Paper servers or fails when\n player's orientation does not match.\n- None: Does not modify coordinates.");
         public static final ConfigOptionList    PASTE_NBT_BEHAVIOR          = new ConfigOptionList("pasteNbtRestoreBehavior", PasteNbtBehavior.NONE).apply(GENERIC_KEY);
         public static final ConfigOptionList    PASTE_REPLACE_BEHAVIOR      = new ConfigOptionList("pasteReplaceBehavior", ReplaceBehavior.NONE).apply(GENERIC_KEY);
@@ -46,7 +45,7 @@ public class Configs implements IConfigHandler
         public static final ConfigString        CUSTOM_SCHEMATIC_BASE_DIRECTORY         = new ConfigString( "customSchematicBaseDirectory", DataManager.getDefaultBaseSchematicDirectory().toAbsolutePath().toString()).apply(GENERIC_KEY);
 
         public static final ConfigBoolean       AREAS_PER_WORLD             = new ConfigBoolean("areaSelectionsPerWorld", true).apply(GENERIC_KEY);
-        public static final ConfigBoolean       BETTER_RENDER_ORDER         = new ConfigBoolean("betterRenderOrder", true).apply(GENERIC_KEY);
+//        public static final ConfigBoolean       BETTER_RENDER_ORDER         = new ConfigBoolean("betterRenderOrder", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       CHANGE_SELECTED_CORNER      = new ConfigBoolean("changeSelectedCornerOnMove", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       CLONE_AT_ORIGINAL_POS       = new ConfigBoolean("cloneAtOriginalPosition", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       COMMAND_DISABLE_FEEDBACK    = new ConfigBoolean("commandDisableFeedback", true).apply(GENERIC_KEY);
@@ -59,14 +58,16 @@ public class Configs implements IConfigHandler
         public static final ConfigString        COMMAND_NAME_SUMMON         = new ConfigString( "commandNameSummon", "summon").apply(GENERIC_KEY);
         public static final ConfigInteger       COMMAND_TASK_INTERVAL       = new ConfigInteger("commandTaskInterval", 1, 1, 1000).apply(GENERIC_KEY);
         public static final ConfigBoolean       COMMAND_USE_WORLDEDIT       = new ConfigBoolean("commandUseWorldEdit", false).apply(GENERIC_KEY);
+        public static final ConfigBoolean       COMMAND_USE_STRICT          = new ConfigBoolean("commandUseStrict", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       DEBUG_LOGGING               = new ConfigBoolean("debugLogging", false).apply(GENERIC_KEY);
         public static final ConfigOptionList    DATAFIXER_MODE              = new ConfigOptionList("datafixerMode", DataFixerMode.ALWAYS).apply(GENERIC_KEY);
         public static final ConfigInteger       DATAFIXER_DEFAULT_SCHEMA    = new ConfigInteger("datafixerDefaultSchema", 1139, 99, 2724, true).apply(GENERIC_KEY);
-        //public static final ConfigBoolean       EASY_PLACE_CLICK_ADJACENT   = new ConfigBoolean("easyPlaceClickAdjacent", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean       DISPLAY_FILE_OPS_FEEDBACK   = new ConfigBoolean("displayFileOpsFeedback", false).apply(GENERIC_KEY);
+        public static final ConfigBoolean       EASY_PLACE_CLICK_ADJACENT   = new ConfigBoolean("easyPlaceClickAdjacent", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       EASY_PLACE_FIRST            = new ConfigBoolean("easyPlaceFirst", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       EASY_PLACE_HOLD_ENABLED     = new ConfigBoolean("easyPlaceHoldEnabled", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       EASY_PLACE_MODE             = new ConfigBoolean("easyPlaceMode", false).apply(GENERIC_KEY);
-        //public static final ConfigBoolean       EASY_PLACE_POST_REWRITE     = new ConfigBoolean("easyPlacePostRewrite", false).apply(GENERIC_KEY);
+        public static final ConfigBoolean       EASY_PLACE_POST_REWRITE     = new ConfigBoolean("easyPlacePostRewrite", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       EASY_PLACE_SP_HANDLING      = new ConfigBoolean("easyPlaceSinglePlayerHandling", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       EASY_PLACE_SP_VALIDATION    = new ConfigBoolean("easyPlaceSinglePlayerValidation", true).apply(GENERIC_KEY);
         public static final ConfigInteger       EASY_PLACE_SWAP_INTERVAL    = new ConfigInteger("easyPlaceSwapInterval", 0, 0, 10000).apply(GENERIC_KEY);
@@ -75,7 +76,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       ENABLE_DIFFERENT_BLOCKS     = new ConfigBoolean("enableDifferentBlocks", false).apply(GENERIC_KEY);
         public static final ConfigBooleanHotkeyed ENTITY_DATA_SYNC          = new ConfigBooleanHotkeyed("entityDataSync", false, "").apply(GENERIC_KEY);
         public static final ConfigBoolean       ENTITY_DATA_SYNC_BACKUP     = new ConfigBoolean("entityDataSyncBackup", false).apply(GENERIC_KEY);
-        public static final ConfigFloat         ENTITY_DATA_SYNC_CACHE_TIMEOUT= new ConfigFloat("entityDataSyncCacheTimeout", 0.75f, 0.25f, 30.0f).apply(GENERIC_KEY);
+        public static final ConfigFloat         ENTITY_DATA_SYNC_CACHE_TIMEOUT= new ConfigFloat("entityDataSyncCacheTimeout", 2.75f, 1.0f, 100.0f).apply(GENERIC_KEY);
         public static final ConfigBoolean       ENTITY_DATA_LOAD_NBT        = new ConfigBoolean("entityDataSyncLoadNbt", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       EXECUTE_REQUIRE_TOOL        = new ConfigBoolean("executeRequireHoldingTool", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       FIX_CHEST_MIRROR            = new ConfigBoolean("fixChestMirror", true).apply(GENERIC_KEY);
@@ -102,11 +103,10 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       PICK_BLOCK_AVOID_DAMAGEABLE = new ConfigBoolean("pickBlockAvoidDamageable", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       PICK_BLOCK_AVOID_TOOLS      = new ConfigBoolean("pickBlockAvoidTools", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       PICK_BLOCK_ENABLED          = new ConfigBoolean("pickBlockEnabled", true).apply(GENERIC_KEY);
-        //public static final ConfigBoolean       PICK_BLOCK_IGNORE_NBT       = new ConfigBoolean("pickBlockIgnoreNbt", false).apply(GENERIC_KEY);
+//        public static final ConfigBoolean       PICK_BLOCK_IGNORE_NBT       = new ConfigBoolean("pickBlockIgnoreNbt", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       PICK_BLOCK_SHULKERS         = new ConfigBoolean("pickBlockShulkers", false).apply(GENERIC_KEY);
         public static final ConfigString        PICK_BLOCKABLE_SLOTS        = new ConfigString( "pickBlockableSlots", "1,2,3,4,5").apply(GENERIC_KEY);
         public static final ConfigBoolean       PLACEMENT_RESTRICTION       = new ConfigBoolean("placementRestriction", false).apply(GENERIC_KEY);
-//        public static final ConfigBoolean       RECIPE_BOOK_SP_SHADOW_UNLOCK= new ConfigBoolean("recipeBookSinglePlayerShadowUnlock", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       RENDER_MATERIALS_IN_GUI     = new ConfigBoolean("renderMaterialListInGuis", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       RENDER_THREAD_NO_TIMEOUT    = new ConfigBoolean("renderThreadNoTimeout", true).apply(GENERIC_KEY);
         public static final ConfigInteger       SERVER_NBT_REQUEST_RATE     = new ConfigInteger("serverNbtRequestRate", 2).apply(GENERIC_KEY);
@@ -140,17 +140,20 @@ public class Configs implements IConfigHandler
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 AREAS_PER_WORLD,
-                //BETTER_RENDER_ORDER,
+//				BETTER_RENDER_ORDER,
                 CHANGE_SELECTED_CORNER,
                 CLONE_AT_ORIGINAL_POS,
                 COMMAND_DISABLE_FEEDBACK,
                 COMMAND_FILL_NO_CHUNK_CLAMP,
                 COMMAND_USE_WORLDEDIT,
+                COMMAND_USE_STRICT,
                 CUSTOM_SCHEMATIC_BASE_DIRECTORY_ENABLED,
+                DEBUG_HUD_MODE,
                 DEBUG_LOGGING,
+				DISPLAY_FILE_OPS_FEEDBACK,
                 DATAFIXER_MODE,
                 DATAFIXER_DEFAULT_SCHEMA,
-                //EASY_PLACE_CLICK_ADJACENT,
+                EASY_PLACE_CLICK_ADJACENT,
                 EASY_PLACE_AVOID_BEACONS,
                 EASY_PLACE_FIRST,
                 EASY_PLACE_HOLD_ENABLED,
@@ -158,9 +161,9 @@ public class Configs implements IConfigHandler
                 EASY_PLACE_IGNORE_SHULKER_BOX,
                 EASY_PLACE_LEAVE_ONE,
                 EASY_PLACE_MODE,
-                //EASY_PLACE_POST_REWRITE,
                 EASY_PLACE_PICK_BLOCK_AFTER_USE,
                 EASY_PLACE_PICK_BLOCK_HALT,
+                EASY_PLACE_POST_REWRITE,
                 EASY_PLACE_PROTOCOL,
                 EASY_PLACE_SKIP_INVENTORY_UPDATE_DURATION,
                 EASY_PLACE_SP_HANDLING,
@@ -204,12 +207,11 @@ public class Configs implements IConfigHandler
                 PICK_BLOCK_AVOID_DAMAGEABLE,
                 PICK_BLOCK_AVOID_TOOLS,
                 PICK_BLOCK_ENABLED,
-                //PICK_BLOCK_IGNORE_NBT,
+//                PICK_BLOCK_IGNORE_NBT,
                 PICK_BLOCK_SHULKERS,
                 PLACEMENT_REPLACE_BEHAVIOR,
                 PLACEMENT_RESTRICTION,
                 PLACEMENT_RESTRICTION_WARN,
-//                RECIPE_BOOK_SP_SHADOW_UNLOCK,
                 RENDER_MATERIALS_IN_GUI,
                 RENDER_THREAD_NO_TIMEOUT,
                 SCHEMATIC_VERIFIER_CHECK_CHUNK_RELOAD,
@@ -256,6 +258,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       ENABLE_SCHEMATIC_BLOCKS             = new ConfigBoolean("enableSchematicBlocksRendering",  true).apply(VISUALS_KEY);
         public static final ConfigBoolean       ENABLE_SCHEMATIC_FLUIDS             = new ConfigBoolean("enableSchematicFluidRendering", true).apply(VISUALS_KEY);
         public static final ConfigBoolean       ENABLE_SCHEMATIC_OVERLAY            = new ConfigBoolean("enableSchematicOverlay",  true).apply(VISUALS_KEY);
+        public static final ConfigBooleanHotkeyed ENABLE_SCHEMATIC_OVERLAY_CULLING  = new ConfigBooleanHotkeyed("enableSchematicOverlayCulling", true, "").apply(VISUALS_KEY);
         public static final ConfigBoolean       ENABLE_SCHEMATIC_RENDERING          = new ConfigBoolean("enableSchematicRendering", true).apply(VISUALS_KEY);
         public static final ConfigBoolean       ENABLE_SCHEMATIC_FAKE_LIGHTING      = new ConfigBoolean("enableSchematicFakeLighting", true).apply(VISUALS_KEY);
         //public static final ConfigInteger       RENDER_SCHEMATIC_MAX_THREADS        = new ConfigInteger("renderSchematicMaxThreads", 4, 1, 16).apply(VISUALS_KEY);
@@ -308,6 +311,7 @@ public class Configs implements IConfigHandler
                 ENABLE_SCHEMATIC_FLUIDS,
                 ENABLE_SCHEMATIC_FAKE_LIGHTING,
                 ENABLE_SCHEMATIC_OVERLAY,
+                ENABLE_SCHEMATIC_OVERLAY_CULLING,
                 IGNORE_EXISTING_FLUIDS,
                 IGNORE_EXISTING_BLOCKS,
                 IGNORABLE_EXISTING_BLOCKS,
@@ -473,7 +477,6 @@ public class Configs implements IConfigHandler
                 ConfigUtils.readConfigBase(root, "InfoOverlays", InfoOverlays.OPTIONS);
                 ConfigUtils.readConfigBase(root, "Visuals", Visuals.OPTIONS);
 
-                RenderCompat.checkGpuVisuals();
                 //Litematica.debugLog("loadFromFile(): Successfully loaded config file '{}'.", configFile.toAbsolutePath());
             }
             else
@@ -483,12 +486,13 @@ public class Configs implements IConfigHandler
         }
 
         DataManager.setToolItem(Generic.TOOL_ITEM.getStringValue());
-        if (MinecraftClient.getInstance().world != null)
+        if (Minecraft.getInstance().level != null)
         {
-            DataManager.getInstance().setToolItemComponents(Generic.TOOL_ITEM_COMPONENTS.getStringValue(), MinecraftClient.getInstance().world.getRegistryManager());
+            DataManager.getInstance().setToolItemComponents(Generic.TOOL_ITEM_COMPONENTS.getStringValue(), Minecraft.getInstance().level.registryAccess());
         }
         InventoryUtils.setPickBlockableSlots(Generic.PICK_BLOCKABLE_SLOTS.getStringValue());
         DataManager.getSelectionManager().checkSelectionModeConfig();
+	    LitematicaDebugHud.INSTANCE.checkConfig();
 
         AddonUtils.setSubstitutions(Generic.SUBSTITUTIONS.getStrings());
     }

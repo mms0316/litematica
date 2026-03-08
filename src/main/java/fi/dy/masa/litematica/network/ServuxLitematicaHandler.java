@@ -3,20 +3,20 @@ package fi.dy.masa.litematica.network;
 import javax.annotation.Nullable;
 import io.netty.buffer.Unpooled;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jspecify.annotations.NonNull;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtSizeTracker;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.random.Random;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import fi.dy.masa.malilib.network.IClientPayloadData;
 import fi.dy.masa.malilib.network.IPluginClientPlayHandler;
 import fi.dy.masa.malilib.network.PacketSplitter;
@@ -27,19 +27,19 @@ import fi.dy.masa.litematica.schematic.LitematicaSchematic;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 
 @Environment(EnvType.CLIENT)
-public abstract class ServuxLitematicaHandler<T extends CustomPayload> implements IPluginClientPlayHandler<T>
+public abstract class ServuxLitematicaHandler<T extends CustomPacketPayload> implements IPluginClientPlayHandler<T>
 {
     private final static ServuxLitematicaHandler<ServuxLitematicaPacket.Payload> INSTANCE = new ServuxLitematicaHandler<>()
     {
         @Override
-        public void receive(ServuxLitematicaPacket.Payload payload, ClientPlayNetworking.Context context)
+        public void receive(ServuxLitematicaPacket.Payload payload, ClientPlayNetworking.@NonNull Context context)
         {
             ServuxLitematicaHandler.INSTANCE.receivePlayPayload(payload, context);
         }
     };
     public static ServuxLitematicaHandler<ServuxLitematicaPacket.Payload> getInstance() { return INSTANCE; }
 
-    public static final Identifier CHANNEL_ID = Identifier.of("servux", "litematics");
+    public static final Identifier CHANNEL_ID = Identifier.fromNamespaceAndPath("servux", "litematics");
 
     private boolean servuxRegistered;
     private boolean payloadRegistered = false;
@@ -94,18 +94,18 @@ public abstract class ServuxLitematicaHandler<T extends CustomPayload> implement
             {
                 if (this.readingSessionKey == -1)
                 {
-                    this.readingSessionKey = Random.create(Util.getMeasuringTimeMs()).nextLong();
+                    this.readingSessionKey = RandomSource.create(Util.getMillis()).nextLong();
                 }
 
                 //Litematica.debugLog("ServuxLitematicaHandler#decodeClientData(): received Entity Data Packet Slice of size {} (in bytes) // reading session key [{}]", packet.getTotalSize(), this.readingSessionKey);
-                PacketByteBuf fullPacket = PacketSplitter.receive(this, this.readingSessionKey, packet.getBuffer());
+                FriendlyByteBuf fullPacket = PacketSplitter.receive(this, this.readingSessionKey, packet.getBuffer());
 
                 if (fullPacket != null)
                 {
                     try
                     {
                         this.readingSessionKey = -1;
-                        this.handleBulkData(fullPacket.readVarInt(), (NbtCompound) fullPacket.readNbt(NbtSizeTracker.ofUnlimitedBytes()));
+                        this.handleBulkData(fullPacket.readVarInt(), (CompoundTag) fullPacket.readNbt(NbtAccounter.unlimitedHeap()));
                     }
                     catch (Exception e)
                     {
@@ -117,14 +117,14 @@ public abstract class ServuxLitematicaHandler<T extends CustomPayload> implement
         }
     }
 
-    private void handleBulkData(final int type, @Nullable NbtCompound nbt)
+    private void handleBulkData(final int type, @Nullable CompoundTag nbt)
     {
         if (nbt == null || nbt.isEmpty())
         {
             return;
         }
 
-        String task = nbt.getString("Task", "BulkEntityReply");
+        String task = nbt.getStringOr("Task", "BulkEntityReply");
 
         // For future Granular Task Management
         switch (task)
@@ -132,7 +132,7 @@ public abstract class ServuxLitematicaHandler<T extends CustomPayload> implement
             // File-Transmit support
             case "Litematic-TransmitStart", "Litematic-TransmitCancel", "Litematic-TransmitData", "Litematic-TransmitEnd" ->
             {
-                Pair<LitematicaSchematic, NbtCompound> schemPair = LitematicaSchematic.receiveFileTransmit(nbt);
+                Pair<LitematicaSchematic, CompoundTag> schemPair = LitematicaSchematic.receiveFileTransmit(nbt);
 
                 if (schemPair != null && schemPair.getLeft().getFile() != null)
                 {
@@ -172,14 +172,14 @@ public abstract class ServuxLitematicaHandler<T extends CustomPayload> implement
     @Override
     public void receivePlayPayload(T payload, ClientPlayNetworking.Context ctx)
     {
-        if (payload.getId().id().equals(CHANNEL_ID))
+        if (payload.type().id().equals(CHANNEL_ID))
         {
             ServuxLitematicaHandler.INSTANCE.decodeClientData(CHANNEL_ID, ((ServuxLitematicaPacket.Payload) payload).data());
         }
     }
 
     @Override
-    public void encodeWithSplitter(PacketByteBuf buffer, ClientPlayNetworkHandler handler)
+    public void encodeWithSplitter(FriendlyByteBuf buffer, ClientPacketListener handler)
     {
         // Send each PacketSplitter buffer slice
         ServuxLitematicaHandler.INSTANCE.sendPlayPayload(new ServuxLitematicaPacket.Payload(ServuxLitematicaPacket.ResponseC2SData(buffer)));
@@ -192,10 +192,10 @@ public abstract class ServuxLitematicaHandler<T extends CustomPayload> implement
 
         if (packet.getType().equals(ServuxLitematicaPacket.Type.PACKET_C2S_NBT_RESPONSE_START))
         {
-            PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+            FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
             buffer.writeVarInt(packet.getTransactionId());
             buffer.writeNbt(packet.getCompound());
-            PacketSplitter.send(this, buffer, MinecraftClient.getInstance().getNetworkHandler());
+            PacketSplitter.send(this, buffer, Minecraft.getInstance().getConnection());
         }
         else if (!ServuxLitematicaHandler.INSTANCE.sendPlayPayload(new ServuxLitematicaPacket.Payload(packet)))
         {

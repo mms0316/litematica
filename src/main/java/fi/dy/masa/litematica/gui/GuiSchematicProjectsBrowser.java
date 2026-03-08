@@ -105,7 +105,7 @@ public class GuiSchematicProjectsBrowser extends GuiListBase<DirectoryEntry, Wid
     private void reCreateGuiElements()
     {
         this.clearButtons();
-        this.clearWidgets();
+	    this.clearWidgets();    // todo check
 
         this.createElements();
     }
@@ -148,7 +148,7 @@ public class GuiSchematicProjectsBrowser extends GuiListBase<DirectoryEntry, Wid
             {
                 DirectoryEntry entry = this.gui.getListWidget().getLastSelectedEntry();
 
-                if (entry != null && entry.getType() == DirectoryEntryType.FILE)
+                if (entry != null && entry.type() == DirectoryEntryType.FILE)
                 {
                     if (DataManager.getSchematicProjectsManager().openProject(entry.getFullPath()))
                     {
@@ -207,7 +207,7 @@ public class GuiSchematicProjectsBrowser extends GuiListBase<DirectoryEntry, Wid
                 this(label, null);
             }
 
-            Type(String translationKey, String hoverText)
+            Type(String translationKey, @Nullable String hoverText)
             {
                 this.translationKey = translationKey;
                 this.hoverText = hoverText;
@@ -226,36 +226,27 @@ public class GuiSchematicProjectsBrowser extends GuiListBase<DirectoryEntry, Wid
         }
     }
 
-    private static class ProjectCreator implements IStringConsumerFeedback
-    {
-        private final Path dir;
-        private final GuiSchematicProjectsBrowser gui;
+	private record ProjectCreator(Path dir, GuiSchematicProjectsBrowser gui) implements IStringConsumerFeedback
+	{
+		@Override
+		public boolean setString(String projectName)
+		{
+			Path file = this.dir.resolve(projectName + ".json");
 
-        private ProjectCreator(Path dir, GuiSchematicProjectsBrowser gui)
-        {
-            this.dir = dir;
-            this.gui = gui;
-        }
+			if (Files.exists(file) == false)
+			{
+				DataManager.getSchematicProjectsManager().createNewProject(this.dir, projectName);
+				// In here we need to add the message to the manager GUI, because InfoUtils.showGuiOrInGameMessage()
+				// would add it to the current GUI, which here is the text input GUI, which will close immediately
+				// after this method returns true.
+				this.gui.getListWidget().refreshEntries();
+				this.gui.addMessage(MessageType.SUCCESS, "litematica.message.schematic_projects.project_created", projectName);
+				return true;
+			}
 
-        @Override
-        public boolean setString(String projectName)
-        {
-            Path file = this.dir.resolve(projectName + ".json");
+			InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.error.schematic_projects.project_already_exists", projectName);
 
-            if (Files.exists(file) == false)
-            {
-                DataManager.getSchematicProjectsManager().createNewProject(this.dir, projectName);
-                // In here we need to add the message to the manager GUI, because InfoUtils.showGuiOrInGameMessage()
-                // would add it to the current GUI, which here is the text input GUI, which will close immediately
-                // after this method returns true.
-                this.gui.getListWidget().refreshEntries();
-                this.gui.addMessage(MessageType.SUCCESS, "litematica.message.schematic_projects.project_created", projectName);
-                return true;
-            }
-
-            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.error.schematic_projects.project_already_exists", projectName);
-
-            return false;
-        }
-    }
+			return false;
+		}
+	}
 }

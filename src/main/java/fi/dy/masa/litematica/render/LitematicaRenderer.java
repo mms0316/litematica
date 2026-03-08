@@ -1,23 +1,27 @@
 package fi.dy.masa.litematica.render;
 
 import javax.annotation.Nullable;
-
-import fi.dy.masa.litematica.compat.sodium.SodiumCompat;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BlockRenderLayerGroup;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.profiler.Profiler;
+import com.mojang.blaze3d.textures.GpuSampler;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.state.LevelRenderState;
+import net.minecraft.util.profiling.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.phys.Vec3;
 
+import fi.dy.masa.malilib.compat.iris.IrisCompat;
 import fi.dy.masa.litematica.Reference;
-import fi.dy.masa.litematica.compat.iris.IrisCompat;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.litematica.render.schematic.WorldRendererSchematic;
@@ -27,7 +31,7 @@ public class LitematicaRenderer
 {
     private static final LitematicaRenderer INSTANCE = new LitematicaRenderer();
 
-    private MinecraftClient mc;
+    private Minecraft mc;
     private WorldRendererSchematic worldRenderer;
     private Frustum frustum;
     private int frameCount;
@@ -40,20 +44,20 @@ public class LitematicaRenderer
     private boolean renderPiecewiseEntities;
     private boolean renderPiecewiseTileEntities;
 
-    private LitematicaRenderer()
-    {
-    }
-
     public static LitematicaRenderer getInstance()
     {
         return INSTANCE;
     }
 
-    public WorldRendererSchematic getWorldRenderer()
+	private LitematicaRenderer()
+	{
+	}
+
+	public WorldRendererSchematic getWorldRenderer()
     {
         if (this.worldRenderer == null)
         {
-            this.mc = MinecraftClient.getInstance();
+            this.mc = Minecraft.getInstance();
             this.worldRenderer = new WorldRendererSchematic(this.mc);
         }
 
@@ -71,7 +75,7 @@ public class LitematicaRenderer
         return this.getWorldRenderer();
     }
 
-    public void loadRenderers(@Nullable Profiler profiler)
+    public void loadRenderers(@Nullable ProfilerFiller profiler)
     {
         this.getWorldRenderer().loadRenderers(profiler);
     }
@@ -80,6 +84,14 @@ public class LitematicaRenderer
     {
         this.getWorldRenderer().setWorldAndLoadRenderers(worldClient);
     }
+
+	public void onBlockModelRendererReload(BlockRenderDispatcher manager)
+	{
+		if (this.worldRenderer != null)
+		{
+			this.worldRenderer.reloadBlockRenderManager(manager);
+		}
+	}
 
     private void calculateFinishTime()
     {
@@ -96,142 +108,17 @@ public class LitematicaRenderer
         }
     }
 
-    /*
-    public void renderSchematicWorld(MatrixStack matrices, Matrix4f matrix, float partialTicks)
+    public void onEndFrame()
     {
-        if (this.mc.skipGameRender == false)
-        {
-            this.mc.getProfiler().push("litematica_schematic_world_render");
-
-            if (this.mc.getCameraEntity() == null)
-            {
-                this.mc.setCameraEntity(this.mc.player);
-            }
-
-            RenderSystem.pushMatrix();
-            RenderSystem.enableDepthTest();
-
-            this.calculateFinishTime();
-            this.renderWorld(matrices, matrix, partialTicks, this.finishTimeNano);
-            this.cleanup();
-
-            RenderSystem.popMatrix();
-
-            this.mc.getProfiler().pop();
-        }
+        this.getWorldRenderer().getChunkFixUniform().endFrame();
     }
 
-    private void renderWorld(MatrixStack matrices, Matrix4f matrix, float partialTicks, long finishTimeNano)
+    public void onClose()
     {
-        this.mc.getProfiler().push("culling");
-
-        RenderSystem.shadeModel(GL11.GL_SMOOTH);
-
-        Camera camera = this.getCamera();
-        Vec3d cameraPos = camera.getPos();
-        double x = cameraPos.x;
-        double y = cameraPos.y;
-        double z = cameraPos.z;
-
-        Frustum frustum = new Frustum(matrices.peek().getModel(), matrix);
-        frustum.setPosition(x, y, z);
-
-        this.mc.getProfiler().swap("prepare_terrain");
-        this.mc.getTextureManager().bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
-        fi.dy.masa.malilib.render.RenderUtils.disableDiffuseLighting();
-        WorldRendererSchematic worldRenderer = this.getWorldRenderer();
-
-        this.mc.getProfiler().swap("terrain_setup");
-        worldRenderer.setupTerrain(camera, frustum, this.frameCount++, this.mc.player.isSpectator());
-
-        this.mc.getProfiler().swap("update_chunks");
-        worldRenderer.updateChunks(finishTimeNano);
-
-        this.mc.getProfiler().swap("terrain");
-        RenderSystem.matrixMode(GL11.GL_MODELVIEW);
-        RenderSystem.disableAlphaTest();
-
-        if (Configs.Visuals.ENABLE_SCHEMATIC_BLOCKS.getBooleanValue())
-        {
-            RenderSystem.pushMatrix();
-
-            if (Configs.Visuals.RENDER_COLLIDING_SCHEMATIC_BLOCKS.getBooleanValue())
-            {
-                RenderSystem.enablePolygonOffset();
-                RenderSystem.polygonOffset(-0.2f, -0.4f);
-            }
-
-            this.setupAlphaShader();
-            this.enableAlphaShader();
-
-            fi.dy.masa.malilib.render.RenderUtils.setupBlend();
-
-            worldRenderer.renderBlockLayer(RenderLayer.getSolid(), matrices, camera);
-            worldRenderer.renderBlockLayer(RenderLayer.getCutoutMipped(), matrices, camera);
-            worldRenderer.renderBlockLayer(RenderLayer.getCutout(), matrices, camera);
-
-            if (Configs.Visuals.RENDER_COLLIDING_SCHEMATIC_BLOCKS.getBooleanValue())
-            {
-                RenderSystem.polygonOffset(0f, 0f);
-                RenderSystem.disablePolygonOffset();
-            }
-
-            RenderSystem.disableBlend();
-            RenderSystem.shadeModel(GL11.GL_FLAT);
-            RenderSystem.alphaFunc(GL11.GL_GREATER, 0.01F);
-
-            RenderSystem.matrixMode(GL11.GL_MODELVIEW);
-            RenderSystem.popMatrix();
-
-            this.mc.getProfiler().swap("entities");
-
-            RenderSystem.pushMatrix();
-
-            fi.dy.masa.malilib.render.RenderUtils.enableDiffuseLightingForLevel(matrices);
-            fi.dy.masa.malilib.render.RenderUtils.setupBlend();
-
-            worldRenderer.renderEntities(camera, frustum, matrices, partialTicks);
-
-            RenderSystem.disableFog(); // Fixes Structure Blocks breaking all rendering
-            RenderSystem.disableBlend();
-            fi.dy.masa.malilib.render.RenderUtils.disableDiffuseLighting();
-
-            RenderSystem.matrixMode(GL11.GL_MODELVIEW);
-            RenderSystem.popMatrix();
-
-            RenderSystem.enableCull();
-            RenderSystem.alphaFunc(GL11.GL_GREATER, 0.1F);
-            this.mc.getTextureManager().bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
-            RenderSystem.shadeModel(GL11.GL_SMOOTH);
-
-            this.mc.getProfiler().swap("translucent");
-            RenderSystem.depthMask(false);
-
-            RenderSystem.pushMatrix();
-
-            fi.dy.masa.malilib.render.RenderUtils.setupBlend();
-
-            worldRenderer.renderBlockLayer(RenderLayer.getTranslucent(), matrices, camera);
-
-            RenderSystem.popMatrix();
-
-            this.disableAlphaShader();
-        }
-
-        this.mc.getProfiler().swap("overlay");
-        this.renderSchematicOverlay(matrices);
-
-        RenderSystem.enableAlphaTest();
-        RenderSystem.disableBlend();
-        RenderSystem.depthMask(true);
-        RenderSystem.shadeModel(GL11.GL_FLAT);
-        RenderSystem.enableCull();
-
-        this.mc.getProfiler().pop();
+        this.getWorldRenderer().clearChunkFixUniform();
     }
-    */
 
-    public void renderSchematicOverlays(Camera camera, Profiler profiler)
+    public void renderSchematicOverlays(Camera camera, ProfilerFiller profiler)
     {
         boolean invert = Hotkeys.INVERT_OVERLAY_RENDER_STATE.getKeybind().isKeybindHeld();
 
@@ -252,10 +139,15 @@ public class LitematicaRenderer
         }
     }
 
-    public void piecewisePrepareAndUpdate(Frustum frustum, Profiler profiler)
+	public void updateCameraState(Camera camera, float tickProgress)
+	{
+		this.getWorldRenderer().updateCameraState(camera, tickProgress);
+	}
+
+    public void piecewisePrepare(Frustum frustum, ProfilerFiller profiler)
     {
-        boolean render = Configs.Generic.BETTER_RENDER_ORDER.getBooleanValue() &&
-                         Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
+		// Configs.Generic.BETTER_RENDER_ORDER.getBooleanValue() &&
+        boolean render = Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
                          this.mc.getCameraEntity() != null;
         this.renderPiecewiseSchematic = false;
         this.renderPiecewiseBlocks = false;
@@ -277,11 +169,11 @@ public class LitematicaRenderer
                 profiler.push(Reference.MOD_ID+"_culling");
                 this.calculateFinishTime();
 
-                profiler.swap(Reference.MOD_ID+"_terrain_setup");
+                profiler.popPush(Reference.MOD_ID+"_terrain_setup");
                 worldRenderer.setupTerrain(this.getCamera(), frustum, this.frameCount++, this.mc.player.isSpectator(), profiler);
 
-                profiler.swap(Reference.MOD_ID+"_update_chunks");
-                worldRenderer.updateChunks(this.finishTimeNano, profiler);
+//                profiler.popPush(Reference.MOD_ID+"_update_chunks");
+//                worldRenderer.updateChunks(this.finishTimeNano, profiler);
 
                 profiler.pop();
 
@@ -290,7 +182,22 @@ public class LitematicaRenderer
         }
     }
 
-    public void scheduleTranslucentSorting(Vec3d camera, Profiler profiler)
+    public void piecewiseUpdate(Camera camera, ProfilerFiller profiler)
+    {
+        boolean render = Configs.Visuals.ENABLE_RENDERING.getBooleanValue() &&
+                camera != null;
+        WorldRendererSchematic worldRenderer = this.getWorldRenderer();
+
+        if (render && this.frustum != null && worldRenderer.hasWorld() &&
+            this.renderPiecewiseSchematic)
+        {
+            profiler.push(Reference.MOD_ID+"_update_chunks");
+            worldRenderer.updateChunks(this.finishTimeNano, profiler);
+            profiler.pop();
+        }
+    }
+
+    public void scheduleTranslucentSorting(Vec3 camera, ProfilerFiller profiler)
     {
         if (this.renderPiecewiseBlocks)
         {
@@ -300,92 +207,17 @@ public class LitematicaRenderer
         }
     }
 
-    public void capturePreMainValues(GpuBufferSlice fogBuffer, Profiler profiler)
+    public void capturePreMainValues(Camera camera, GpuBufferSlice fogBuffer, ProfilerFiller profiler)
     {
         if (this.renderPiecewiseBlocks)
         {
             profiler.push(Reference.MOD_ID+"_pre_main_capture");
-            this.getWorldRenderer().capturePreMainValues(fogBuffer, profiler);
+            this.getWorldRenderer().capturePreMainValues(camera, fogBuffer, profiler);
             profiler.pop();
         }
     }
 
-//    public void piecewiseRenderSolid(Matrix4f viewMatrix, Matrix4f posMatrix, Profiler profiler)
-//    {
-//        if (this.renderPiecewiseBlocks)
-//        {
-//            profiler.push(Reference.MOD_ID+"_solid");
-//
-//            this.getWorldRenderer().renderBlockLayer(RenderLayer.getSolid(), this.getCamera(), profiler,
-//                                                     this.renderCollidingSchematicBlocks ?
-//                                                     MaLiLibPipelines.SOLID_MASA_OFFSET :
-//                                                     MaLiLibPipelines.SOLID_MASA);
-//
-//            profiler.pop();
-//        }
-//    }
-//
-//    public void piecewiseRenderCutoutMipped(Matrix4f viewMatrix, Matrix4f posMatrix, Profiler profiler)
-//    {
-//        if (this.renderPiecewiseBlocks)
-//        {
-//            profiler.push(Reference.MOD_ID+"_cutout_mipped");
-//
-//            this.getWorldRenderer().renderBlockLayer(RenderLayer.getCutoutMipped(), this.getCamera(), profiler,
-//                                                     this.renderCollidingSchematicBlocks ?
-//                                                     MaLiLibPipelines.CUTOUT_MIPPED_MASA_OFFSET :
-//                                                     MaLiLibPipelines.CUTOUT_MIPPED_MASA);
-//
-//            profiler.pop();
-//        }
-//    }
-//
-//    public void piecewiseRenderCutout(Matrix4f viewMatrix, Matrix4f posMatrix, Profiler profiler)
-//    {
-//        if (this.renderPiecewiseBlocks)
-//        {
-//            profiler.push(Reference.MOD_ID+"_cutout");
-//
-//            this.getWorldRenderer().renderBlockLayer(RenderLayer.getCutout(), this.getCamera(), profiler,
-//                                                     this.renderCollidingSchematicBlocks ?
-//                                                     MaLiLibPipelines.CUTOUT_MASA_OFFSET :
-//                                                     MaLiLibPipelines.CUTOUT_MASA);
-//
-//            profiler.pop();
-//        }
-//    }
-//
-//    public void piecewiseRenderTranslucent(Matrix4f viewMatrix, Matrix4f posMatrix, Profiler profiler)
-//    {
-//        if (this.renderPiecewiseBlocks)
-//        {
-//            profiler.push(Reference.MOD_ID+"_translucent");
-//
-//            this.getWorldRenderer().renderBlockLayer(RenderLayer.getTranslucent(), this.getCamera(), profiler,
-//                                                     this.renderCollidingSchematicBlocks ?
-//                                                     MaLiLibPipelines.TRANSLUCENT_MASA_OFFSET :
-//                                                     MaLiLibPipelines.TRANSLUCENT_MASA);
-//
-//            profiler.pop();
-//        }
-//    }
-//
-//    public void piecewiseRenderTripwire(Matrix4f viewMatrix, Matrix4f posMatrix, Profiler profiler)
-//    {
-//        if (this.renderPiecewiseBlocks)
-//        {
-//            profiler.push(Reference.MOD_ID+"_tripwire");
-//
-//            this.getWorldRenderer().renderBlockLayer(RenderLayer.getTripwire(), this.getCamera(), profiler,
-//                                                     this.renderCollidingSchematicBlocks ?
-//                                                     MaLiLibPipelines.TRIPWIRE_MASA_OFFSET :
-//                                                     MaLiLibPipelines.TRIPWIRE_MASA);
-//
-//            profiler.pop();
-//        }
-//    }
-
-    public void piecewisePrepareBlockLayers(Matrix4fc matrix4fc, double cameraX, double cameraY, double cameraZ, Profiler profiler)
+    public void piecewisePrepareBlockLayers(Matrix4fc matrix4fc, double cameraX, double cameraY, double cameraZ, ProfilerFiller profiler)
     {
         if (this.renderPiecewiseBlocks)
         {
@@ -395,36 +227,57 @@ public class LitematicaRenderer
         }
     }
 
-    public void piecewiseDrawBlockLayerGroup(BlockRenderLayerGroup group)
+    public void piecewiseDrawBlockLayerGroup(ChunkSectionLayerGroup group, @Nullable GpuSampler sampler)
     {
         if (this.renderPiecewiseBlocks)
         {
             // Use Saved Profiler later
-            this.getWorldRenderer().drawBlockLayerGroup(group);
+            this.getWorldRenderer().drawBlockLayerGroup(group, sampler);
         }
     }
 
-    public void piecewiseRenderEntities(MatrixStack matrices, VertexConsumerProvider.Immediate immediate, float partialTicks, Profiler profiler)
+    public void piecewisePrepareEntities(Camera camera, Frustum frustum, LevelRenderState renderStates, DeltaTracker tickCounter, ProfilerFiller profiler)
     {
         if (this.renderPiecewiseEntities)
         {
-            profiler.push(Reference.MOD_ID+"_entities");
-            this.getWorldRenderer().renderEntities(this.getCamera(), this.frustum, matrices, immediate, partialTicks, profiler);
+            profiler.push(Reference.MOD_ID+"_prepare_entities");
+            this.getWorldRenderer().prepareEntities(this.getCamera(), this.frustum, renderStates, tickCounter, profiler);
             profiler.pop();
         }
     }
 
-    public void piecewiseRenderBlockEntities(MatrixStack matrices, VertexConsumerProvider.Immediate immediate, VertexConsumerProvider.Immediate immediate2, float partialTicks, Profiler profiler)
+	public void piecewiseRenderEntities(PoseStack matrices, LevelRenderState renderStates, SubmitNodeCollector queue, ProfilerFiller profiler)
+	{
+		if (this.renderPiecewiseEntities)
+		{
+			profiler.push(Reference.MOD_ID+"_render_entities");
+			this.getWorldRenderer().renderEntities(this.getCamera(), this.frustum, matrices, renderStates, queue, profiler);
+			profiler.pop();
+		}
+	}
+
+	public void piecewisePrepareBlockEntities(Camera camera, Frustum frustum, LevelRenderState renderStates, float tickProgress, ProfilerFiller profiler)
     {
         if (this.renderPiecewiseTileEntities)
         {
-            profiler.push(Reference.MOD_ID+"_block_entities");
-            this.getWorldRenderer().renderBlockEntities(this.getCamera(), this.frustum, matrices, immediate, immediate2, partialTicks, profiler);
+            profiler.push(Reference.MOD_ID+"_prepare_block_entities");
+			PoseStack matrices = new PoseStack();
+            this.getWorldRenderer().prepareBlockEntities(this.getCamera(), this.frustum, renderStates, matrices, tickProgress, profiler);
             profiler.pop();
         }
     }
 
-    public void piecewiseRenderOverlay(Matrix4f posMatrix, Matrix4f projMatrix, Profiler profiler)
+	public void piecewiseRenderBlockEntities(PoseStack matrices, LevelRenderState renderStates, SubmitNodeStorage queue, ProfilerFiller profiler)
+	{
+		if (this.renderPiecewiseTileEntities)
+		{
+			profiler.push(Reference.MOD_ID+"_block_entities");
+			this.getWorldRenderer().renderBlockEntities(this.getCamera(), this.frustum, matrices, renderStates, queue, profiler);
+			profiler.pop();
+		}
+	}
+
+	public void piecewiseRenderOverlay(Matrix4f posMatrix, Matrix4f projMatrix, ProfilerFiller profiler)
     {
         if (this.renderPiecewiseSchematic)
         {
@@ -434,12 +287,13 @@ public class LitematicaRenderer
         }
 
         this.getWorldRenderer().clearBlockBatchDraw();
+		this.getWorldRenderer().clearWorldRenderStates();
         this.cleanup();
     }
 
     private Camera getCamera()
     {
-        return this.mc.gameRenderer.getCamera();
+        return this.mc.gameRenderer.getMainCamera();
     }
 
     private void cleanup()

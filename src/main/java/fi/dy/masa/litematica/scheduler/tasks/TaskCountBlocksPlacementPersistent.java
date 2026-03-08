@@ -15,15 +15,16 @@ import fi.dy.masa.litematica.materials.MaterialListUtils;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.Container;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.profiling.ProfilerFiller;
 
 public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
 {
@@ -60,13 +61,13 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
     }
 
     @Override
-    protected void countAtBox(net.minecraft.util.math.Box box)
+    protected void countAtBox(AABB box)
     {
         // Done in execute()
     }
 
     @Override
-    public boolean execute(Profiler profiler)
+    public boolean execute(ProfilerFiller profiler)
     {
         // Process the schematic world
         // This can't be done once in the constructor because the schematic world may not be loaded yet
@@ -74,14 +75,14 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
         LayerRange range = this.layerRange;
         Direction.Axis axis = range.getAxis();
 
-        var chunkManager = this.schematicWorld.getChunkManager();
+        var chunkManager = this.schematicWorld.getChunkProvider();
         var schematicPlacementManager = DataManager.getSchematicPlacementManager();
 
         for (int chunkIndex = 0; chunkIndex < this.pendingChunks.size(); ++chunkIndex)
         {
             ChunkPos chunkPos = this.pendingChunks.get(chunkIndex);
 
-            if (!chunkManager.isChunkLoaded(chunkPos.x, chunkPos.z))
+            if (!chunkManager.hasChunk(chunkPos.x, chunkPos.z))
             {
                 schematicPlacementManager.markChunkForRebuild(chunkPos);
                 continue;
@@ -89,13 +90,12 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
 
             for (IntBoundingBox bb : this.getBoxesInChunk(chunkPos))
             {
-                final int startX = axis == Direction.Axis.X ? Math.max(bb.minX, range.getLayerMin()) : bb.minX;
-                final int startY = axis == Direction.Axis.Y ? Math.max(bb.minY, range.getLayerMin()) : bb.minY;
-                final int startZ = axis == Direction.Axis.Z ? Math.max(bb.minZ, range.getLayerMin()) : bb.minZ;
-                final int endX = axis == Direction.Axis.X ? Math.min(bb.maxX, range.getLayerMax()) : bb.maxX;
-                final int endY = axis == Direction.Axis.Y ? Math.min(bb.maxY, range.getLayerMax()) : bb.maxY;
-                final int endZ = axis == Direction.Axis.Z ? Math.min(bb.maxZ, range.getLayerMax()) : bb.maxZ;
-
+                final int startX = axis == Direction.Axis.X ? Math.max(bb.minX(), range.getLayerMin()) : bb.minX();
+                final int startY = axis == Direction.Axis.Y ? Math.max(bb.minY(), range.getLayerMin()) : bb.minY();
+                final int startZ = axis == Direction.Axis.Z ? Math.max(bb.minZ(), range.getLayerMin()) : bb.minZ();
+                final int endX = axis == Direction.Axis.X ? Math.min(bb.maxX(), range.getLayerMax()) : bb.maxX();
+                final int endY = axis == Direction.Axis.Y ? Math.min(bb.maxY(), range.getLayerMax()) : bb.maxY();
+                final int endZ = axis == Direction.Axis.Z ? Math.min(bb.maxZ(), range.getLayerMax()) : bb.maxZ();
                 for (int y = startY; y <= endY; ++y)
                 {
                     for (int z = startZ; z <= endZ; ++z)
@@ -118,15 +118,15 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
                     }
                 }
 
-                List<Entity> entities = this.schematicWorld.getOtherEntities(null, new Box(startX, startY, startZ, endX + 1, endY + 1, endZ + 1));
+                List<Entity> entities = this.schematicWorld.getEntities(null, new AABB(startX, startY, startZ, endX + 1, endY + 1, endZ + 1));
                 if (entities != null && !entities.isEmpty())
                 {
                     for (Entity entity : entities)
                     {
                         // Mark entities processed, because they may reside in multiple chunks
-                        if (entity.getUuid() != null && this.schematicEntities.containsKey(entity.getUuid()))
+                        if (entity.getUUID() != null && this.schematicEntities.containsKey(entity.getUUID()))
                             continue;
-                        this.schematicEntities.put(entity.getUuid(), entity);
+                        this.schematicEntities.put(entity.getUUID(), entity);
                     }
                 }
             }
@@ -167,15 +167,15 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
                 }
 
                 BlockEntity schematicBlockEntity = this.schematicWorld.getBlockEntity(pos);
-                if (schematicBlockEntity instanceof Inventory schematicInventory)
+                if (schematicBlockEntity instanceof Container schematicInventory)
                 {
                     schematicInventory.forEach(itemStack -> this.addItemStackToCount(itemStack, this.itemTypesTotal));
                     BlockEntity clientBlockEntity = this.clientWorld.getBlockEntity(pos);
-                    if (!(clientBlockEntity instanceof Inventory))
+                    if (!(clientBlockEntity instanceof Container))
                     {
                         schematicInventory.forEach(itemStack -> this.addItemStackToCount(itemStack, this.itemTypesMissing));
                     }
-                    // clientWorld has empty Inventory, so it's not possible to compare
+                    // clientWorld has empty Container, so it's not possible to compare
                 }
             }
 

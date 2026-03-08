@@ -5,14 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.ApiStatus;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.BlockMirror;
-import net.minecraft.util.BlockRotation;
-import net.minecraft.util.math.BlockPos;
-
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.interfaces.ISchematicPlacementEventListener;
 import fi.dy.masa.litematica.interfaces.ISchematicPlacementEventManager;
@@ -127,7 +125,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
      */
     @Override
     public void invokeSetSubRegionMirror(@Nonnull ISchematicPlacementEventListener listener,
-                                         @Nonnull SubRegionPlacement placement, BlockMirror mirror)
+                                         @Nonnull SubRegionPlacement placement, Mirror mirror)
     {
         if (this.handlers.containsKey(listener) &&
             this.handlers.get(listener).contains(SchematicPlacementEventFlag.ALL_EVENTS))
@@ -141,7 +139,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
      */
     @Override
     public void invokeSetSubRegionRotation(@Nonnull ISchematicPlacementEventListener listener,
-                                           @Nonnull SubRegionPlacement placement, BlockRotation rot)
+                                           @Nonnull SubRegionPlacement placement, Rotation rot)
     {
         if (this.handlers.containsKey(listener) &&
             this.handlers.get(listener).contains(SchematicPlacementEventFlag.ALL_EVENTS))
@@ -236,7 +234,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
     }
 
     @ApiStatus.Internal
-    public void onPlacementCreateFromJson(SchematicPlacement placement, LitematicaSchematic schematic, BlockPos origin, String name, BlockRotation rotation, BlockMirror mirror, boolean enabled, boolean enableRender, JsonObject obj)
+    public void onPlacementCreateFromJson(SchematicPlacement placement, LitematicaSchematic schematic, BlockPos origin, String name, Rotation rotation, Mirror mirror, boolean enabled, boolean enableRender, JsonObject obj)
     {
         this.handlers.forEach(
                 (handler, list) ->
@@ -250,7 +248,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
     }
 
     @ApiStatus.Internal
-    public void onPlacementCreateFromNbt(SchematicPlacement placement, LitematicaSchematic schematic, BlockPos origin, String name, BlockRotation rotation, BlockMirror mirror, boolean enabled, boolean enableRender, NbtCompound nbt)
+    public void onPlacementCreateFromNbt(SchematicPlacement placement, LitematicaSchematic schematic, BlockPos origin, String name, Rotation rotation, Mirror mirror, boolean enabled, boolean enableRender, CompoundTag nbt)
     {
         this.handlers.forEach(
                 (handler, list) ->
@@ -278,7 +276,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
     }
 
     @ApiStatus.Internal
-    public void onSavePlacementToNbt(SchematicPlacement placement, NbtCompound nbt)
+    public void onSavePlacementToNbt(SchematicPlacement placement, CompoundTag nbt)
     {
         this.handlers.forEach(
                 (handler, list) ->
@@ -292,7 +290,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
     }
 
     @ApiStatus.Internal
-    public void onSubRegionCreateFromJson(SubRegionPlacement subRegion, BlockPos origin, String name, BlockRotation rotation, BlockMirror mirror, boolean enabled, boolean enableRender, JsonObject obj)
+    public void onSubRegionCreateFromJson(SubRegionPlacement subRegion, BlockPos origin, String name, Rotation rotation, Mirror mirror, boolean enabled, boolean enableRender, JsonObject obj)
     {
         this.handlers.forEach(
                 (handler, list) ->
@@ -390,7 +388,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
     }
 
     @ApiStatus.Internal
-    public void onSetMirror(SchematicPlacement placement, BlockMirror mirror)
+    public void onSetMirror(SchematicPlacement placement, Mirror mirror)
     {
         this.handlers.forEach(
                 (handler, list) ->
@@ -404,7 +402,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
     }
 
     @ApiStatus.Internal
-    public void onSetRotation(SchematicPlacement placement, BlockRotation rotation)
+    public void onSetRotation(SchematicPlacement placement, Rotation rotation)
     {
         this.handlers.forEach(
                 (handler, list) ->
@@ -474,7 +472,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
     }
 
     @ApiStatus.Internal
-    public void onSetSubRegionMirror(SubRegionPlacement subRegion, BlockMirror mirror)
+    public void onSetSubRegionMirror(SubRegionPlacement subRegion, Mirror mirror)
     {
         this.handlers.forEach(
                 (handler, list) ->
@@ -488,7 +486,7 @@ public class SchematicPlacementEventHandler implements ISchematicPlacementEventM
     }
 
     @ApiStatus.Internal
-    public void onSetSubRegionRotation(SubRegionPlacement subRegion, BlockRotation rotation)
+    public void onSetSubRegionRotation(SubRegionPlacement subRegion, Rotation rotation)
     {
         this.handlers.forEach(
                 (handler, list) ->

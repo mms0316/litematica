@@ -2,11 +2,10 @@ package fi.dy.masa.litematica.scheduler;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.profiling.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.util.profiler.Profilers;
-
 import fi.dy.masa.litematica.Reference;
 
 public class TaskScheduler
@@ -35,10 +34,10 @@ public class TaskScheduler
 
     public static TaskScheduler getServerInstanceIfExistsOrClient()
     {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         // Yes this is actually correct despite the naming - in single player we want to
         // schedule stuff to the integrated server's thread in some cases
-        return mc.isIntegratedServerRunning() ? INSTANCE_SERVER : INSTANCE_CLIENT;
+        return mc.hasSingleplayerServer() ? INSTANCE_SERVER : INSTANCE_CLIENT;
     }
 
     public void scheduleTask(ITask task, int interval)
@@ -53,8 +52,8 @@ public class TaskScheduler
 
     public void runTasks()
     {
-        if (MinecraftClient.getInstance().player == null) return;
-        Profiler profiler = Profilers.get();
+        if (Minecraft.getInstance().player == null) return;
+        ProfilerFiller profiler = Profiler.get();
 
         profiler.push(Reference.MOD_ID+"_run_tasks");
         synchronized (this)

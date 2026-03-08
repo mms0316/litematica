@@ -1,12 +1,12 @@
 package fi.dy.masa.litematica.scheduler;
 
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
 
 public interface ITask
 {
     /**
      * Get the display name for this task, used in the Task Manager GUI
-     * @return
+     * @return ()
      */
     String getDisplayName();
 
@@ -25,11 +25,11 @@ public interface ITask
      * Execute the task. Return true to indicate that this task has finished.
      * @return true to indicate the task has finished and can be removed
      */
-    boolean execute(Profiler profiler);
+    boolean execute(ProfilerFiller profiler);
 
     /**
      * Returns true if this task should be removed
-     * @return
+     * @return ()
      */
     boolean shouldRemove();
 
@@ -40,13 +40,13 @@ public interface ITask
 
     /**
      * Returns the task's timer
-     * @return
+     * @return ()
      */
     TaskTimer getTimer();
 
     /**
      * Creates a new timer for the task, with the given execution interval in game ticks
-     * @param interval
+     * @param interval ()
      */
     void createTimer(int interval);
 }

@@ -1,16 +1,15 @@
 package fi.dy.masa.litematica.util;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.util.StringRepresentable;
 import com.google.common.collect.ImmutableList;
-
-import net.minecraft.util.StringIdentifiable;
-
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.data.Schema;
 import fi.dy.masa.litematica.config.Configs;
 
-public enum DataFixerMode implements IConfigOptionListEntry, StringIdentifiable
+public enum DataFixerMode implements IConfigOptionListEntry, StringRepresentable
 {
     ALWAYS                  ("always", "litematica.gui.label.data_fixer_mode.always"),
     BELOW_1215              ("below_1215", "litematica.gui.label.data_fixer_mode.below_1215"),
@@ -23,7 +22,7 @@ public enum DataFixerMode implements IConfigOptionListEntry, StringIdentifiable
     BELOW_112X              ("below_112X", "litematica.gui.label.data_fixer_mode.below_112X"),
     NEVER                   ("never", "litematica.gui.label.data_fixer_mode.never");
 
-    public static final StringIdentifiable.EnumCodec<DataFixerMode> CODEC = StringIdentifiable.createCodec(DataFixerMode::values);
+    public static final StringRepresentable.EnumCodec<DataFixerMode> CODEC = StringRepresentable.fromEnum(DataFixerMode::values);
     public static final ImmutableList<DataFixerMode> VALUES = ImmutableList.copyOf(values());
 
     private final String configString;
@@ -36,7 +35,7 @@ public enum DataFixerMode implements IConfigOptionListEntry, StringIdentifiable
     }
 
     @Override
-    public String asString()
+    public @Nonnull String getSerializedName()
     {
         return this.configString;
     }

@@ -1,19 +1,18 @@
 package fi.dy.masa.litematica.util;
 
+import javax.annotation.Nonnull;
+import net.minecraft.util.StringRepresentable;
 import com.google.common.collect.ImmutableList;
-
-import net.minecraft.util.StringIdentifiable;
-
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
-public enum PasteNbtBehavior implements IConfigOptionListEntry, StringIdentifiable
+public enum PasteNbtBehavior implements IConfigOptionListEntry, StringRepresentable
 {
     NONE            ("none",              "litematica.gui.label.paste_nbt_behavior.none"),
     PLACE_MODIFY    ("place_data_modify", "litematica.gui.label.paste_nbt_behavior.place_data_modify"),
     PLACE_CLONE     ("place_clone",       "litematica.gui.label.paste_nbt_behavior.place_clone");
 
-    public static final StringIdentifiable.EnumCodec<PasteNbtBehavior> CODEC = StringIdentifiable.createCodec(PasteNbtBehavior::values);
+    public static final StringRepresentable.EnumCodec<PasteNbtBehavior> CODEC = StringRepresentable.fromEnum(PasteNbtBehavior::values);
     public static final ImmutableList<PasteNbtBehavior> VALUES = ImmutableList.copyOf(values());
     private final String configString;
     private final String translationKey;
@@ -25,7 +24,7 @@ public enum PasteNbtBehavior implements IConfigOptionListEntry, StringIdentifiab
     }
 
     @Override
-    public String asString()
+    public @Nonnull String getSerializedName()
     {
         return this.configString;
     }

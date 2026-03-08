@@ -3,10 +3,8 @@ package fi.dy.masa.litematica.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import net.minecraft.block.Block;
-import net.minecraft.registry.tag.TagKey;
-
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 import fi.dy.masa.litematica.config.Configs;
 
 public class IgnoreBlockRegistry
@@ -24,7 +22,7 @@ public class IgnoreBlockRegistry
         {
             for (TagKey<Block> tag : this.blockTags)
             {
-                if (block.getDefaultState().isIn(tag))
+                if (block.defaultBlockState().is(tag))
                 {
                     return true;
                 }

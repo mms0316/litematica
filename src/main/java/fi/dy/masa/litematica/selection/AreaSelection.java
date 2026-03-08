@@ -2,6 +2,8 @@ package fi.dy.masa.litematica.selection;
 
 import java.util.*;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
@@ -13,9 +15,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.gui.interfaces.IMessageConsumer;
 import fi.dy.masa.malilib.util.InfoUtils;
@@ -61,7 +60,7 @@ public class AreaSelection
     {
         this.subRegionBoxes = new HashMap<>();
         this.name = "Unnamed";
-        this.calculatedOrigin = BlockPos.ORIGIN;
+        this.calculatedOrigin = BlockPos.ZERO;
         this.calculatedOriginDirty = true;
         this.explicitOrigin = null;
     }
@@ -213,7 +212,7 @@ public class AreaSelection
         }
         else
         {
-            this.calculatedOrigin = BlockPos.ORIGIN;
+            this.calculatedOrigin = BlockPos.ZERO;
         }
 
         this.calculatedOriginDirty = false;
@@ -379,12 +378,12 @@ public class AreaSelection
         {
             if (box.getPos1() != null)
             {
-                this.setSubRegionCornerPos(box, Corner.CORNER_1, box.getPos1().add(diff));
+                this.setSubRegionCornerPos(box, Corner.CORNER_1, box.getPos1().offset(diff));
             }
 
             if (box.getPos2() != null)
             {
-                this.setSubRegionCornerPos(box, Corner.CORNER_2, box.getPos2().add(diff));
+                this.setSubRegionCornerPos(box, Corner.CORNER_2, box.getPos2().offset(diff));
             }
         }
 
@@ -409,7 +408,7 @@ public class AreaSelection
         {
             if (this.getExplicitOrigin() != null)
             {
-                this.setExplicitOrigin(this.getExplicitOrigin().offset(direction, amount));
+                this.setExplicitOrigin(this.getExplicitOrigin().relative(direction, amount));
             }
         }
         else if (box != null)
@@ -418,13 +417,13 @@ public class AreaSelection
 
             if ((corner == Corner.NONE || corner == Corner.CORNER_1) && box.getPos1() != null)
             {
-                BlockPos pos = this.getSubRegionCornerPos(box, Corner.CORNER_1).offset(direction, amount);
+                BlockPos pos = this.getSubRegionCornerPos(box, Corner.CORNER_1).relative(direction, amount);
                 this.setSubRegionCornerPos(box, Corner.CORNER_1, pos);
             }
 
             if ((corner == Corner.NONE || corner == Corner.CORNER_2) && box.getPos2() != null)
             {
-                BlockPos pos = this.getSubRegionCornerPos(box, Corner.CORNER_2).offset(direction, amount);
+                BlockPos pos = this.getSubRegionCornerPos(box, Corner.CORNER_2).relative(direction, amount);
                 this.setSubRegionCornerPos(box, Corner.CORNER_2, pos);
             }
         }

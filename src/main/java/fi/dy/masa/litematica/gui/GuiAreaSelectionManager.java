@@ -28,7 +28,7 @@ import fi.dy.masa.litematica.util.FileType;
 
 public class GuiAreaSelectionManager extends GuiListBase<DirectoryEntry, WidgetDirectoryEntry, WidgetAreaSelectionBrowser> implements ISelectionListener<DirectoryEntry>
 {
-    private SelectionManager selectionManager;
+    private final SelectionManager selectionManager;
 
     public GuiAreaSelectionManager()
     {
@@ -66,7 +66,7 @@ public class GuiAreaSelectionManager extends GuiListBase<DirectoryEntry, WidgetD
     protected void reCreateGuiElements()
     {
         this.clearButtons();
-        this.clearWidgets();
+	    this.clearWidgets();        // todo check
 
         int x = this.getScreenWidth() - 13;
         int y = 24;
@@ -117,7 +117,7 @@ public class GuiAreaSelectionManager extends GuiListBase<DirectoryEntry, WidgetD
     /**
      * This is the string the DataManager uses for saving/loading/storing the last used directory
      * for each browser GUI type/contet.
-     * @return
+     * @return ()
      */
     public String getBrowserContext()
     {
@@ -143,7 +143,8 @@ public class GuiAreaSelectionManager extends GuiListBase<DirectoryEntry, WidgetD
     @Override
     public void onSelectionChange(DirectoryEntry entry)
     {
-        if (entry.getType() == DirectoryEntryType.FILE && FileType.fromFile(entry.getFullPath()) == FileType.JSON)
+		if (entry == null) return;
+        if (entry.type() == DirectoryEntryType.FILE && FileType.fromFile(entry.getFullPath()) == FileType.JSON)
         {
             String selectionId = entry.getFullPath().toAbsolutePath().toString();
 
@@ -172,111 +173,84 @@ public class GuiAreaSelectionManager extends GuiListBase<DirectoryEntry, WidgetD
         return new WidgetAreaSelectionBrowser(listX, listY, 100, 100, this, this.getSelectionListener());
     }
 
-    private static class ButtonListener implements IButtonActionListener
-    {
-        private final GuiAreaSelectionManager gui;
-        private final ButtonType type;
+	private record ButtonListener(ButtonType type, GuiAreaSelectionManager gui) implements IButtonActionListener
+	{
+		@Override
+		public void actionPerformedWithButton(ButtonBase button, int mouseButton)
+		{
+			if (this.type == ButtonType.NEW_SELECTION)
+			{
+				Path dir = this.gui.getListWidget().getCurrentDirectory();
+				String title = "litematica.gui.title.create_area_selection";
+				GuiBase.openGui(new GuiTextInput(256, title, "", this.gui, new SelectionCreator(dir, this.gui)));
+			}
+			else if (this.type == ButtonType.FROM_PLACEMENT)
+			{
+				SchematicPlacement placement = DataManager.getSchematicPlacementManager()
+														  .getSelectedSchematicPlacement();
 
-        public ButtonListener(ButtonType type, GuiAreaSelectionManager gui)
-        {
-            this.type = type;
-            this.gui = gui;
-        }
+				if (placement != null)
+				{
+					Path dir = this.gui.getListWidget().getCurrentDirectory();
+					String title = "litematica.gui.title.create_area_selection_from_placement";
+					GuiBase.openGui(new GuiTextInput(256, title, placement.getName(), this.gui, new SelectionCreatorPlacement(placement, dir, this.gui)));
+				}
+				else
+				{
+					this.gui.addMessage(MessageType.ERROR, "litematica.error.area_selection.no_placement_selected");
+				}
+			}
+			else if (this.type == ButtonType.UNSELECT)
+			{
+				DataManager.getSelectionManager().setCurrentSelection(null);
+				this.gui.reCreateGuiElements();
+			}
+		}
 
-        @Override
-        public void actionPerformedWithButton(ButtonBase button, int mouseButton)
-        {
-            if (this.type == ButtonType.NEW_SELECTION)
-            {
-                Path dir = this.gui.getListWidget().getCurrentDirectory();
-                String title = "litematica.gui.title.create_area_selection";
-                GuiBase.openGui(new GuiTextInput(256, title, "", this.gui, new SelectionCreator(dir, this.gui)));
-            }
-            else if (this.type == ButtonType.FROM_PLACEMENT)
-            {
-                SchematicPlacement placement = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
+		public enum ButtonType
+		{
+			NEW_SELECTION("litematica.gui.button.area_selections.create_new_selection"),
+			FROM_PLACEMENT("litematica.gui.button.area_selections.create_selection_from_placement"),
+			UNSELECT("litematica.gui.button.area_selections.unselect");
 
-                if (placement != null)
-                {
-                    Path dir = this.gui.getListWidget().getCurrentDirectory();
-                    String title = "litematica.gui.title.create_area_selection_from_placement";
-                    GuiBase.openGui(new GuiTextInput(256, title, placement.getName(), this.gui, new SelectionCreatorPlacement(placement, dir, this.gui)));
-                }
-                else
-                {
-                    this.gui.addMessage(MessageType.ERROR, "litematica.error.area_selection.no_placement_selected");
-                }
-            }
-            else if (this.type == ButtonType.UNSELECT)
-            {
-                DataManager.getSelectionManager().setCurrentSelection(null);
-                this.gui.reCreateGuiElements();
-            }
-        }
+			private final String labelKey;
 
-        public enum ButtonType
-        {
-            NEW_SELECTION       ("litematica.gui.button.area_selections.create_new_selection"),
-            FROM_PLACEMENT      ("litematica.gui.button.area_selections.create_selection_from_placement"),
-            UNSELECT            ("litematica.gui.button.area_selections.unselect");
+			ButtonType(String labelKey)
+			{
+				this.labelKey = labelKey;
+			}
 
-            private final String labelKey;
+			public String getLabelKey()
+			{
+				return this.labelKey;
+			}
+		}
+	}
 
-            private ButtonType(String labelKey)
-            {
-                this.labelKey = labelKey;
-            }
+	public record SelectionCreator(Path dir, GuiAreaSelectionManager gui) implements IStringConsumer
+	{
+		@Override
+		public void setString(String string)
+		{
+			this.gui.selectionManager.createNewSelection(this.dir, string);
+			this.gui.getListWidget().refreshEntries();
+		}
+	}
 
-            public String getLabelKey()
-            {
-                return this.labelKey;
-            }
-        }
-    }
+	public record SelectionCreatorPlacement(SchematicPlacement placement, Path dir, GuiAreaSelectionManager gui)
+			implements IStringConsumerFeedback
+	{
+		@Override
+		public boolean setString(String name)
+		{
+			if (this.gui.getSelectionManager().createSelectionFromPlacement(this.dir, this.placement, name, this.gui))
+			{
+				this.gui.addMessage(MessageType.SUCCESS, "litematica.message.area_selections.selection_created_from_placement", name);
+				this.gui.getListWidget().refreshEntries();
+				return true;
+			}
 
-    public static class SelectionCreator implements IStringConsumer
-    {
-        private final Path dir;
-        private final GuiAreaSelectionManager gui;
-
-        public SelectionCreator(Path dir, GuiAreaSelectionManager gui)
-        {
-            this.dir = dir;
-            this.gui = gui;
-        }
-
-        @Override
-        public void setString(String string)
-        {
-            this.gui.selectionManager.createNewSelection(this.dir, string);
-            this.gui.getListWidget().refreshEntries();
-        }
-    }
-
-    public static class SelectionCreatorPlacement implements IStringConsumerFeedback
-    {
-        private final SchematicPlacement placement;
-        private final Path dir;
-        private final GuiAreaSelectionManager gui;
-
-        public SelectionCreatorPlacement(SchematicPlacement placement, Path dir, GuiAreaSelectionManager gui)
-        {
-            this.placement = placement;
-            this.dir = dir;
-            this.gui = gui;
-        }
-
-        @Override
-        public boolean setString(String name)
-        {
-            if (this.gui.getSelectionManager().createSelectionFromPlacement(this.dir, this.placement, name, this.gui))
-            {
-                this.gui.addMessage(MessageType.SUCCESS, "litematica.message.area_selections.selection_created_from_placement", name);
-                this.gui.getListWidget().refreshEntries();
-                return true;
-            }
-
-            return false;
-        }
-    }
+			return false;
+		}
+	}
 }

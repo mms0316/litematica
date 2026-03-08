@@ -1,12 +1,10 @@
 package fi.dy.masa.litematica.interfaces;
 
 import java.util.function.Supplier;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import fi.dy.masa.litematica.schematic.pickblock.SchematicPickBlockEventResult;
 
 public interface ISchematicPickBlockEventListener
@@ -17,9 +15,9 @@ public interface ISchematicPickBlockEventListener
 
 	SchematicPickBlockEventResult onSchematicPickBlockStart(boolean closest);
 
-	SchematicPickBlockEventResult onSchematicPickBlockPreGather(World schematicWorld, BlockPos pos, BlockState expectedState);
+	SchematicPickBlockEventResult onSchematicPickBlockPreGather(Level schematicWorld, BlockPos pos, BlockState expectedState);
 
-	SchematicPickBlockEventResult onSchematicPickBlockPrePick(World schematicWorld, BlockPos pos, BlockState expectedState, ItemStack stack);
+	SchematicPickBlockEventResult onSchematicPickBlockPrePick(Level schematicWorld, BlockPos pos, BlockState expectedState, ItemStack stack);
 
 	void onSchematicPickBlockSuccess();
 }

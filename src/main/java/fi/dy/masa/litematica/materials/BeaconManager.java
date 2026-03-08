@@ -6,12 +6,12 @@ import com.google.gson.JsonObject;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.JsonUtils;
-import net.minecraft.block.BeaconBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
+import fi.dy.masa.malilib.util.game.wrap.GameWrap;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -65,12 +65,12 @@ public class BeaconManager {
         }
     }
 
-    public void register(MinecraftClient mc) {
-        if (mc.player == null || mc.world == null) return;
+    public void register(Minecraft mc) {
+        if (mc.player == null || mc.level == null) return;
 
-        if (mc.crosshairTarget instanceof BlockHitResult blockHitResult) {
+        if (GameWrap.getHitResult() instanceof BlockHitResult blockHitResult) {
             final var blockPos = blockHitResult.getBlockPos();
-            final var blockState = mc.world.getBlockState(blockPos);
+            final var blockState = mc.level.getBlockState(blockPos);
             if (blockState.getBlock() instanceof BeaconBlock) {
                 beaconList.add(blockPos);
                 InfoUtils.printActionbarMessage("Registered beacon");
@@ -78,12 +78,12 @@ public class BeaconManager {
         }
     }
 
-    public void unregister(MinecraftClient mc) {
-        if (mc.player == null || mc.world == null) return;
+    public void unregister(Minecraft mc) {
+        if (mc.player == null || mc.level == null) return;
 
-        if (mc.crosshairTarget instanceof BlockHitResult blockHitResult) {
+        if (GameWrap.getHitResult() instanceof BlockHitResult blockHitResult) {
             final var blockPos = blockHitResult.getBlockPos();
-            final var blockState = mc.world.getBlockState(blockPos);
+            final var blockState = mc.level.getBlockState(blockPos);
             if (blockState.getBlock() instanceof BeaconBlock) {
                 beaconList.remove(blockPos);
                 InfoUtils.printActionbarMessage("Unregistered beacon");
@@ -91,7 +91,7 @@ public class BeaconManager {
         }
     }
 
-    public void unregisterAll(MinecraftClient mc) {
+    public void unregisterAll(Minecraft mc) {
         if (beaconList.isEmpty())
             InfoUtils.printActionbarMessage("Nothing to be unregistered");
         else {
@@ -109,10 +109,10 @@ public class BeaconManager {
             if (pos.getY() < beaconPos.getY())
                 continue;
             //Bedrock doesn't obstruct
-            if (blockState.isOf(Blocks.BEDROCK))
+            if (blockState.is(Blocks.BEDROCK))
                 continue;
             //Visually-transparent blocks don't obstruct (from BeaconBlockEntity.java::tick)
-            if (blockState.getOpacity() < 15)
+            if (blockState.getLightBlock() < 15)
                 continue;
 
             return true;

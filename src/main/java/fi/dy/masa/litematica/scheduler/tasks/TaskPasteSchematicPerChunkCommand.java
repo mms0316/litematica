@@ -4,42 +4,44 @@ import java.util.*;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import com.google.common.collect.Queues;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.command.argument.BlockArgumentParser;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.*;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.WorldChunk;
-
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.malilib.util.position.PositionUtils;
-import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.mixin.block.IMixinAbstractBlock;
@@ -55,7 +57,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
     protected final Queue<String> queuedCommands = Queues.newArrayDeque();
     protected final Long2LongOpenHashMap placedPositionTimestamps = new Long2LongOpenHashMap();
     protected final LongArrayList fillVolumes = new LongArrayList();
-    protected final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    protected final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
     protected final PasteNbtBehavior nbtBehavior;
     protected final String cloneCommand;
     protected final String fillCommand;
@@ -68,6 +70,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
     protected int maxCommandLength = 255;
     protected int sentFillCommands;
     protected int sentSetblockCommands;
+    protected String useStrict;
 
     public TaskPasteSchematicPerChunkCommand(Collection<SchematicPlacement> placements,
                                              LayerRange range,
@@ -83,6 +86,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
         this.summonCommand = Configs.Generic.COMMAND_NAME_SUMMON.getStringValue();
         this.useFillCommand = Configs.Generic.PASTE_USE_FILL_COMMAND.getBooleanValue();
         this.useWorldEdit = Configs.Generic.COMMAND_USE_WORLDEDIT.getBooleanValue();
+        this.useStrict = Configs.Generic.COMMAND_USE_STRICT.getBooleanValue() ? " strict" : "";
         this.nbtBehavior = (PasteNbtBehavior) Configs.Generic.PASTE_NBT_BEHAVIOR.getOptionListValue();
 
         if (this.useFillCommand)
@@ -98,7 +102,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
     }
 
     @Override
-    public boolean execute(Profiler profiler)
+    public boolean execute(ProfilerFiller profiler)
     {
         // Nothing to do
         if (this.ignoreBlocks && this.ignoreEntities)
@@ -147,8 +151,8 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
         }
         else
         {
-            this.positionIterator = BlockPos.iterate(box.minX, box.minY, box.minZ,
-                                                     box.maxX, box.maxY, box.maxZ).iterator();
+            this.positionIterator = BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(),
+                                                     box.maxX(), box.maxY(), box.maxZ()).iterator();
         }
 
         this.phase = TaskPhase.PROCESS_BOX_BLOCKS;
@@ -156,8 +160,8 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
     protected void prepareSummoningEntities(IntBoundingBox box)
     {
-        net.minecraft.util.math.Box bb = new net.minecraft.util.math.Box(box.minX, box.minY, box.minZ, box.maxX + 1, box.maxY + 1, box.maxZ + 1);
-        this.entityIterator = this.schematicWorld.getOtherEntities(null, bb, (e) -> true).iterator();
+        net.minecraft.world.phys.AABB bb = new net.minecraft.world.phys.AABB(box.minX(), box.minY(), box.minZ(), box.maxX() + 1, box.maxY() + 1, box.maxZ() + 1);
+        this.entityIterator = this.schematicWorld.getEntities((Entity) null, bb, (e) -> true).iterator();
         this.phase = TaskPhase.PROCESS_BOX_ENTITIES;
     }
 
@@ -173,8 +177,10 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
     protected void processBlocksInCurrentBoxUsingSetBlockOnly()
     {
         ChunkPos chunkPos = this.currentChunkPos;
-        ChunkSchematic schematicChunk = this.schematicWorld.getChunkProvider().getChunk(chunkPos.x, chunkPos.z);
-        Chunk clientChunk = this.mc.world.getChunk(chunkPos.x, chunkPos.z);
+        if (chunkPos == null || this.positionIterator == null || this.mc.level == null) return;
+        ChunkSchematic schematicChunk = this.schematicWorld.getChunkProvider().getChunkForLighting(chunkPos.x, chunkPos.z);
+        if (schematicChunk == null || this.currentBox == null) return;
+        ChunkAccess clientChunk = this.mc.level.getChunk(chunkPos.x, chunkPos.z);
         boolean ignoreLimit = Configs.Generic.PASTE_IGNORE_CMD_LIMIT.getBooleanValue();
 
         while (this.positionIterator.hasNext() &&
@@ -203,10 +209,11 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
     protected void processBlocksInCurrentBoxUsingFill()
     {
         ChunkPos chunkPos = this.currentChunkPos;
+        if (chunkPos == null || this.currentBox == null || this.mc.level == null) return;
         final int baseX = chunkPos.x << 4;
         final int baseZ = chunkPos.z << 4;
-        ChunkSchematic schematicChunk = this.schematicWorld.getChunkProvider().getChunk(chunkPos.x, chunkPos.z);
-        Chunk clientChunk = this.mc.world.getChunk(chunkPos.x, chunkPos.z);
+        ChunkSchematic schematicChunk = this.schematicWorld.getChunkProvider().getChunkForLighting(chunkPos.x, chunkPos.z);
+        ChunkAccess clientChunk = this.mc.level.getChunk(chunkPos.x, chunkPos.z);
 
         while (this.fillVolumes.isEmpty() == false && this.queuedCommands.size() < this.maxCommandsPerTick)
         {
@@ -233,6 +240,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
     protected void processEntitiesInCurrentBox()
     {
+        if (this.entityIterator == null || this.currentBox == null || this.mc.level == null) return;
         while (this.entityIterator.hasNext() && this.queuedCommands.size() < this.maxCommandsPerTick)
         {
             this.summonEntity(this.entityIterator.next());
@@ -246,7 +254,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
         }
     }
 
-    protected void pasteBlock(BlockPos pos, WorldChunk schematicChunk, Chunk clientChunk, boolean ignoreLimit)
+    protected void pasteBlock(BlockPos pos, LevelChunk schematicChunk, ChunkAccess clientChunk, boolean ignoreLimit)
     {
         BlockState stateSchematic = schematicChunk.getBlockState(pos);
         BlockState stateClient = clientChunk.getBlockState(pos);
@@ -265,15 +273,15 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
             if (be != null && nbtBehavior != PasteNbtBehavior.NONE && this.useWorldEdit == false)
             {
                 Consumer<String> commandHandler = ignoreLimit ? this::sendCommand : this.queuedCommands::offer;
-                World schematicWorld = schematicChunk.getWorld();
+                Level schematicWorld = schematicChunk.getLevel();
 
                 if (nbtBehavior == PasteNbtBehavior.PLACE_MODIFY)
                 {
-                    this.setDataViaDataModify(pos, stateSchematic, be, schematicWorld, this.mc.world, commandHandler);
+                    this.setDataViaDataModify(pos, stateSchematic, be, schematicWorld, this.mc.level, commandHandler);
                 }
                 else if (nbtBehavior == PasteNbtBehavior.PLACE_CLONE)
                 {
-                    this.placeBlockViaClone(pos, stateSchematic, be, schematicWorld, this.mc.world, commandHandler);
+                    this.placeBlockViaClone(pos, stateSchematic, be, schematicWorld, this.mc.level, commandHandler);
                 }
             }
             else
@@ -285,7 +293,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
     protected boolean useSpecialPasting(BlockState state)
     {
-        return this.useWorldEdit == false && state.isIn(BlockTags.ALL_SIGNS);
+        return this.useWorldEdit == false && state.is(BlockTags.ALL_SIGNS);
     }
 
     protected boolean shouldSetBlock(BlockState stateSchematic, BlockState stateClient)
@@ -317,7 +325,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
             String command = String.format(Locale.ROOT, "%s %s %f %f %f",
                                            this.summonCommand, id, entity.getX(), entity.getY(), entity.getZ());
 
-            if (entity instanceof ItemFrameEntity itemFrame)
+            if (entity instanceof ItemFrame itemFrame)
             {
                 command = this.getSummonCommandForItemFrame(itemFrame, command);
             }
@@ -326,27 +334,32 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
         }
     }
 
-    protected String getSummonCommandForItemFrame(ItemFrameEntity itemFrame, String originalCommand)
+    protected String getSummonCommandForItemFrame(ItemFrame itemFrame, String originalCommand)
     {
-        ItemStack stack = itemFrame.getHeldItemStack();
+        ItemStack stack = itemFrame.getItem();
 
         if (stack.isEmpty() == false)
         {
-            Identifier itemId = Registries.ITEM.getId(stack.getItem());
-            int facingId = itemFrame.getHorizontalFacing().getIndex();
+            Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+            int facingId = itemFrame.getDirection().get3DDataValue();
             String nbtStr = String.format(" {Facing:%db,Item:{id:\"%s\",Count:1b}}", facingId, itemId);
-            NbtComponent entityComp = stack.get(DataComponentTypes.ENTITY_DATA);
+            TypedEntityData<EntityType<?>> entityData = stack.get(DataComponents.ENTITY_DATA);
 
-            if (entityComp != null && entityComp.isEmpty() == false)
+            if (entityData != null)
             {
-                String itemNbt = entityComp.toString();
-                String tmp = String.format(" {Facing:%db,Item:{id:\"%s\",Count:1b,tag:%s}}",
-                                           facingId, itemId, itemNbt);
+				CompoundTag entityComp = entityData.copyTagWithoutId();
 
-                if (originalCommand.length() + tmp.length() < 255)
-                {
-                    nbtStr = tmp;
-                }
+				if (entityComp.isEmpty())
+				{
+					String itemNbt = entityComp.toString();
+					String tmp = String.format(" {Facing:%db,Item:{id:\"%s\",Count:1b,tag:%s}}",
+											   facingId, itemId, itemNbt);
+
+					if (originalCommand.length() + tmp.length() < 255)
+					{
+						nbtStr = tmp;
+					}
+				}
             }
 
             return originalCommand + nbtStr;
@@ -362,7 +375,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
     protected void queueSetBlockCommand(int x, int y, int z, BlockState state, Consumer<String> commandHandler)
     {
-        String blockString = BlockArgumentParser.stringifyBlockState(state);
+        String blockString = BlockStateParser.serialize(state);
 
         if (this.useWorldEdit)
         {
@@ -373,7 +386,8 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
         else
         {
             String cmdName = this.setBlockCommand;
-            commandHandler.accept(String.format("%s %d %d %d %s", cmdName, x, y, z, blockString));
+            String cmd = String.format("%s %d %d %d %s%s", cmdName, x, y, z, blockString, this.useStrict);
+            commandHandler.accept(cmd);
         }
 
         ++this.sentSetblockCommands;
@@ -414,7 +428,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
     protected void queueFillCommandForBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BlockState state)
     {
-        String blockString = BlockArgumentParser.stringifyBlockState(state);
+        String blockString = BlockStateParser.serialize(state);
 
         if (this.useWorldEdit)
         {
@@ -434,6 +448,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
                 fillCommand += " replace air";
             }
 
+            fillCommand += this.useStrict;
             this.queuedCommands.offer(fillCommand);
         }
 
@@ -441,7 +456,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
     }
 
     protected void setDataViaDataModify(BlockPos pos, BlockState state, BlockEntity be,
-                                        World schematicWorld, ClientWorld clientWorld,
+                                        Level schematicWorld, ClientLevel clientWorld,
                                         Consumer<String> commandHandler)
     {
         BlockPos placementPos = this.placeNbtPickedBlock(pos, state, be, schematicWorld, clientWorld);
@@ -452,7 +467,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
             try
             {
-                Set<String> keys = new HashSet<>(be.createNbt(clientWorld.getRegistryManager()).getKeys());
+                Set<String> keys = new HashSet<>(be.saveWithoutMetadata(clientWorld.registryAccess()).keySet());
                 keys.remove("id");
                 keys.remove("x");
                 keys.remove("y");
@@ -461,47 +476,51 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
                 for (String key : keys)
                 {
                     String command = String.format("data modify block %d %d %d %s set from block %d %d %d %s",
-                                                   pos.getX(), pos.getY(), pos.getZ(), key,
-                                                   placementPos.getX(), placementPos.getY(), placementPos.getZ(), key);
+                                                   pos.getX(), pos.getY(), pos.getZ(),
+                                                   key,
+                                                   placementPos.getX(), placementPos.getY(), placementPos.getZ(),
+                                                   key);
                     commandHandler.accept(command);
                 }
             }
             catch (Exception ignore) {}
 
             String cmdName = this.setBlockCommand;
-            String command = String.format("%s %d %d %d air",
-                                           cmdName, placementPos.getX(), placementPos.getY(), placementPos.getZ());
+            String command = String.format("%s %d %d %d air%s",
+                                           cmdName,
+                                           placementPos.getX(), placementPos.getY(), placementPos.getZ(),
+                                           this.useStrict);
             commandHandler.accept(command);
         }
     }
 
-    protected void specialPasteBlock(BlockPos pos, BlockState state, World schematicWorld, Consumer<String> commandHandler)
+    protected void specialPasteBlock(BlockPos pos, BlockState state, Level schematicWorld, Consumer<String> commandHandler)
     {
-        if (state.isIn(BlockTags.ALL_SIGNS))
+        if (state.is(BlockTags.ALL_SIGNS))
         {
             this.specialPasteSignBlock(pos, state, schematicWorld, commandHandler);
         }
     }
 
-    protected void specialPasteSignBlock(BlockPos pos, BlockState state, World schematicWorld, Consumer<String> commandHandler)
+    protected void specialPasteSignBlock(BlockPos pos, BlockState state, Level schematicWorld, Consumer<String> commandHandler)
     {
         BlockEntity be = schematicWorld.getBlockEntity(pos);
         String cmdName = this.setBlockCommand;
-        String blockString = BlockArgumentParser.stringifyBlockState(state);
+        String blockString = BlockStateParser.serialize(state);
 
         if (be instanceof SignBlockEntity signBe)
         {
-            NbtCompound tag = be.createNbt(schematicWorld.getRegistryManager());
+            CompoundTag tag = be.saveWithoutMetadata(schematicWorld.registryAccess());
 
             if (tag != null)
             {
                 // Remove redundant tags to save on the command string length
-                if (signBe.getBackText().hasText(this.mc.player) == false)
+                if (signBe.getBackText().hasMessage(this.mc.player) == false)
                 {
                     tag.remove("back_text");
                 }
 
-                if (signBe.getFrontText().hasText(this.mc.player) == false)
+                if (signBe.getFrontText().hasMessage(this.mc.player) == false)
                 {
                     tag.remove("front_text");
                 }
@@ -511,8 +530,13 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
                     tag.remove("is_waxed");
                 }
 
-                String cmd = String.format("%s %d %d %d %s%s",
-                                           cmdName, pos.getX(), pos.getY(), pos.getZ(), blockString, tag);
+                tag.remove("components");
+
+                String cmd = String.format("%s %d %d %d %s%s%s",
+                                           cmdName,
+                                           pos.getX(), pos.getY(), pos.getZ(),
+                                           blockString, tag.toString(),
+                                           this.useStrict);
 
                 if (cmd.length() <= this.maxCommandLength)
                 {
@@ -523,47 +547,53 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
             }
         }
 
-        commandHandler.accept(String.format("%s %d %d %d %s",
-                                            cmdName, pos.getX(), pos.getY(), pos.getZ(), blockString));
+        String cmd = String.format("%s %d %d %d %s%s",
+                                   cmdName, pos.getX(), pos.getY(), pos.getZ(), blockString,
+                                   this.useStrict);
+        commandHandler.accept(cmd);
         ++this.sentSetblockCommands;
     }
 
     protected void placeBlockViaClone(BlockPos pos, BlockState state, BlockEntity be,
-                                      World schematicWorld, ClientWorld clientWorld,
+                                      Level schematicWorld, ClientLevel clientWorld,
                                       Consumer<String> commandHandler)
     {
         BlockPos placementPos = this.placeNbtPickedBlock(pos, state, be, schematicWorld, clientWorld);
 
         if (placementPos != null)
         {
-            String command = String.format("%s %d %d %d %d %d %d %d %d %d",
+            String command = String.format("%s %d %d %d %d %d %d %d %d %d%s",
                                            this.cloneCommand,
                                            placementPos.getX(), placementPos.getY(), placementPos.getZ(),
                                            placementPos.getX(), placementPos.getY(), placementPos.getZ(),
-                                           pos.getX(), pos.getY(), pos.getZ());
+                                           pos.getX(), pos.getY(), pos.getZ(),
+                                           this.useStrict);
             commandHandler.accept(command);
 
             String cmdName = this.setBlockCommand;
-            command = String.format("%s %d %d %d air",
-                                    cmdName, placementPos.getX(), placementPos.getY(), placementPos.getZ());
+            command = String.format("%s %d %d %d air%s",
+                                    cmdName, placementPos.getX(), placementPos.getY(), placementPos.getZ(),
+                                    this.useStrict);
             commandHandler.accept(command);
         }
     }
 
     @Nullable
     protected BlockPos placeNbtPickedBlock(BlockPos pos, BlockState state, BlockEntity be,
-                                           @Nonnull World schematicWorld, @Nonnull ClientWorld clientWorld)
+                                           @Nonnull Level schematicWorld, @Nonnull ClientLevel clientWorld)
     {
-        double reach = this.mc.player.getBlockInteractionRange();
-        BlockPos placementPos = this.findEmptyNearbyPosition(clientWorld, this.mc.player.getPos(), 4, reach);
+        if (this.mc.player == null || this.mc.gameMode == null) return null;
+        double reach = this.mc.player.blockInteractionRange();
+        BlockPos placementPos = this.findEmptyNearbyPosition(clientWorld, this.mc.player.position(), 4, reach);
 
-        if (placementPos != null && preparePickedStack(pos, state, be, schematicWorld, this.mc, clientWorld.getRegistryManager()))
+        if (placementPos != null && preparePickedStack(pos, state, be, schematicWorld, this.mc, clientWorld.registryAccess()))
         {
-            Vec3d posVec = new Vec3d(placementPos.getX() + 0.5, placementPos.getY() + 0.5, placementPos.getZ() + 0.5);
+            Vec3 posVec = new Vec3(placementPos.getX() + 0.5, placementPos.getY() + 0.5, placementPos.getZ() + 0.5);
             BlockHitResult hitResult = new BlockHitResult(posVec, Direction.UP, placementPos, true);
 
-            this.mc.interactionManager.interactBlock(this.mc.player, Hand.OFF_HAND, hitResult);
+            this.mc.gameMode.useItemOn(this.mc.player, InteractionHand.OFF_HAND, hitResult);
             this.placedPositionTimestamps.put(placementPos.asLong(), System.nanoTime());
+            this.mc.player.getInventory().setItem(Inventory.SLOT_OFFHAND, ItemStack.EMPTY);
 
             return placementPos;
         }
@@ -572,7 +602,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
     }
 
     protected void fillVolume(long encodedValue, int baseX, int baseZ,
-                              ChunkSchematic schematicChunk, Chunk clientChunk)
+                              ChunkSchematic schematicChunk, ChunkAccess clientChunk)
     {
         int startPos = (int) encodedValue;
         int packedOffset = getPackedSize(encodedValue);
@@ -605,7 +635,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
     protected void generateFillVolumes(IntBoundingBox box)
     {
-        ChunkSchematic chunk = this.schematicWorld.getChunkProvider().getChunk(box.minX >> 4, box.minZ >> 4);
+        ChunkSchematic chunk = this.schematicWorld.getChunkProvider().getChunkForLighting(box.minX() >> 4, box.minZ() >> 4);
         boolean ignoreBeFromFill = Configs.Generic.PASTE_IGNORE_BE_IN_FILL.getBooleanValue() &&
                                    Configs.Generic.PASTE_NBT_BEHAVIOR.getOptionListValue() != PasteNbtBehavior.NONE;
         
@@ -624,11 +654,11 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
         Collections.reverse(this.fillVolumes);
     }
 
-    protected int getBlockStripLength(BlockPos.Mutable pos,
+    protected int getBlockStripLength(BlockPos.MutableBlockPos pos,
                                       Direction direction,
                                       int maxLength,
                                       BlockState firstState,
-                                      Chunk chunk)
+                                      ChunkAccess chunk)
     {
         int length = 1;
 
@@ -655,15 +685,15 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
                                   boolean ignoreBeFromFill)
     {
         boolean ignoreBeEntirely = Configs.Generic.PASTE_IGNORE_BE_ENTIRELY.getBooleanValue();
-        BlockPos.Mutable mutablePos = this.mutablePos;
+        BlockPos.MutableBlockPos mutablePos = this.mutablePos;
         ReplaceBehavior replace = this.replace;
-        final int startX = box.minX & 0xF;
-        final int startZ = box.minZ & 0xF;
-        final int endX = box.maxX & 0xF;
-        final int endZ = box.maxZ & 0xF;
-        final int worldMinY = chunk.getBottomY();
+        final int startX = box.minX() & 0xF;
+        final int startZ = box.minZ() & 0xF;
+        final int endX = box.maxX() & 0xF;
+        final int endZ = box.maxZ() & 0xF;
+        final int worldMinY = chunk.getMinY();
 
-        for (int y = box.minY; y <= box.maxY; ++y)
+        for (int y = box.minY(); y <= box.maxY(); ++y)
         {
             for (int z = startZ; z <= endZ; ++z)
             {
@@ -709,23 +739,23 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
                                          LongArrayList volumesOut,
                                          boolean ignoreBe)
     {
-        BlockPos.Mutable mutablePos = this.mutablePos;
-        final int sdOffX = stripDirection.getOffsetX();
-        final int sdOffY = stripDirection.getOffsetY();
-        final int sdOffZ = stripDirection.getOffsetZ();
-        final int scOffX = stripCombineDirection.getOffsetX();
-        final int scOffY = stripCombineDirection.getOffsetY();
-        final int scOffZ = stripCombineDirection.getOffsetZ();
-        final int lcOffX = layerCombineDirection.getOffsetX();
-        final int lcOffY = layerCombineDirection.getOffsetY();
-        final int lcOffZ = layerCombineDirection.getOffsetZ();
-        final int startX = box.minX & 0xF;
-        final int startZ = box.minZ & 0xF;
-        final int endX = box.maxX & 0xF;
-        final int endZ = box.maxZ & 0xF;
-        final int worldMinY = chunk.getBottomY();
+        BlockPos.MutableBlockPos mutablePos = this.mutablePos;
+        final int sdOffX = stripDirection.getStepX();
+        final int sdOffY = stripDirection.getStepY();
+        final int sdOffZ = stripDirection.getStepZ();
+        final int scOffX = stripCombineDirection.getStepX();
+        final int scOffY = stripCombineDirection.getStepY();
+        final int scOffZ = stripCombineDirection.getStepZ();
+        final int lcOffX = layerCombineDirection.getStepX();
+        final int lcOffY = layerCombineDirection.getStepY();
+        final int lcOffZ = layerCombineDirection.getStepZ();
+        final int startX = box.minX() & 0xF;
+        final int startZ = box.minZ() & 0xF;
+        final int endX = box.maxX() & 0xF;
+        final int endZ = box.maxZ() & 0xF;
+        final int worldMinY = chunk.getMinY();
 
-        for (int y = box.minY; y <= box.maxY; ++y)
+        for (int y = box.minY(); y <= box.maxY(); ++y)
         {
             for (int x = startX; x <= endX; ++x)
             {
@@ -747,7 +777,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
                         {
                             // Find identical adjacent strips, and set their data in the array to zero,
                             // since they are being combined into one layer starting from the first position.
-                            while (nextX <= 15 && nextY <= box.maxY && nextZ <= 15 &&
+                            while (nextX <= 15 && nextY <= box.maxY() && nextZ <= 15 &&
                                    workArr[nextX][nextY - worldMinY][nextZ] == length &&
                                    chunk.getBlockState(mutablePos.set(nextX, nextY, nextZ)) == state)
                             {
@@ -786,7 +816,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
         {
             for (int z = startZ; z <= endZ; ++z)
             {
-                for (int y = box.minY; y <= box.maxY; ++y)
+                for (int y = box.minY(); y <= box.maxY(); ++y)
                 {
                     int packedSize = workArr[x][y - worldMinY][z];
 
@@ -803,7 +833,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
                         if (ignoreBe == false || state.hasBlockEntity() == false)
                         {
                             // Find identical adjacent layers
-                            while (nextX <= 15 && nextY <= box.maxY && nextZ <= 15 &&
+                            while (nextX <= 15 && nextY <= box.maxY() && nextZ <= 15 &&
                                    workArr[nextX][nextY - worldMinY][nextZ] == packedSize &&
                                    chunk.getBlockState(mutablePos.set(nextX, nextY, nextZ)) == state)
                             {
@@ -923,31 +953,31 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
 
     @Nullable
-    public BlockPos findEmptyNearbyPosition(World world, Vec3d centerPos, int radius, double reachDistance)
+    public BlockPos findEmptyNearbyPosition(Level world, Vec3 centerPos, int radius, double reachDistance)
     {
-        BlockPos.Mutable pos = new BlockPos.Mutable();
-        BlockPos.Mutable sidePos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos sidePos = new BlockPos.MutableBlockPos();
         long currentTime = System.nanoTime();
         long timeout = 2000000000L; // 2 second timeout before trying to place again to the same position
         double squaredReach = reachDistance * reachDistance;
         int radiusY = Math.min(radius, 2);
 
-        for (double y = centerPos.getY() - radiusY; y <= centerPos.getY() + radiusY; ++y)
+        for (double y = centerPos.y() - radiusY; y <= centerPos.y() + radiusY; ++y)
         {
-            for (double z = centerPos.getZ() - radius; z <= centerPos.getZ() + radius; ++z)
+            for (double z = centerPos.z() - radius; z <= centerPos.z() + radius; ++z)
             {
-                for (double x = centerPos.getX() - radius; x <= centerPos.getX() + radius; ++x)
+                for (double x = centerPos.x() - radius; x <= centerPos.x() + radius; ++x)
                 {
                     // Don't try to place if block is too far (server rejects it)
-                    if (centerPos.squaredDistanceTo(x, y, z) > squaredReach)
+                    if (centerPos.distanceToSqr(x, y, z) > squaredReach)
                     {
                         continue;
                     }
 
                     // Don't try to place a block intersecting the player
-                    if (MathHelper.floor(MathHelper.abs((float)(centerPos.getX() - x))) < 2 &&
-                        MathHelper.floor(MathHelper.abs((float)(centerPos.getZ() - z))) < 2 &&
-                        y >= centerPos.getY() - 2 && y <= centerPos.getY() + 2)
+                    if (Mth.floor(Mth.abs((float)(centerPos.x() - x))) < 2 &&
+                        Mth.floor(Mth.abs((float)(centerPos.z() - z))) < 2 &&
+                        y >= centerPos.y() - 2 && y <= centerPos.y() + 2)
                     {
                         continue;
                     }
@@ -963,7 +993,7 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
 
                     if (isPositionAndSidesEmpty(world, pos, sidePos))
                     {
-                        return pos.toImmutable();
+                        return pos.immutable();
                     }
                 }
             }
@@ -972,16 +1002,16 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
         return null;
     }
 
-    public static boolean isPositionAndSidesEmpty(World world, BlockPos centerPos, BlockPos.Mutable pos)
+    public static boolean isPositionAndSidesEmpty(Level world, BlockPos centerPos, BlockPos.MutableBlockPos pos)
     {
-        if (world.isAir(centerPos) == false)
+        if (world.isEmptyBlock(centerPos) == false)
         {
             return false;
         }
 
         for (Direction side : PositionUtils.ALL_DIRECTIONS)
         {
-            if (world.isAir(pos.set(centerPos, side)) == false)
+            if (world.isEmptyBlock(pos.setWithOffset(centerPos, side)) == false)
             {
                 return false;
             }
@@ -991,10 +1021,10 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
     }
 
     protected static boolean preparePickedStack(BlockPos pos, BlockState state, BlockEntity be,
-                                                World world, MinecraftClient mc,
-                                                @Nonnull DynamicRegistryManager registryManager)
+                                                Level world, Minecraft mc,
+                                                @Nonnull RegistryAccess registryManager)
     {
-        if (mc.player == null || mc.interactionManager == null)
+        if (mc.player == null || mc.gameMode == null)
         {
             return false;
         }
@@ -1008,8 +1038,8 @@ public class TaskPasteSchematicPerChunkCommand extends TaskPasteSchematicPerChun
             //BlockItem.setBlockEntityData(stack, be.getType(), nbt);
 
             BlockUtils.setStackNbt(stack, be, registryManager);
-            mc.player.getInventory().setStack(PlayerInventory.OFF_HAND_SLOT, stack);
-            mc.interactionManager.clickCreativeStack(stack, 45);
+            mc.player.getInventory().setItem(Inventory.SLOT_OFFHAND, stack);
+            mc.gameMode.handleCreativeModeItemAdd(stack, 45);
             return true;
         }
 

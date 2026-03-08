@@ -2,22 +2,24 @@ package fi.dy.masa.litematica.world;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.phys.AABB;
+import fi.dy.masa.litematica.Litematica;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.WorldChunk;
-
-public class ChunkSchematic extends WorldChunk
+public class ChunkSchematic extends LevelChunk
 {
-    private static final BlockState AIR = Blocks.AIR.getDefaultState();
+    private static final BlockState AIR = Blocks.AIR.defaultBlockState();
 
     private final List<Entity> entityList = new ArrayList<>();
     private final long timeCreated;
@@ -26,18 +28,18 @@ public class ChunkSchematic extends WorldChunk
     private int entityCount;
     private boolean isEmpty = true;
 
-    public ChunkSchematic(World worldIn, ChunkPos pos)
+    public ChunkSchematic(Level worldIn, ChunkPos pos)
     {
         super(worldIn, pos);
 
-        this.timeCreated = worldIn.getTime();
-        this.bottomY = worldIn.getBottomY();
-        this.topY = worldIn.getTopYInclusive();
+        this.timeCreated = worldIn.getGameTime();
+        this.bottomY = worldIn.getMinY();
+        this.topY = worldIn.getMaxY();
         this.entityCount = 0;
     }
 
     @Override
-    public BlockState getBlockState(BlockPos pos)
+    public @Nonnull BlockState getBlockState(BlockPos pos)
     {
         int x = pos.getX() & 0xF;
         int y = pos.getY();
@@ -45,13 +47,13 @@ public class ChunkSchematic extends WorldChunk
         int cy = this.getSectionIndex(y);
         y &= 0xF;
 
-        ChunkSection[] sections = this.getSectionArray();
+        LevelChunkSection[] sections = this.getSections();
 
         if (cy >= 0 && cy < sections.length)
         {
-            ChunkSection chunkSection = sections[cy];
+            LevelChunkSection chunkSection = sections[cy];
 
-            if (!chunkSection.isEmpty())
+            if (!chunkSection.hasOnlyAir())
             {
                 return chunkSection.getBlockState(x, y, z);
             }
@@ -61,7 +63,7 @@ public class ChunkSchematic extends WorldChunk
     }
 
     @Override
-    public BlockState setBlockState(BlockPos pos, BlockState state, int isMoving)
+    public BlockState setBlockState(@Nonnull BlockPos pos, @Nonnull BlockState state, int isMoving)
     {
         BlockState stateOld = this.getBlockState(pos);
         int y = pos.getY();
@@ -78,9 +80,9 @@ public class ChunkSchematic extends WorldChunk
 
             Block blockNew = state.getBlock();
             Block blockOld = stateOld.getBlock();
-            ChunkSection section = this.getSectionArray()[cy];
+            LevelChunkSection section = this.getSections()[cy];
 
-            if (section.isEmpty() && state.isAir())
+            if (section.hasOnlyAir() && state.isAir())
             {
                 return null;
             }
@@ -96,7 +98,7 @@ public class ChunkSchematic extends WorldChunk
 
             if (blockOld != blockNew)
             {
-                this.getWorld().removeBlockEntity(pos);
+                this.getLevel().removeBlockEntity(pos);
             }
 
             if (section.getBlockState(x, y, z).getBlock() != blockNew)
@@ -105,36 +107,44 @@ public class ChunkSchematic extends WorldChunk
             }
             else
             {
-                if (state.hasBlockEntity() && blockNew instanceof BlockEntityProvider)
+                if (state.hasBlockEntity() && blockNew instanceof EntityBlock)
                 {
-                    BlockEntity te = this.getBlockEntity(pos, WorldChunk.CreationType.CHECK);
+                    BlockEntity te = this.getBlockEntity(pos, LevelChunk.EntityCreationType.CHECK);
 
                     if (te == null)
                     {
-                        te = ((BlockEntityProvider) blockNew).createBlockEntity(pos, state);
+                        te = ((EntityBlock) blockNew).newBlockEntity(pos, state);
 
                         if (te != null)
                         {
-                            this.getWorld().getWorldChunk(pos).setBlockEntity(te);
+                            this.getLevel().getChunkAt(pos).setBlockEntity(te);
                         }
                     }
                 }
 
-                this.needsSaving();
+                this.isUnsaved();
 
                 return stateOld;
             }
         }
     }
 
+    public AABB getBoundingBox()
+    {
+        final ChunkPos pos = this.getPos();
+        AABB bb = new AABB(pos.getMinBlockX(), this.getMinY(), pos.getMinBlockZ(), pos.getMaxBlockX(), this.getMaxY(), pos.getMaxBlockZ());
+        Litematica.debugLog("ChunkSchematic#getBoundingBox(): --> {}", bb.toString());
+        return bb;
+    }
+
     @SuppressWarnings("deprecation")
     @Override
-    public void addEntity(Entity entity)
+    public void addEntity(@Nonnull Entity entity)
     {
         this.entityList.forEach(
                 (ent ->
                 {
-                    if (ent.getUuid() == entity.getUuid() || ent.getId() == entity.getId())
+                    if (ent.getUUID() == entity.getUUID() || ent.getId() == entity.getId())
                     {
                         return;
                     }

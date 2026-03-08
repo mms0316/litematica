@@ -2,13 +2,11 @@ package fi.dy.masa.litematica.world;
 
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.World;
-
+import net.minecraft.world.level.Level;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.render.LitematicaRenderer;
 import fi.dy.masa.litematica.render.schematic.WorldRendererSchematic;
@@ -19,7 +17,7 @@ public class SchematicWorldHandler
 
     protected final Supplier<WorldRendererSchematic> rendererSupplier;
     @Nullable protected WorldSchematic world;
-    @Nullable protected DynamicRegistryManager.Immutable dynamicRegistryManager = DynamicRegistryManager.EMPTY;
+    @Nullable protected RegistryAccess.Frozen dynamicRegistryManager = RegistryAccess.EMPTY;
 
     // The supplier can return null, but it can't be null itself!
     public SchematicWorldHandler(Supplier<WorldRendererSchematic> rendererSupplier)
@@ -44,7 +42,7 @@ public class SchematicWorldHandler
         return this.world;
     }
 
-    public void setDynamicRegistryManager(@Nullable DynamicRegistryManager.Immutable immutable)
+    public void setDynamicRegistryManager(@Nullable RegistryAccess.Frozen immutable)
     {
         if (immutable == null)
         {
@@ -57,14 +55,14 @@ public class SchematicWorldHandler
     /**
      * Store/Get the Dynamic Registry if we can get it
      */
-    public DynamicRegistryManager getRegistryManager()
+    public RegistryAccess getRegistryManager()
     {
         return this.dynamicRegistryManager;
     }
 
     public static WorldSchematic createSchematicWorld(@Nullable WorldRendererSchematic worldRenderer)
     {
-        World world = MinecraftClient.getInstance().world;
+        Level world = Minecraft.getInstance().level;
 
         if (world == null)
         {
@@ -83,9 +81,9 @@ public class SchematicWorldHandler
          */
         // Use the DimensionType of the current client world
 
-        ClientWorld.Properties levelInfo = new ClientWorld.Properties(Difficulty.PEACEFUL, false, true);
+        ClientLevel.ClientLevelData levelInfo = new ClientLevel.ClientLevelData(Difficulty.PEACEFUL, false, true);
 
-        return new WorldSchematic(levelInfo, world.getRegistryManager(), world.getDimensionEntry(), worldRenderer);
+        return new WorldSchematic(levelInfo, world.registryAccess(), world.dimensionTypeRegistration(), worldRenderer);
     }
 
     public void recreateSchematicWorld(boolean remove)

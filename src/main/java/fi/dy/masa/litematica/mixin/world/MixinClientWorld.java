@@ -1,14 +1,5 @@
 package fi.dy.masa.litematica.mixin.world;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.MutableWorldProperties;
-import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,24 +8,33 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.storage.WritableLevelData;
 
 //Custom Additions (easier to resolve future merge conflicts)
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
 import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 
-@Mixin(ClientWorld.class)
-public abstract class MixinClientWorld extends World
+@Mixin(ClientLevel.class)
+public abstract class MixinClientWorld extends Level
 {
-    private MixinClientWorld(MutableWorldProperties properties,
-                             RegistryKey<World> registryRef,
-                             DynamicRegistryManager manager,
-                             RegistryEntry<DimensionType> dimension,
+    private MixinClientWorld(WritableLevelData properties,
+                             ResourceKey<Level> registryRef,
+                             RegistryAccess manager,
+                             Holder<DimensionType> dimension,
                              boolean isClient, boolean debugWorld, long seed, int maxChainedNeighborUpdates)
     {
         super(properties, registryRef, manager, dimension, isClient, debugWorld, seed, maxChainedNeighborUpdates);
     }
 
-    @Inject(method = "handleBlockUpdate", at = @At("HEAD"))
+    @Inject(method = "setServerVerifiedBlockState", at = @At("HEAD"))
     private void litematica_onHandleBlockUpdate(BlockPos pos, BlockState state, int flags, CallbackInfo ci)
     {
         SchematicVerifier.markVerifierBlockChanges(pos);

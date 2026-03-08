@@ -1,13 +1,12 @@
 package fi.dy.masa.litematica;
 
-import net.minecraft.client.MinecraftClient;
-
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.event.*;
 import fi.dy.masa.malilib.interfaces.IInitializationHandler;
 import fi.dy.masa.malilib.interfaces.IRenderer;
 import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
+import net.minecraft.client.Minecraft;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntitiesDataStorage;
@@ -46,7 +45,7 @@ public class InitHandler implements IInitializationHandler
         WorldLoadHandler.getInstance().registerWorldLoadPreHandler(listener);
         WorldLoadHandler.getInstance().registerWorldLoadPostHandler(listener);
 
-        KeyCallbacks.init(MinecraftClient.getInstance());
+        KeyCallbacks.init(Minecraft.getInstance());
         StatusInfoRenderer.init();
 
         DataManager.getAreaSelectionsBaseDirectory();

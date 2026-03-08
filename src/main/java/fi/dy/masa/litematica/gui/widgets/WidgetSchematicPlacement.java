@@ -3,12 +3,11 @@ package fi.dy.masa.litematica.gui.widgets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import fi.dy.masa.malilib.render.GuiContext;
 import com.google.common.collect.ImmutableList;
-
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
-
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
@@ -66,41 +65,39 @@ public class WidgetSchematicPlacement extends WidgetListEntryBase<SchematicPlace
     }
 
     @Override
-    public boolean canSelectAt(int mouseX, int mouseY, int mouseButton)
+    public boolean canSelectAt(MouseButtonEvent click)
     {
-        return mouseX < this.buttonsStartX && super.canSelectAt(mouseX, mouseY, mouseButton);
+        return click.x() < this.buttonsStartX && super.canSelectAt(click);
     }
 
     @Override
-    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void render(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
-//        RenderUtils.color(1f, 1f, 1f, 1f);
-
         boolean placementSelected = this.manager.getSelectedSchematicPlacement() == this.placement;
 
         // Draw a lighter background for the hovered and the selected entry
         if (selected || placementSelected || this.isMouseOver(mouseX, mouseY))
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0707070);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0707070);
         }
         else if (this.isOdd)
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0101010);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0101010);
         }
         // Draw a slightly lighter background for even entries
         else
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0303030);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0303030);
         }
 
         if (placementSelected)
         {
-            RenderUtils.drawOutline(drawContext, this.x, this.y, this.width, this.height, 0xFFE0E0E0);
+            RenderUtils.drawOutline(ctx, this.x, this.y, this.width, this.height, 0xFFE0E0E0);
         }
 
         String name = this.placement.getName();
         String pre = this.placement.isEnabled() ? GuiBase.TXT_GREEN : GuiBase.TXT_RED;
-        this.drawString(drawContext, this.x + 20, this.y + 7, 0xFFFFFFFF, pre + name);
+        this.drawString(ctx, this.x + 20, this.y + 7, 0xFFFFFFFF, pre + name);
 
         Icons icon;
 
@@ -113,39 +110,37 @@ public class WidgetSchematicPlacement extends WidgetListEntryBase<SchematicPlace
             icon = Icons.SCHEMATIC_TYPE_MEMORY;
         }
 
-//        RenderUtils.color(1, 1, 1, 1);
-//        this.parent.bindTexture(Icons.TEXTURE, drawContext);
-        icon.renderAt(drawContext, this.x + 2, this.y + 5, this.zLevel, false, false);
+        icon.renderAt(ctx, this.x + 2, this.y + 5, this.zLevel, false, false);
 
         if (this.placement.isRegionPlacementModified())
         {
             icon = Icons.NOTICE_EXCLAMATION_11;
-            icon.renderAt(drawContext, this.buttonsStartX - 13, this.y + 6, this.zLevel, false, false);
+            icon.renderAt(ctx, this.buttonsStartX - 13, this.y + 6, this.zLevel, false, false);
         }
 
         if (this.placement.isLocked())
         {
             icon = Icons.LOCK_LOCKED;
-            icon.renderAt(drawContext, this.buttonsStartX - 26, this.y + 6, this.zLevel, false, false);
+            icon.renderAt(ctx, this.buttonsStartX - 26, this.y + 6, this.zLevel, false, false);
         }
 
-        super.render(drawContext, mouseX, mouseY, placementSelected);
+        super.render(ctx, mouseX, mouseY, placementSelected);
     }
 
     @Override
-    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void postRenderHovered(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
         if (this.placement.isLocked() &&
             GuiBase.isMouseOver(mouseX, mouseY, this.x + this.buttonsStartX - 38, this.y + 6, 11, 11))
         {
             String str = StringUtils.translate("litematica.hud.schematic_placement.hover_info.placement_locked");
-            RenderUtils.drawHoverText(drawContext, mouseX, mouseY, ImmutableList.of(str));
+            RenderUtils.drawHoverText(ctx, mouseX, mouseY, ImmutableList.of(str));
         }
         else if (this.placement.isRegionPlacementModified() &&
                  GuiBase.isMouseOver(mouseX, mouseY, this.x + this.buttonsStartX - 25, this.y + 6, 11, 11))
         {
             String str = StringUtils.translate("litematica.hud.schematic_placement.hover_info.placement_modified");
-            RenderUtils.drawHoverText(drawContext, mouseX, mouseY, ImmutableList.of(str));
+            RenderUtils.drawHoverText(ctx, mouseX, mouseY, ImmutableList.of(str));
         }
         else if (GuiBase.isMouseOver(mouseX, mouseY, this.x, this.y, this.buttonsStartX - 18, this.height))
         {
@@ -163,71 +158,63 @@ public class WidgetSchematicPlacement extends WidgetListEntryBase<SchematicPlace
             String strSize = String.format("%d x %d x %d", size.getX(), size.getY(), size.getZ());
             text.add(StringUtils.translate("litematica.gui.label.schematic_placement.enclosing_size", strSize));
 
-            RenderUtils.drawHoverText(drawContext, mouseX, mouseY, text);
+            RenderUtils.drawHoverText(ctx, mouseX, mouseY, text);
         }
     }
 
-    public static class ButtonListener implements IButtonActionListener
-    {
-        public final ButtonType type;
-        public final WidgetSchematicPlacement widget;
+	public record ButtonListener(ButtonType type, WidgetSchematicPlacement widget) implements IButtonActionListener
+	{
+		@Override
+		public void actionPerformedWithButton(ButtonBase button, int mouseButton)
+		{
+			if (this.type == ButtonType.CONFIGURE)
+			{
+				GuiPlacementConfiguration gui = new GuiPlacementConfiguration(this.widget.placement);
+				gui.setParent(this.widget.parent.getParentGui());
+				GuiBase.openGui(gui);
+			}
+			else if (this.type == ButtonType.REMOVE)
+			{
+				if (this.widget.placement.isLocked() && GuiBase.isShiftDown() == false)
+				{
+					this.widget.parent.getParentGui()
+									  .addMessage(MessageType.ERROR, "litematica.error.schematic_placements.remove_fail_locked");
+				}
+				else
+				{
+					this.widget.manager.removeSchematicPlacement(this.widget.placement);
+					this.widget.parent.refreshEntries();
+				}
+			}
+			else if (this.type == ButtonType.TOGGLE_ENABLED)
+			{
+				this.widget.placement.toggleEnabled();
+				this.widget.parent.refreshEntries();
+			}
+		}
 
-        public ButtonListener(ButtonType type, WidgetSchematicPlacement widget)
-        {
-            this.type = type;
-            this.widget = widget;
-        }
+		public enum ButtonType
+		{
+			CONFIGURE("litematica.gui.button.schematic_placements.configure"),
+			REMOVE("litematica.gui.button.schematic_placements.remove"),
+			TOGGLE_ENABLED("litematica.gui.button.schematic_placements.placement_enabled");
 
-        @Override
-        public void actionPerformedWithButton(ButtonBase button, int mouseButton)
-        {
-            if (this.type == ButtonType.CONFIGURE)
-            {
-                GuiPlacementConfiguration gui = new GuiPlacementConfiguration(this.widget.placement);
-                gui.setParent(this.widget.parent.getParentGui());
-                GuiBase.openGui(gui);
-            }
-            else if (this.type == ButtonType.REMOVE)
-            {
-                if (this.widget.placement.isLocked() && GuiBase.isShiftDown() == false)
-                {
-                    this.widget.parent.getParentGui().addMessage(MessageType.ERROR, "litematica.error.schematic_placements.remove_fail_locked");
-                }
-                else
-                {
-                    this.widget.manager.removeSchematicPlacement(this.widget.placement);
-                    this.widget.parent.refreshEntries();
-                }
-            }
-            else if (this.type == ButtonType.TOGGLE_ENABLED)
-            {
-                this.widget.placement.toggleEnabled();
-                this.widget.parent.refreshEntries();
-            }
-        }
+			private final String translationKey;
 
-        public enum ButtonType
-        {
-            CONFIGURE       ("litematica.gui.button.schematic_placements.configure"),
-            REMOVE          ("litematica.gui.button.schematic_placements.remove"),
-            TOGGLE_ENABLED  ("litematica.gui.button.schematic_placements.placement_enabled");
+			ButtonType(String translationKey)
+			{
+				this.translationKey = translationKey;
+			}
 
-            private final String translationKey;
+			public String getTranslationKey()
+			{
+				return this.translationKey;
+			}
 
-            ButtonType(String translationKey)
-            {
-                this.translationKey = translationKey;
-            }
-
-            public String getTranslationKey()
-            {
-                return this.translationKey;
-            }
-
-            public String getDisplayName()
-            {
-                return StringUtils.translate(this.translationKey);
-            }
-        }
-    }
+			public String getDisplayName()
+			{
+				return StringUtils.translate(this.translationKey);
+			}
+		}
+	}
 }

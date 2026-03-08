@@ -2,12 +2,10 @@ package fi.dy.masa.litematica.gui.widgets;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.client.gui.DrawContext;
-
 import fi.dy.masa.litematica.schematic.projects.SchematicProject;
 import fi.dy.masa.litematica.schematic.projects.SchematicVersion;
 import fi.dy.masa.malilib.gui.widgets.WidgetListEntryBase;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 
@@ -26,38 +24,36 @@ public class WidgetSchematicVersion extends WidgetListEntryBase<SchematicVersion
     }
 
     @Override
-    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void render(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
-//        RenderUtils.color(1f, 1f, 1f, 1f);
-
         boolean versionSelected = this.project.getCurrentVersion() == this.entry;
 
         // Draw a lighter background for the hovered and the selected entry
         if (selected || versionSelected || this.isMouseOver(mouseX, mouseY))
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0707070);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0707070);
         }
         else if (this.isOdd)
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0101010);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0101010);
         }
         // Draw a slightly lighter background for even entries
         else
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0xA0303030);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0xA0303030);
         }
 
         if (versionSelected)
         {
-            RenderUtils.drawOutline(drawContext, this.x, this.y, this.width, this.height, 0xFFE0E0E0);
+            RenderUtils.drawOutline(ctx, this.x, this.y, this.width, this.height, 0xFFE0E0E0);
         }
 
         String str = StringUtils.translate("litematica.gui.label.schematic_projects.version_entry", this.entry.getVersion(), this.entry.getName());
-        this.drawString(drawContext, this.x + 4, this.y + 4, 0xFFFFFFFF, str);
+        this.drawString(ctx, this.x + 4, this.y + 4, 0xFFFFFFFF, str);
     }
 
     @Override
-    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void postRenderHovered(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
         List<String> text = new ArrayList<>();
         /*
@@ -73,6 +69,6 @@ public class WidgetSchematicVersion extends WidgetListEntryBase<SchematicVersion
         text.add(StringUtils.translate("litematica.gui.label.schematic_placement.enclosing_size", strSize));
         */
 
-        RenderUtils.drawHoverText(drawContext, mouseX, mouseY, text);
+        RenderUtils.drawHoverText(ctx, mouseX, mouseY, text);
     }
 }

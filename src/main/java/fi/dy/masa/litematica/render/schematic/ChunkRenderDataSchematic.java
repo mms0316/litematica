@@ -2,36 +2,36 @@ package fi.dy.masa.litematica.render.schematic;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import java.util.*;
+import com.mojang.blaze3d.vertex.MeshData;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.render.BuiltBuffer;
-import net.minecraft.client.render.RenderLayer;
 
 public class ChunkRenderDataSchematic implements AutoCloseable
 {
     public static final ChunkRenderDataSchematic EMPTY = new ChunkRenderDataSchematic() {
         @Override
-        protected void setBlockLayerUsed(BlockRenderLayer layer)
+        protected void setBlockLayerUsed(ChunkSectionLayer layer)
         {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        protected void setBlockLayerStarted(BlockRenderLayer layer)
+        protected void setBlockLayerStarted(ChunkSectionLayer layer)
         {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        protected void setLayerUsed(RenderLayer layer)
+        protected void setLayerUsed(RenderType layer)
         {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        protected void setLayerStarted(RenderLayer layer)
+        protected void setLayerStarted(RenderType layer)
         {
             throw new UnsupportedOperationException();
         }
@@ -49,22 +49,41 @@ public class ChunkRenderDataSchematic implements AutoCloseable
         }
     };
 
-    private final List<BlockEntity> blockEntities = new ArrayList<>();
-    private final List<BlockEntity> noCullBlockEntities = new ArrayList<>();
-    private final Set<BlockRenderLayer> blockLayersUsed = new ObjectArraySet<>();
-    private final Set<BlockRenderLayer> blockLayersStarted = new ObjectArraySet<>();
-    private final Set<RenderLayer> layersUsed = new ObjectArraySet<>();
-    private final Set<RenderLayer> layersStarted = new ObjectArraySet<>();
-    private final Set<OverlayRenderType> overlayLayersUsed = new ObjectArraySet<>();
-    private final Set<OverlayRenderType> overlayLayersStarted = new ObjectArraySet<>();
-    private final BuiltBufferCache builtBufferCache = new BuiltBufferCache();
-    private final Map<BlockRenderLayer, BuiltBuffer.SortState> blockSortingData = new HashMap<>();
-    private final Map<RenderLayer, BuiltBuffer.SortState> layerSortingData = new HashMap<>();
-    private final Map<OverlayRenderType, BuiltBuffer.SortState> overlaySortingData = new HashMap<>();
-    private boolean blocksEmpty = true;
-    private boolean layerEmpty = true;
-    private boolean overlayEmpty = true;
+    private final List<BlockEntity> blockEntities;
+    private final List<BlockEntity> noCullBlockEntities;
+    private final Set<ChunkSectionLayer> blockLayersUsed;
+    private final Set<ChunkSectionLayer> blockLayersStarted;
+    private final Set<RenderType> layersUsed;
+    private final Set<RenderType> layersStarted;
+    private final Set<OverlayRenderType> overlayLayersUsed;
+    private final Set<OverlayRenderType> overlayLayersStarted;
+    private final BuiltBufferCache builtBufferCache;
+    private final Map<ChunkSectionLayer, MeshData.SortState> blockSortingData;
+    private final Map<RenderType, MeshData.SortState> layerSortingData;
+    private final Map<OverlayRenderType, MeshData.SortState> overlaySortingData;
+    private boolean blocksEmpty;
+    private boolean layerEmpty;
+    private boolean overlayEmpty;
     private long timeBuilt;
+
+	public ChunkRenderDataSchematic()
+	{
+		this.blockEntities = new ArrayList<>();
+		this.noCullBlockEntities = new ArrayList<>();
+		this.blockLayersUsed = new ObjectArraySet<>();
+		this.blockLayersStarted = new ObjectArraySet<>();
+		this.layersUsed = new ObjectArraySet<>();
+		this.layersStarted = new ObjectArraySet<>();
+		this.overlayLayersUsed = new ObjectArraySet<>();
+		this.overlayLayersStarted = new ObjectArraySet<>();
+		this.builtBufferCache = new BuiltBufferCache();
+		this.blockSortingData = new HashMap<>();
+		this.layerSortingData = new HashMap<>();
+		this.overlaySortingData = new HashMap<>();
+		this.blocksEmpty = true;
+		this.layerEmpty = true;
+		this.overlayEmpty = true;
+	}
 
     public boolean isBlockLayerEmpty()
     {
@@ -91,12 +110,12 @@ public class ChunkRenderDataSchematic implements AutoCloseable
         return Math.max(this.getStartedSize(), this.getUsedSize());
     }
 
-    public boolean isBlockLayerEmpty(BlockRenderLayer layer)
+    public boolean isBlockLayerEmpty(ChunkSectionLayer layer)
     {
         return !this.blockLayersUsed.contains(layer);
     }
 
-    public boolean isLayerEmpty(RenderLayer layer)
+    public boolean isLayerEmpty(RenderType layer)
     {
         return !this.layersUsed.contains(layer);
     }
@@ -111,12 +130,12 @@ public class ChunkRenderDataSchematic implements AutoCloseable
         return !this.overlayLayersUsed.contains(type);
     }
 
-    public boolean isBlockLayerStarted(BlockRenderLayer layer)
+    public boolean isBlockLayerStarted(ChunkSectionLayer layer)
     {
         return this.blockLayersStarted.contains(layer);
     }
 
-    public boolean isLayerStarted(RenderLayer layer)
+    public boolean isLayerStarted(RenderType layer)
     {
         return this.layersStarted.contains(layer);
     }
@@ -126,35 +145,35 @@ public class ChunkRenderDataSchematic implements AutoCloseable
         return this.overlayLayersStarted.contains(type);
     }
 
-    protected void setBlockLayerStarted(BlockRenderLayer layer)
+    protected void setBlockLayerStarted(ChunkSectionLayer layer)
     {
         this.blockLayersStarted.add(layer);
     }
 
-    protected void setBlockLayerUsed(BlockRenderLayer layer)
+    protected void setBlockLayerUsed(ChunkSectionLayer layer)
     {
         this.blocksEmpty = false;
         this.blockLayersUsed.add(layer);
     }
 
-    protected void setBlockLayerUnused(BlockRenderLayer layer)
+    protected void setBlockLayerUnused(ChunkSectionLayer layer)
     {
         this.blockLayersStarted.remove(layer);
         this.blockLayersUsed.remove(layer);
     }
 
-    protected void setLayerStarted(RenderLayer layer)
+    protected void setLayerStarted(RenderType layer)
     {
         this.layersStarted.add(layer);
     }
 
-    protected void setLayerUsed(RenderLayer layer)
+    protected void setLayerUsed(RenderType layer)
     {
         this.layerEmpty = false;
         this.layersUsed.add(layer);
     }
 
-    protected void setBlockLayerUnused(RenderLayer layer)
+    protected void setBlockLayerUnused(RenderType layer)
     {
         this.layersStarted.remove(layer);
         this.layersUsed.remove(layer);
@@ -207,12 +226,12 @@ public class ChunkRenderDataSchematic implements AutoCloseable
         this.builtBufferCache.closeAll();
     }
 
-    public boolean hasTransparentSortingDataForBlockLayer(BlockRenderLayer layer)
+    public boolean hasTransparentSortingDataForBlockLayer(ChunkSectionLayer layer)
     {
         return this.blockSortingData.get(layer) != null;
     }
 
-    public boolean hasTransparentSortingDataForLayer(RenderLayer layer)
+    public boolean hasTransparentSortingDataForLayer(RenderType layer)
     {
         return this.layerSortingData.get(layer) != null;
     }
@@ -222,33 +241,33 @@ public class ChunkRenderDataSchematic implements AutoCloseable
         return this.overlaySortingData.get(type) != null;
     }
 
-    protected void setTransparentSortingDataForBlockLayer(BlockRenderLayer layer, @Nonnull BuiltBuffer.SortState transparentSortingData)
+    protected void setTransparentSortingDataForBlockLayer(ChunkSectionLayer layer, @Nonnull MeshData.SortState transparentSortingData)
     {
         this.blockSortingData.put(layer, transparentSortingData);
     }
 
-    protected void setTransparentSortingDataForLayer(RenderLayer layer, @Nonnull BuiltBuffer.SortState transparentSortingData)
+    protected void setTransparentSortingDataForLayer(RenderType layer, @Nonnull MeshData.SortState transparentSortingData)
     {
         this.layerSortingData.put(layer, transparentSortingData);
     }
 
-    protected void setTransparentSortingDataForOverlay(OverlayRenderType type, @Nonnull BuiltBuffer.SortState transparentSortingData)
+    protected void setTransparentSortingDataForOverlay(OverlayRenderType type, @Nonnull MeshData.SortState transparentSortingData)
     {
         this.overlaySortingData.put(type, transparentSortingData);
     }
 
-    protected BuiltBuffer.SortState getTransparentSortingDataForBlockLayer(BlockRenderLayer layer)
+    protected MeshData.SortState getTransparentSortingDataForBlockLayer(ChunkSectionLayer layer)
     {
         return this.blockSortingData.get(layer);
     }
 
-    protected BuiltBuffer.SortState getTransparentSortingDataForLayer(RenderLayer layer)
+    protected MeshData.SortState getTransparentSortingDataForLayer(RenderType layer)
     {
         return this.layerSortingData.get(layer);
     }
 
     @Nullable
-    protected BuiltBuffer.SortState getTransparentSortingDataForOverlay(OverlayRenderType type)
+    protected MeshData.SortState getTransparentSortingDataForOverlay(OverlayRenderType type)
     {
         return this.overlaySortingData.get(type);
     }

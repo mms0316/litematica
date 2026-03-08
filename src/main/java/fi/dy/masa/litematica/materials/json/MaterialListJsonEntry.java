@@ -4,27 +4,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.annotation.Nullable;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.util.Mth;
+import net.minecraft.util.context.ContextMap;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
+import net.minecraft.world.item.crafting.display.RecipeDisplayEntry;
+import net.minecraft.world.item.crafting.display.RecipeDisplayId;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.apache.commons.lang3.math.Fraction;
 import org.apache.commons.lang3.tuple.Pair;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.NetworkRecipeId;
-import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.book.RecipeBookCategory;
-import net.minecraft.recipe.display.SlotDisplay;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.util.context.ContextParameterMap;
-import net.minecraft.util.math.MathHelper;
-
 import fi.dy.masa.malilib.mixin.recipe.IMixinIngredient;
 import fi.dy.masa.malilib.util.game.RecipeBookUtils;
 
@@ -32,16 +30,16 @@ public class MaterialListJsonEntry
 {
 //    private static final AnsiLogger LOGGER = new AnsiLogger(MaterialListJsonEntry.class, true, true);
     private final List<MaterialListJsonBase> requirements;
-    private final RegistryEntry<Item> inputItem;
+    private final Holder<Item> inputItem;
     private final int total;
     private final Type type;
     private boolean hasOutput = false;
-    private NetworkRecipeId primaryId;
-    private HashMap<NetworkRecipeId, List<Ingredient>> recipeRequirements;
-    private HashMap<NetworkRecipeId, RecipeBookCategory> recipeCategory;
-    private HashMap<NetworkRecipeId, RecipeBookUtils.Type> recipeTypes;
+    private RecipeDisplayId primaryId;
+    private HashMap<RecipeDisplayId, List<Ingredient>> recipeRequirements;
+    private HashMap<RecipeDisplayId, RecipeBookCategory> recipeCategory;
+    private HashMap<RecipeDisplayId, RecipeBookUtils.Type> recipeTypes;
 
-    private MaterialListJsonEntry(RegistryEntry<Item> inputItem, int total, Type type)
+    private MaterialListJsonEntry(Holder<Item> inputItem, int total, Type type)
     {
         this.requirements = new ArrayList<>();
         this.inputItem = inputItem;
@@ -49,12 +47,12 @@ public class MaterialListJsonEntry
         this.type = type;
     }
 
-    public static @Nullable MaterialListJsonEntry build(RegistryEntry<Item> input, final int total, List<RecipeBookUtils.Type> types, @Nullable RegistryEntry<Item> prevItem, boolean craftingOnly)
+    public static @Nullable MaterialListJsonEntry build(Holder<Item> input, final int total, List<RecipeBookUtils.Type> types, @Nullable Holder<Item> prevItem, boolean craftingOnly)
     {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (input == null || mc.world == null) return null;
+        Minecraft mc = Minecraft.getInstance();
+        if (input == null || mc.level == null) return null;
 
-        Pair<RegistryEntry<Item>, Integer> itemOverride = MaterialListJsonOverrides.INSTANCE.matchOverride(input, total);
+        Pair<Holder<Item>, Integer> itemOverride = MaterialListJsonOverrides.INSTANCE.matchOverride(input, total);
 
         if (types.isEmpty())
         {
@@ -63,8 +61,8 @@ public class MaterialListJsonEntry
         }
 
         ItemStack shadow = new ItemStack(itemOverride.getLeft());
-        List<Pair<NetworkRecipeId, RecipeDisplayEntry>> lookup = RecipeBookUtils.getDisplayEntryFromRecipeBook(shadow, types);
-        ContextParameterMap map = RecipeBookUtils.getMap(mc);
+        List<Pair<RecipeDisplayId, RecipeDisplayEntry>> lookup = RecipeBookUtils.getDisplayEntryFromRecipeBook(shadow, types);
+        ContextMap map = RecipeBookUtils.getMap(mc);
 
         if (lookup.isEmpty() || MaterialListJsonOverrides.INSTANCE.shouldKeepItemOrBlock(itemOverride.getLeft()))
         {
@@ -84,10 +82,10 @@ public class MaterialListJsonEntry
         result.hasOutput = true;
 
         // Only report the first entry (It's just redundant work, but we flagged it as MULTI)
-        Pair<NetworkRecipeId, RecipeDisplayEntry> pair = lookup.getFirst();
-        NetworkRecipeId id = pair.getLeft();
+        Pair<RecipeDisplayId, RecipeDisplayEntry> pair = lookup.getFirst();
+        RecipeDisplayId id = pair.getLeft();
         RecipeDisplayEntry entry = pair.getRight();
-        List<ItemStack> resultStacks = entry.getStacks(map);
+        List<ItemStack> resultStacks = entry.resultItems(map);
         ItemStack resultStack = resultStacks.getFirst();
         int resultCount = resultStack.getCount();
         RecipeBookCategory category = entry.category();
@@ -98,7 +96,7 @@ public class MaterialListJsonEntry
         {
             if (craftingOnly && type == RecipeBookUtils.Type.STONECUTTER)
             {
-                Pair<NetworkRecipeId, RecipeDisplayEntry> altPair = lookup.get(1);
+                Pair<RecipeDisplayId, RecipeDisplayEntry> altPair = lookup.get(1);
                 RecipeDisplayEntry altEntry = altPair.getRight();
                 RecipeBookUtils.Type altType = RecipeBookUtils.Type.fromRecipeDisplay(altEntry.display());
 
@@ -107,7 +105,7 @@ public class MaterialListJsonEntry
 //                    LOGGER.warn("MaterialListJsonEntry#build(): Found alternate Crafting type recipe(s) for item [{}] over Stonecutter type", itemOverride.getLeft().getIdAsString());
                     id = altPair.getLeft();
                     entry = altEntry;
-                    resultStacks = entry.getStacks(map);
+                    resultStacks = entry.resultItems(map);
                     resultStack = resultStacks.getFirst();
                     resultCount = resultStack.getCount();
                     category = entry.category();
@@ -117,7 +115,7 @@ public class MaterialListJsonEntry
             else if (!craftingOnly &&
                     (type == RecipeBookUtils.Type.SHAPED || type == RecipeBookUtils.Type.SHAPELESS))
             {
-                Pair<NetworkRecipeId, RecipeDisplayEntry> altPair = lookup.get(1);
+                Pair<RecipeDisplayId, RecipeDisplayEntry> altPair = lookup.get(1);
                 RecipeDisplayEntry altEntry = altPair.getRight();
                 RecipeBookUtils.Type altType = RecipeBookUtils.Type.fromRecipeDisplay(altEntry.display());
 
@@ -126,7 +124,7 @@ public class MaterialListJsonEntry
 //                    LOGGER.warn("MaterialListJsonEntry#build(): Found alternate Stonecutter type recipe(s) for item [{}] over Crafting type", itemOverride.getLeft().getIdAsString());
                     id = altPair.getLeft();
                     entry = altEntry;
-                    resultStacks = entry.getStacks(map);
+                    resultStacks = entry.resultItems(map);
                     resultStack = resultStacks.getFirst();
                     resultCount = resultStack.getCount();
                     category = entry.category();
@@ -150,7 +148,7 @@ public class MaterialListJsonEntry
                 if (entry.craftingRequirements().isPresent())
                 {
 //                    Litematica.LOGGER.warn("MaterialListJsonEntry#build(): skipping recipe for [{}]", resultStack.toString());
-                    resultStacks = entry.getStacks(map);
+                    resultStacks = entry.resultItems(map);
                     resultStack = resultStacks.getFirst();
                     resultCount = resultStack.getCount();
                     category = entry.category();
@@ -170,21 +168,21 @@ public class MaterialListJsonEntry
             result.recipeTypes.put(id, type);
             result.primaryId = id;
 
-            HashMap<RegistryEntry<Item>, Integer> ded = new HashMap<>();
+            HashMap<Holder<Item>, Integer> ded = new HashMap<>();
 
             for (Ingredient ing : ingredients)
             {
-                SlotDisplay display = ing.toDisplay();
-                List<ItemStack> displayStacks = display.getStacks(map);
+                SlotDisplay display = ing.display();
+                List<ItemStack> displayStacks = display.resolveForStacks(map);
                 ItemStack displayStack = displayStacks.getFirst();
-                RegistryEntry<Item> itemEntry = displayStack.getRegistryEntry();
-                RegistryEntryList<Item> ingEntries = ((IMixinIngredient) (Object) ing).malilib_getEntries();
+                Holder<Item> itemEntry = displayStack.getItemHolder();
+                HolderSet<Item> ingEntries = ((IMixinIngredient) (Object) ing).malilib_getEntries();
 
                 if (ingEntries.size() > 1)
                 {
                     itemEntry = MaterialListJsonOverrides.INSTANCE.overridePrimaryMaterial(ingEntries.get(0));
                     display = new SlotDisplay.ItemSlotDisplay(itemEntry);
-                    displayStacks = display.getStacks(map);
+                    displayStacks = display.resolveForStacks(map);
                     displayStack = displayStacks.getFirst();
 //                    LOGGER.warn("build(): ingredient [{}] reduced to a single item from [{}] entries", itemEntry.getIdAsString(), ingEntries.size());
                 }
@@ -203,7 +201,7 @@ public class MaterialListJsonEntry
                 {
 //                    final float adjusted = ((float) itemOverride.getRight() / resultCount);
                     final Fraction adjusted = Fraction.getFraction(itemOverride.getRight(), resultCount);
-                    final int floor = MathHelper.floor(adjusted.floatValue());
+                    final int floor = Mth.floor(adjusted.floatValue());
                     final float remainderCalc = resultCount * (adjusted.floatValue() - floor);
                     final int remainderCount = Math.round(remainderCalc);
                     adjustedTotal = Math.max(floor + (remainderCount > 0 ? 1 : 0), (remainderCount > 0 ? 1 : 0));
@@ -249,23 +247,23 @@ public class MaterialListJsonEntry
 
     public Type getType() { return this.type; }
 
-    public RegistryEntry<Item> getInputItem() { return this.inputItem; }
+    public Holder<Item> getInputItem() { return this.inputItem; }
 
     public List<MaterialListJsonBase> getRequirements() { return this.requirements; }
 
-    public NetworkRecipeId getPrimaryId() { return this.primaryId; }
+    public RecipeDisplayId getPrimaryId() { return this.primaryId; }
 
-    public HashMap<NetworkRecipeId, List<Ingredient>> getRecipeRequirements()
+    public HashMap<RecipeDisplayId, List<Ingredient>> getRecipeRequirements()
     {
         return this.recipeRequirements;
     }
 
-    public HashMap<NetworkRecipeId, RecipeBookCategory> getRecipeCategory()
+    public HashMap<RecipeDisplayId, RecipeBookCategory> getRecipeCategory()
     {
         return this.recipeCategory;
     }
 
-    public HashMap<NetworkRecipeId, RecipeBookUtils.Type> getRecipeTypes()
+    public HashMap<RecipeDisplayId, RecipeBookUtils.Type> getRecipeTypes()
     {
         return this.recipeTypes;
     }
@@ -292,7 +290,7 @@ public class MaterialListJsonEntry
     {
         JsonObject obj = new JsonObject();
 
-        obj.add("Item", new JsonPrimitive(this.getInputItem().getIdAsString()));
+        obj.add("Item", new JsonPrimitive(this.getInputItem().getRegisteredName()));
         obj.add("Count", new JsonPrimitive(this.getTotal()));
         obj.add("Type", new JsonPrimitive(this.type.name()));
 
@@ -309,7 +307,7 @@ public class MaterialListJsonEntry
     {
         JsonArray arr = new JsonArray();
 
-        for (NetworkRecipeId id : this.recipeRequirements.keySet())
+        for (RecipeDisplayId id : this.recipeRequirements.keySet())
         {
             List<Ingredient> requires = this.recipeRequirements.get(id);
             RecipeBookCategory category = this.recipeCategory.get(id);

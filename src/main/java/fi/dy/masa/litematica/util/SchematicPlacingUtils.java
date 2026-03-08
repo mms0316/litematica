@@ -5,31 +5,29 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.block.enums.ChestType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.decoration.DisplayEntity;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.entity.decoration.painting.PaintingEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.BlockMirror;
-import net.minecraft.util.BlockRotation;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.Direction.AxisDirection;
-import net.minecraft.world.World;
-import net.minecraft.world.tick.OrderedTick;
-import net.minecraft.world.tick.WorldTickScheduler;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.AxisDirection;
+import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.decoration.painting.Painting;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.ticks.LevelTicks;
+import net.minecraft.world.ticks.ScheduledTick;
 
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.nbt.NbtUtils;
@@ -46,7 +44,7 @@ import fi.dy.masa.litematica.world.WorldSchematic;
 
 public class SchematicPlacingUtils
 {
-    public static boolean placeToWorldWithinChunk(World world,
+    public static boolean placeToWorldWithinChunk(Level world,
                                                   ChunkPos chunkPos,
                                                   SchematicPlacement schematicPlacement,
                                                   ReplaceBehavior replace,
@@ -87,9 +85,9 @@ public class SchematicPlacingUtils
 
                 if (placement.isEnabled())
                 {
-                    Map<BlockPos, NbtCompound> blockEntityMap = schematic.getBlockEntityMapForRegion(regionName);
-                    Map<BlockPos, OrderedTick<Block>> scheduledBlockTicks = schematic.getScheduledBlockTicksForRegion(regionName);
-                    Map<BlockPos, OrderedTick<Fluid>> scheduledFluidTicks = schematic.getScheduledFluidTicksForRegion(regionName);
+                    Map<BlockPos, CompoundTag> blockEntityMap = schematic.getBlockEntityMapForRegion(regionName);
+                    Map<BlockPos, ScheduledTick<Block>> scheduledBlockTicks = schematic.getScheduledBlockTicksForRegion(regionName);
+                    Map<BlockPos, ScheduledTick<Fluid>> scheduledFluidTicks = schematic.getScheduledFluidTicksForRegion(regionName);
 
                     if (placeBlocksWithinChunk(world, chunkPos, regionName, container, blockEntityMap,
                                                origin, schematicPlacement, placement, scheduledBlockTicks,
@@ -117,14 +115,14 @@ public class SchematicPlacingUtils
         return allSuccess;
     }
 
-    public static boolean placeBlocksWithinChunk(World world, ChunkPos chunkPos, String regionName,
+    public static boolean placeBlocksWithinChunk(Level world, ChunkPos chunkPos, String regionName,
                                                  LitematicaBlockStateContainer container,
-                                                 Map<BlockPos, NbtCompound> blockEntityMap,
+                                                 Map<BlockPos, CompoundTag> blockEntityMap,
                                                  BlockPos origin,
                                                  SchematicPlacement schematicPlacement,
                                                  SubRegionPlacement placement,
-                                                 @Nullable Map<BlockPos, OrderedTick<Block>> scheduledBlockTicks,
-                                                 @Nullable Map<BlockPos, OrderedTick<Fluid>> scheduledFluidTicks,
+                                                 @Nullable Map<BlockPos, ScheduledTick<Block>> scheduledBlockTicks,
+                                                 @Nullable Map<BlockPos, ScheduledTick<Fluid>> scheduledFluidTicks,
                                                  ReplaceBehavior replace,
                                                  PasteLayerBehavior layerBehavior,
                                                  boolean notifyNeighbors)
@@ -140,15 +138,15 @@ public class SchematicPlacingUtils
         BlockPos regionPos = placement.getPos();
 
         // These are the untransformed relative positions
-        BlockPos posEndRel = (new BlockPos(PositionUtils.getRelativeEndPositionFromAreaSize(regionSize))).add(regionPos);
+        BlockPos posEndRel = (new BlockPos(PositionUtils.getRelativeEndPositionFromAreaSize(regionSize))).offset(regionPos);
         BlockPos posMinRel = PositionUtils.getMinCorner(regionPos, posEndRel);
 
         // The transformed sub-region origin position
         BlockPos regionPosTransformed = PositionUtils.getTransformedBlockPos(regionPos, schematicPlacement.getMirror(), schematicPlacement.getRotation());
 
         // The relative offset of the affected region's corners, to the sub-region's origin corner
-        BlockPos boxMinRel = new BlockPos(bounds.minX - origin.getX() - regionPosTransformed.getX(), 0, bounds.minZ - origin.getZ() - regionPosTransformed.getZ());
-        BlockPos boxMaxRel = new BlockPos(bounds.maxX - origin.getX() - regionPosTransformed.getX(), 0, bounds.maxZ - origin.getZ() - regionPosTransformed.getZ());
+        BlockPos boxMinRel = new BlockPos(bounds.minX() - origin.getX() - regionPosTransformed.getX(), 0, bounds.minZ() - origin.getZ() - regionPosTransformed.getZ());
+        BlockPos boxMaxRel = new BlockPos(bounds.maxX() - origin.getX() - regionPosTransformed.getX(), 0, bounds.maxZ() - origin.getZ() - regionPosTransformed.getZ());
 
         // Reverse transform that relative offset, to get the untransformed orientation's offsets
         boxMinRel = PositionUtils.getReverseTransformedBlockPos(boxMinRel, placement.getMirror(), placement.getRotation());
@@ -164,6 +162,9 @@ public class SchematicPlacingUtils
         BlockPos posMin = PositionUtils.getMinCorner(boxMinRel, boxMaxRel);
         BlockPos posMax = PositionUtils.getMaxCorner(boxMinRel, boxMaxRel);
 
+        // Origin and sub-region origin added together for performance
+        BlockPos totalRegionPosTransformed = regionPosTransformed.offset(origin);
+
         final int startX = posMin.getX();
         final int startZ = posMin.getZ();
         final int endX = posMax.getX();
@@ -171,7 +172,7 @@ public class SchematicPlacingUtils
 
         final int startY = 0;
         final int endY = Math.abs(regionSize.getY()) - 1;
-        BlockPos.Mutable posMutable = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos posMutable = new BlockPos.MutableBlockPos();
 
         //System.out.printf("sx: %d, sy: %d, sz: %d => ex: %d, ey: %d, ez: %d\n", startX, startY, startZ, endX, endY, endZ);
 
@@ -182,17 +183,17 @@ public class SchematicPlacingUtils
             return false;
         }
 
-        final BlockRotation rotationCombined = schematicPlacement.getRotation().rotate(placement.getRotation());
-        final BlockMirror mirrorMain = schematicPlacement.getMirror();
-        final BlockState barrier = Blocks.BARRIER.getDefaultState();
-        BlockMirror mirrorSub = placement.getMirror();
+        final Rotation rotationCombined = schematicPlacement.getRotation().getRotated(placement.getRotation());
+        final Mirror mirrorMain = schematicPlacement.getMirror();
+        final BlockState barrier = Blocks.BARRIER.defaultBlockState();
+        Mirror mirrorSub = placement.getMirror();
         final boolean ignoreInventories = Configs.Generic.PASTE_IGNORE_INVENTORY.getBooleanValue();
 
-        if (mirrorSub != BlockMirror.NONE &&
-            (schematicPlacement.getRotation() == BlockRotation.CLOCKWISE_90 ||
-            schematicPlacement.getRotation() == BlockRotation.COUNTERCLOCKWISE_90))
+        if (mirrorSub != Mirror.NONE &&
+            (schematicPlacement.getRotation() == Rotation.CLOCKWISE_90 ||
+            schematicPlacement.getRotation() == Rotation.COUNTERCLOCKWISE_90))
         {
-            mirrorSub = mirrorSub == BlockMirror.FRONT_BACK ? BlockMirror.LEFT_RIGHT : BlockMirror.FRONT_BACK;
+            mirrorSub = mirrorSub == Mirror.FRONT_BACK ? Mirror.LEFT_RIGHT : Mirror.FRONT_BACK;
         }
 
         final int posMinRelMinusRegX = posMinRel.getX() - regionPos.getX();
@@ -215,15 +216,15 @@ public class SchematicPlacingUtils
                     }
 
                     posMutable.set(x, y, z);
-                    NbtCompound teNBT = blockEntityMap.get(posMutable);
-                    BlockPos origPos = posMutable.toImmutable();
+                    CompoundTag teNBT = blockEntityMap.get(posMutable);
+                    BlockPos origPos = posMutable.immutable();
 
                     posMutable.set(posMinRelMinusRegX + x,
                                    posMinRelMinusRegY + y,
                                    posMinRelMinusRegZ + z);
 
                     BlockPos pos = PositionUtils.getTransformedPlacementPosition(posMutable, schematicPlacement, placement);
-                    pos = pos.add(regionPosTransformed).add(origin);
+                    pos = pos.offset(totalRegionPosTransformed);
 
                     if (!shouldPasteBlock(pos, layerBehavior))
                     {
@@ -240,19 +241,19 @@ public class SchematicPlacingUtils
                     }
 
                     // Fix inventory of adjacent chest sides when mirrored
-                    if (state.hasBlockEntity() && state.isOf(Blocks.CHEST) &&
-                        !ignoreInventories && mirrorMain != BlockMirror.NONE &&
-                        !(state.get(ChestBlock.CHEST_TYPE) == ChestType.SINGLE) &&
+                    if (state.hasBlockEntity() && state.is(Blocks.CHEST) &&
+                        !ignoreInventories && mirrorMain != Mirror.NONE &&
+                        !(state.getValue(ChestBlock.TYPE) == ChestType.SINGLE) &&
                         Configs.Generic.FIX_CHEST_MIRROR.getBooleanValue())
                     {
-                        Direction facing = state.get(ChestBlock.FACING);
+                        Direction facing = state.getValue(ChestBlock.FACING);
                         Direction.Axis axis = facing.getAxis();
-                        ChestType type = state.get(ChestBlock.CHEST_TYPE).getOpposite();
+                        ChestType type = state.getValue(ChestBlock.TYPE).getOpposite();
 
-                        if (mirrorMain != BlockMirror.NONE && axis != Direction.Axis.Y)
+                        if (mirrorMain != Mirror.NONE && axis != Direction.Axis.Y)
                         {
-                            Direction facingAdj = type == ChestType.LEFT ? facing.rotateCounterclockwise(Direction.Axis.Y) : facing.rotateClockwise(Direction.Axis.Y);
-                            BlockPos posAdj = origPos.offset(facingAdj);
+                            Direction facingAdj = type == ChestType.LEFT ? facing.getCounterClockWise(Direction.Axis.Y) : facing.getClockWise(Direction.Axis.Y);
+                            BlockPos posAdj = origPos.relative(facingAdj);
 
                             if (blockEntityMap.containsKey(posAdj))
                             {
@@ -261,23 +262,23 @@ public class SchematicPlacingUtils
                         }
                     }
 
-                    if (mirrorMain != BlockMirror.NONE) { state = state.mirror(mirrorMain); }
-                    if (mirrorSub != BlockMirror.NONE)  { state = state.mirror(mirrorSub); }
-                    if (rotationCombined != BlockRotation.NONE) { state = state.rotate(rotationCombined); }
+                    if (mirrorMain != Mirror.NONE) { state = state.mirror(mirrorMain); }
+                    if (mirrorSub != Mirror.NONE)  { state = state.mirror(mirrorSub); }
+                    if (rotationCombined != Rotation.NONE) { state = state.rotate(rotationCombined); }
 
                     BlockEntity te = world.getBlockEntity(pos);
 
                     if (te != null)
                     {
-                        if (te instanceof Inventory)
+                        if (te instanceof Container)
                         {
-                            ((Inventory) te).clear();
+                            ((Container) te).clearContent();
                         }
 
-                        world.setBlockState(pos, barrier, 0x14);
+                        world.setBlock(pos, barrier, 0x14);
                     }
 
-                    if (world.setBlockState(pos, state, 0x12) && teNBT != null)
+                    if (world.setBlock(pos, state, 0x12) && teNBT != null)
                     {
                         te = world.getBlockEntity(pos);
 
@@ -295,12 +296,12 @@ public class SchematicPlacingUtils
 
                             try
                             {
-                                NbtView view = NbtView.getReader(teNBT, world.getRegistryManager());
-                                te.read(view.getReader());
+                                NbtView view = NbtView.getReader(teNBT, world.registryAccess());
+                                te.loadWithComponents(view.getReader());
 
-                                if (ignoreInventories && te instanceof Inventory)
+                                if (ignoreInventories && te instanceof Container)
                                 {
-                                    ((Inventory) te).clear();
+                                    ((Container) te).clearContent();
                                 }
                             }
                             catch (Exception e)
@@ -313,15 +314,15 @@ public class SchematicPlacingUtils
             }
         }
 
-        if (world instanceof ServerWorld serverWorld)
+        if (world instanceof ServerLevel serverWorld)
         {
             IntBoundingBox box = new IntBoundingBox(startX, startY, startZ, endX, endY, endZ);
 
             if (scheduledBlockTicks != null && scheduledBlockTicks.isEmpty() == false)
             {
-                WorldTickScheduler<Block> scheduler = serverWorld.getBlockTickScheduler();
+                LevelTicks<Block> scheduler = serverWorld.getBlockTicks();
 
-                for (Map.Entry<BlockPos, OrderedTick<Block>> entry : scheduledBlockTicks.entrySet())
+                for (Map.Entry<BlockPos, ScheduledTick<Block>> entry : scheduledBlockTicks.entrySet())
                 {
                     BlockPos pos = entry.getKey();
 
@@ -332,12 +333,12 @@ public class SchematicPlacingUtils
                                        posMinRelMinusRegZ + pos.getZ());
 
                         pos = PositionUtils.getTransformedPlacementPosition(posMutable, schematicPlacement, placement);
-                        pos = pos.add(regionPosTransformed).add(origin);
-                        OrderedTick<Block> tick = entry.getValue();
+                        pos = pos.offset(totalRegionPosTransformed);
+                        ScheduledTick<Block> tick = entry.getValue();
 
                         if (world.getBlockState(pos).getBlock() == tick.type())
                         {
-                            scheduler.scheduleTick(new OrderedTick<>(tick.type(), pos, tick.triggerTick(), tick.priority(), tick.subTickOrder()));
+                            scheduler.schedule(new ScheduledTick<>(tick.type(), pos, tick.triggerTick(), tick.priority(), tick.subTickOrder()));
                         }
                     }
                 }
@@ -345,9 +346,9 @@ public class SchematicPlacingUtils
 
             if (scheduledFluidTicks != null && scheduledFluidTicks.isEmpty() == false)
             {
-                WorldTickScheduler<Fluid> scheduler = serverWorld.getFluidTickScheduler();
+                LevelTicks<Fluid> scheduler = serverWorld.getFluidTicks();
 
-                for (Map.Entry<BlockPos, OrderedTick<Fluid>> entry : scheduledFluidTicks.entrySet())
+                for (Map.Entry<BlockPos, ScheduledTick<Fluid>> entry : scheduledFluidTicks.entrySet())
                 {
                     BlockPos pos = entry.getKey();
 
@@ -358,12 +359,12 @@ public class SchematicPlacingUtils
                                        posMinRelMinusRegZ + pos.getZ());
 
                         pos = PositionUtils.getTransformedPlacementPosition(posMutable, schematicPlacement, placement);
-                        pos = pos.add(regionPosTransformed).add(origin);
-                        OrderedTick<Fluid> tick = entry.getValue();
+                        pos = pos.offset(totalRegionPosTransformed);
+                        ScheduledTick<Fluid> tick = entry.getValue();
 
-                        if (world.getBlockState(pos).getFluidState().getFluid() == tick.type())
+                        if (world.getBlockState(pos).getFluidState().getType() == tick.type())
                         {
-                            scheduler.scheduleTick(new OrderedTick<>(tick.type(), pos, tick.triggerTick(), tick.priority(), tick.subTickOrder()));
+                            scheduler.schedule(new ScheduledTick<>(tick.type(), pos, tick.triggerTick(), tick.priority(), tick.subTickOrder()));
                         }
                     }
                 }
@@ -382,8 +383,8 @@ public class SchematicPlacingUtils
                                        posMinRelMinusRegY + y,
                                        posMinRelMinusRegZ + z);
                         BlockPos pos = PositionUtils.getTransformedPlacementPosition(posMutable, schematicPlacement, placement);
-                        pos = pos.add(regionPosTransformed).add(origin);
-                        world.updateNeighbors(pos, world.getBlockState(pos).getBlock());
+                        pos = pos.offset(totalRegionPosTransformed);
+                        world.updateNeighborsAt(pos, world.getBlockState(pos).getBlock());
                     }
                 }
             }
@@ -392,13 +393,13 @@ public class SchematicPlacingUtils
         return true;
     }
 
-    private static void dumpBlockEntityMap(Map<BlockPos, NbtCompound> teMap)
+    private static void dumpBlockEntityMap(Map<BlockPos, CompoundTag> teMap)
     {
         System.out.print("DUMP TE-MAP:\n");
 
         for (BlockPos pos : teMap.keySet())
         {
-            NbtCompound nbt = teMap.get(pos);
+            CompoundTag nbt = teMap.get(pos);
 
             System.out.printf("  pos[%s]: %s\n", pos.toShortString(), nbt.toString());
         }
@@ -406,7 +407,7 @@ public class SchematicPlacingUtils
         System.out.print("DUMP TE-MAP -- END\n");
     }
 
-    public static void placeEntitiesToWorldWithinChunk(World world, ChunkPos chunkPos,
+    public static void placeEntitiesToWorldWithinChunk(Level world, ChunkPos chunkPos,
                                                        List<EntityInfo> entityList,
                                                        BlockPos origin,
                                                        SchematicPlacement schematicPlacement,
@@ -429,20 +430,20 @@ public class SchematicPlacingUtils
         final double maxX = (chunkPos.x << 4) + 16;
         final double maxZ = (chunkPos.z << 4) + 16;
 
-        final BlockRotation rotationCombined = schematicPlacement.getRotation().rotate(placement.getRotation());
-        final BlockMirror mirrorMain = schematicPlacement.getMirror();
-        BlockMirror mirrorSub = placement.getMirror();
+        final Rotation rotationCombined = schematicPlacement.getRotation().getRotated(placement.getRotation());
+        final Mirror mirrorMain = schematicPlacement.getMirror();
+        Mirror mirrorSub = placement.getMirror();
 
-        if (mirrorSub != BlockMirror.NONE &&
-            (schematicPlacement.getRotation() == BlockRotation.CLOCKWISE_90 ||
-            schematicPlacement.getRotation() == BlockRotation.COUNTERCLOCKWISE_90))
+        if (mirrorSub != Mirror.NONE &&
+            (schematicPlacement.getRotation() == Rotation.CLOCKWISE_90 ||
+            schematicPlacement.getRotation() == Rotation.COUNTERCLOCKWISE_90))
         {
-            mirrorSub = mirrorSub == BlockMirror.FRONT_BACK ? BlockMirror.LEFT_RIGHT : BlockMirror.FRONT_BACK;
+            mirrorSub = mirrorSub == Mirror.FRONT_BACK ? Mirror.LEFT_RIGHT : Mirror.FRONT_BACK;
         }
 
         for (EntityInfo info : entityList)
         {
-            Vec3d pos = info.posVec;
+            Vec3 pos = info.posVec;
             pos = PositionUtils.getTransformedPosition(pos, schematicPlacement.getMirror(), schematicPlacement.getRotation());
             pos = PositionUtils.getTransformedPosition(pos, placement.getMirror(), placement.getRotation());
             double x = pos.x + offX;
@@ -450,7 +451,7 @@ public class SchematicPlacingUtils
             double z = pos.z + offZ;
             float[] origRot = new float[2];
 
-            if (!shouldPasteEntity(new Vec3d(x, y, z), layerBehavior))
+            if (!shouldPasteEntity(new Vec3(x, y, z), layerBehavior))
             {
 //                Litematica.LOGGER.error("placeEntitiesToWorldWithinChunk(): Skipping Entity at pos [{}]", pos.toString());
                 continue;
@@ -458,8 +459,8 @@ public class SchematicPlacingUtils
 
             if (x >= minX && x < maxX && z >= minZ && z < maxZ)
             {
-                NbtCompound tag = info.nbt.copy();
-                String id = tag.getString("id", "");
+                CompoundTag tag = info.nbt.copy();
+                String id = tag.getStringOr("id", "");
 
                 // Avoid warning about invalid hanging position.
                 // Note that this position isn't technically correct, but it only needs to be within 16 blocks
@@ -469,11 +470,11 @@ public class SchematicPlacingUtils
                     id.equals("minecraft:leash_knot") ||
                     id.equals("minecraft:painting"))
                 {
-                    Vec3d p = NbtUtils.readEntityPositionFromTag(tag);
+                    Vec3 p = NbtUtils.readEntityPositionFromTag(tag);
 
                     if (p == null)
                     {
-                        p = new Vec3d(x, y, z);
+                        p = new Vec3(x, y, z);
 //                        NbtUtils.writeEntityPositionToTag(p, tag);
                         NbtUtils.putVec3dCodec(tag, p, "Pos");
                     }
@@ -483,17 +484,17 @@ public class SchematicPlacingUtils
                     tag.putInt("TileZ", (int) p.z);
 
                     // Block-Attached Pos (1.21.5+) Fix
-                    BlockPos px = tag.get("block_pos", BlockPos.CODEC).orElse(null);
+                    BlockPos px = tag.read("block_pos", BlockPos.CODEC).orElse(null);
 
                     if (px != null)
                     {
-                        tag.put("block_pos", BlockPos.CODEC, new BlockPos((int) x, (int) y, (int) z));
+                        tag.store("block_pos", BlockPos.CODEC, new BlockPos((int) x, (int) y, (int) z));
                     }
                 }
 
-                NbtList rotation = tag.getListOrEmpty("Rotation");
-                origRot[0] = rotation.getFloat(0, 0f);
-                origRot[1] = rotation.getFloat(1, 0f);
+                ListTag rotation = tag.getListOrEmpty("Rotation");
+                origRot[0] = rotation.getFloatOr(0, 0f);
+                origRot[1] = rotation.getFloatOr(1, 0f);
 
                 Entity entity = EntityUtils.createEntityAndPassengersFromNBT(tag, world);
 
@@ -505,7 +506,7 @@ public class SchematicPlacingUtils
                     // Update the sleeping position to the current position
                     if (entity instanceof LivingEntity living && living.isSleeping())
                     {
-                        living.setSleepingPosition(BlockPos.ofFloored(x, y, z));
+                        living.setSleepingPos(BlockPos.containing(x, y, z));
                     }
 
                     // Hack fix to fix the painting position offsets.
@@ -513,15 +514,15 @@ public class SchematicPlacingUtils
                     // because it sets the hanging position to the given position (floored)
                     // and then it offsets the position from the hanging position
                     // by 0.5 or 1.0 blocks depending on the painting size.
-                    if (entity instanceof PaintingEntity paintingEntity)
+                    if (entity instanceof Painting paintingEntity)
                     {
-                        Direction right = paintingEntity.getHorizontalFacing().rotateYCounterclockwise();
+                        Direction right = paintingEntity.getDirection().getCounterClockWise();
 
                         if ((paintingEntity.getVariant().value().width() % 2) == 0 &&
-                            right.getDirection() == AxisDirection.POSITIVE)
+                            right.getAxisDirection() == AxisDirection.POSITIVE)
                         {
-                            x -= 1.0 * right.getOffsetX();
-                            z -= 1.0 * right.getOffsetZ();
+                            x -= 1.0 * right.getStepX();
+                            z -= 1.0 * right.getStepZ();
                         }
 
                         if ((paintingEntity.getVariant().value().height() % 2) == 0)
@@ -529,20 +530,20 @@ public class SchematicPlacingUtils
                             y -= 1.0;
                         }
 
-                        entity.setPosition(x, y, z);
+                        entity.setPos(x, y, z);
                     }
-                    if (entity instanceof ItemFrameEntity frameEntity)
+                    if (entity instanceof ItemFrame frameEntity)
                     {
-                        if (frameEntity.getYaw() != origRot[0] && (frameEntity.getPitch() == 90.0F || frameEntity.getPitch() == -90.0F))
+                        if (frameEntity.getYRot() != origRot[0] && (frameEntity.getXRot() == 90.0F || frameEntity.getXRot() == -90.0F))
                         {
                             // Fix Yaw only if Pitch is +/- 90.0F (Floor, Ceiling mounted)
-                            frameEntity.setYaw(origRot[0]);
+                            frameEntity.setYRot(origRot[0]);
                         }
                     }
 
                     EntityUtils.spawnEntityAndPassengersInWorld(entity, world);
 
-                    if (entity instanceof DisplayEntity)
+                    if (entity instanceof Display)
                     {
                         entity.tick(); // Required to set the full data for rendering
                     }
@@ -552,16 +553,16 @@ public class SchematicPlacingUtils
     }
 
     public static void rotateEntity(Entity entity, double x, double y, double z,
-                                    BlockRotation rotationCombined, BlockMirror mirrorMain, BlockMirror mirrorSub)
+                                    Rotation rotationCombined, Mirror mirrorMain, Mirror mirrorSub)
     {
-        float rotationYaw = entity.getYaw();
+        float rotationYaw = entity.getYRot();
 
-        if (mirrorMain != BlockMirror.NONE)         { rotationYaw = entity.applyMirror(mirrorMain); }
-        if (mirrorSub != BlockMirror.NONE)          { rotationYaw = entity.applyMirror(mirrorSub); }
-        if (rotationCombined != BlockRotation.NONE) { rotationYaw += entity.getYaw() - entity.applyRotation(rotationCombined); }
+        if (mirrorMain != Mirror.NONE)         { rotationYaw = entity.mirror(mirrorMain); }
+        if (mirrorSub != Mirror.NONE)          { rotationYaw = entity.mirror(mirrorSub); }
+        if (rotationCombined != Rotation.NONE) { rotationYaw += entity.getYRot() - entity.rotate(rotationCombined); }
 
-        entity.refreshPositionAndAngles(x, y, z, rotationYaw, entity.getPitch());
-        EntityUtils.setEntityRotations(entity, rotationYaw, entity.getPitch());
+        entity.snapTo(x, y, z, rotationYaw, entity.getXRot());
+        EntityUtils.setEntityRotations(entity, rotationYaw, entity.getXRot());
     }
 
     public static boolean shouldPasteBlock(BlockPos pos, PasteLayerBehavior layerBehavior)
@@ -574,13 +575,13 @@ public class SchematicPlacingUtils
         return DataManager.getRenderLayerRange().isPositionWithinRange(pos);
     }
 
-    public static boolean shouldPasteEntity(Vec3d pos, PasteLayerBehavior layerBehavior)
+    public static boolean shouldPasteEntity(Vec3 pos, PasteLayerBehavior layerBehavior)
     {
         if (layerBehavior == PasteLayerBehavior.ALL)
         {
             return true;
         }
 
-        return DataManager.getRenderLayerRange().isPositionWithinRange((int) pos.getX(), (int) pos.getY(), (int) pos.getZ());
+        return DataManager.getRenderLayerRange().isPositionWithinRange((int) pos.x(), (int) pos.y(), (int) pos.z());
     }
 }

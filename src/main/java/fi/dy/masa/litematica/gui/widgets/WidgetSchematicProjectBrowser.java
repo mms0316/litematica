@@ -2,14 +2,12 @@ package fi.dy.masa.litematica.gui.widgets;
 
 import java.nio.file.Path;
 import javax.annotation.Nullable;
-
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.core.BlockPos;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.interfaces.ISelectionListener;
 import fi.dy.masa.malilib.gui.widgets.WidgetFileBrowserBase;
 import fi.dy.masa.malilib.gui.widgets.WidgetFileBrowserBase.DirectoryEntry;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.litematica.data.DataManager;
@@ -57,7 +55,7 @@ public class WidgetSchematicProjectBrowser extends WidgetFileBrowserBase impleme
     {
         if (entry != null)
         {
-            if (entry.getType() == DirectoryEntryType.FILE)
+            if (entry.type() == DirectoryEntryType.FILE)
             {
                 this.selectedProject = DataManager.getSchematicProjectsManager().loadProjectFromFile(entry.getFullPath(), false);
             }
@@ -71,12 +69,12 @@ public class WidgetSchematicProjectBrowser extends WidgetFileBrowserBase impleme
     }
 
     @Override
-    protected void drawAdditionalContents(DrawContext drawContext, int mouseX, int mouseY)
+    protected void drawAdditionalContents(GuiContext ctx, int mouseX, int mouseY)
     {
         int x = this.posX + this.totalWidth - this.infoWidth + 4;
         int y = this.posY + 4;
         int infoHeight = 100;
-        RenderUtils.drawOutlinedBox(drawContext,x - 4, y - 4, this.infoWidth, infoHeight, 0xA0000000, COLOR_HORIZONTAL_BAR);
+        RenderUtils.drawOutlinedBox(ctx,x - 4, y - 4, this.infoWidth, infoHeight, 0xA0000000, COLOR_HORIZONTAL_BAR);
 
         SchematicProject project = this.selectedProject;
 
@@ -88,26 +86,26 @@ public class WidgetSchematicProjectBrowser extends WidgetFileBrowserBase impleme
             int color = 0xFFB0B0B0;
 
             str = StringUtils.translate("litematica.gui.label.schematic_projects.project");
-            this.drawString(drawContext, str, x, y, color);
+            this.drawString(ctx, str, x, y, color);
             y += 12;
-            this.drawString(drawContext, w + project.getName() + r, x + 8, y, color);
+            this.drawString(ctx, w + project.getName() + r, x + 8, y, color);
             y += 12;
             int versionId = project .getCurrentVersionId();
             String strVer = w + (versionId >= 0 ? String.valueOf(versionId + 1) : "N/A") + r;
             str = StringUtils.translate("litematica.gui.label.schematic_projects.version", strVer, w + project.getVersionCount() + r);
-            this.drawString(drawContext, str, x, y, color);
+            this.drawString(ctx, str, x, y, color);
             y += 12;
             SchematicVersion version = project.getCurrentVersion();
 
             if (version != null)
             {
                 str = StringUtils.translate("litematica.gui.label.schematic_projects.origin");
-                this.drawString(drawContext, str, x, y, color);
+                this.drawString(ctx, str, x, y, color);
                 y += 12;
 
                 BlockPos o = project.getOrigin();
                 str = String.format("x: %s%d%s, y: %s%d%s, z: %s%d%s", w, o.getX(), r, w, o.getY(), r, w, o.getZ(), r);
-                this.drawString(drawContext, str, x + 8, y, color);
+                this.drawString(ctx, str, x + 8, y, color);
             }
         }
     }

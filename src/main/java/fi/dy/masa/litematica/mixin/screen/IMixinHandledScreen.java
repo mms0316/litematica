@@ -1,15 +1,15 @@
 package fi.dy.masa.litematica.mixin.screen;
 
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
 
-@Mixin(HandledScreen.class)
+@Mixin(AbstractContainerScreen.class)
 public interface IMixinHandledScreen
 {
-    @Accessor("x")
+    @Accessor("leftPos")
     int litematica_getX();
 
-    @Accessor("y")
+    @Accessor("topPos")
     int litematica_getY();
 }

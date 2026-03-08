@@ -1,58 +1,77 @@
 package fi.dy.masa.litematica.mixin.hud;
 
+import java.util.Collection;
 import java.util.List;
-import org.apache.commons.lang3.tuple.Pair;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.DebugScreenOverlay;
+import net.minecraft.resources.Identifier;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-import net.minecraft.client.gui.hud.DebugHud;
+import fi.dy.masa.litematica.render.LitematicaDebugHud;
+import fi.dy.masa.litematica.util.DebugHudMode;
 
-import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.render.LitematicaRenderer;
-import fi.dy.masa.litematica.render.schematic.WorldRendererSchematic;
-import fi.dy.masa.litematica.util.EntityUtils;
-import fi.dy.masa.litematica.world.SchematicWorldHandler;
-import fi.dy.masa.litematica.world.WorldSchematic;
-import fi.dy.masa.malilib.gui.GuiBase;
-
-@Mixin(DebugHud.class)
+// Original method (Works)
+@Mixin(DebugScreenOverlay.class)
 public abstract class MixinDebugHud
 {
-    @Inject(method = "getLeftText", at = @At("RETURN"))
-    private void litematica_addDebugLines(CallbackInfoReturnable<List<String>> cir)
+	@Shadow @Final private Minecraft minecraft;
+
+	@Redirect(method = "render(Lnet/minecraft/client/gui/GuiGraphics;)V",
+			  at = @At(value = "INVOKE",
+					   target = "Ljava/util/Collection;isEmpty()Z",
+					   ordinal = 0))
+	private boolean litematica_fixF3WhenAllDisabled(Collection<Identifier> instance)
+	{
+		if (LitematicaDebugHud.INSTANCE.getMode() == DebugHudMode.DEFAULT)
+		{
+			return false;
+		}
+
+		return instance.isEmpty();
+	}
+
+	@ModifyArg(method = "render(Lnet/minecraft/client/gui/GuiGraphics;)V",
+			   at = @At(value = "INVOKE",
+					 target = "Lnet/minecraft/client/gui/components/DebugScreenOverlay;renderLines(Lnet/minecraft/client/gui/GuiGraphics;Ljava/util/List;Z)V",
+						ordinal = 0),
+			   index = 1)
+	private List<String> litematica_addDebugLines_Left(List<String> text)
+	// Left side
     {
-        WorldSchematic world = SchematicWorldHandler.getSchematicWorld();
+		// Always display only when F3 is open, whenever Default mode is ON.
+		if (this.minecraft.debugEntries.isOverlayVisible())
+		{
+			if (LitematicaDebugHud.INSTANCE.getMode() == DebugHudMode.DEFAULT)
+			{
+				List<String> list = LitematicaDebugHud.INSTANCE.getDebugLines();
 
-        if (world != null)
-        {
-            List<String> list = cir.getReturnValue();
-            Pair<String, String> pair = EntityUtils.getEntityDebug();
-            String pre = GuiBase.TXT_GOLD;
-            String rst = GuiBase.TXT_RST;
+				if (!list.isEmpty())
+				{
+					int size = text.size();
 
-            WorldRendererSchematic renderer = LitematicaRenderer.getInstance().getWorldRenderer();
+					if (size > 3)
+					{
+						size -= 3;
+					}
+					else
+					{
+						size = 0;
+						// Insert mode, but do not go beyond '0'
+					}
 
-            list.add(String.format("%s[Litematica]%s %s",
-                                   pre, rst, renderer.getDebugInfoRenders()));
+					for (String entry : list)
+					{
+						text.add(size++, entry);
+					}
+				}
+			}
+		}
 
-            String str = String.format("E: %d TE: %d C: %d, CT: %d, CV: %d",
-                                       world.getRegularEntityCount(),
-//                                       world.getEntityDebug(),
-                                       world.getChunkProvider().getTileEntityCount(),
-                                       world.getChunkProvider().getLoadedChunkCount(),
-                                       DataManager.getSchematicPlacementManager().getTouchedChunksCount(),
-                                       DataManager.getSchematicPlacementManager().getLastVisibleChunksCount()
-            );
-
-            list.add(String.format("%s[Litematica]%s %s %s", pre, rst, renderer.getDebugInfoEntities(), str));
-
-            if (!pair.getLeft().isEmpty())
-            {
-                list.add(String.format("%s[%s]%s %s", pre, pair.getLeft(), rst, pair.getRight()));
-            }
-        }
-    }
+		return text;
+	}
 }

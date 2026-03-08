@@ -3,22 +3,19 @@ package fi.dy.masa.litematica.materials;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BundleItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.BundleItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.Vec3i;
-
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
 import fi.dy.masa.litematica.schematic.container.LitematicaBlockStateContainer;
 import fi.dy.masa.malilib.util.InventoryUtils;
@@ -27,10 +24,13 @@ import fi.dy.masa.malilib.util.ItemType;
 //Custom Additions (easier to resolve future merge conflicts)
 import java.util.Map;
 import java.util.Optional;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.BlockPos;
 
 public class MaterialListUtils
 {
@@ -78,17 +78,17 @@ public class MaterialListUtils
                 {
                     Optional<Identifier> entityIdOpt = Optional.ofNullable(entityInfo.nbt.get("id"))
                         .flatMap(nbt -> nbt.asString())
-                        .map(id -> Identifier.of(id));
+                        .map(id -> Identifier.withDefaultNamespace(id));
 
                     if (entityIdOpt.isEmpty()) {
                         continue;
                     }
 
-                    if (entityIdOpt.map(id -> Registries.ENTITY_TYPE.get(id)).isEmpty()) {
+                    if (entityIdOpt.flatMap(id -> BuiltInRegistries.ENTITY_TYPE.get(id)).isEmpty()) {
                         continue;
                     }
 
-                    entityIdOpt.map(id -> Registries.ITEM.get(id)).ifPresent(item -> {
+                    entityIdOpt.flatMap(id -> BuiltInRegistries.ITEM.get(id)).ifPresent(item -> {
                         countsItemsTotal.addTo(new ItemType(new ItemStack(item), false, false), 1);
 
                         // Item Frame
@@ -108,7 +108,7 @@ public class MaterialListUtils
                         // Armor Stand
                         entityInfo.nbt.getCompound("equipment").ifPresent(equipmentNbt -> {
                             equipmentNbt.forEach((key, nbtItem) -> {
-                                if (nbtItem instanceof NbtCompound nbtCompound) {
+                                if (nbtItem instanceof CompoundTag nbtCompound) {
                                     fromNbtCompound(nbtCompound).ifPresent(pair -> countsItemsTotal.addTo(pair.getLeft(), pair.getRight()));
                                 }
                             });
@@ -117,9 +117,9 @@ public class MaterialListUtils
                 }
             }
 
-            Map<BlockPos, NbtCompound> blockEntities = schematic.getBlockEntityMapForRegion(regionName);
+            Map<BlockPos, CompoundTag> blockEntities = schematic.getBlockEntityMapForRegion(regionName);
             if (blockEntities != null) {
-                for (NbtCompound blockEntityNbt : blockEntities.values()) {
+                for (CompoundTag blockEntityNbt : blockEntities.values()) {
                     // Chests
                     blockEntityNbt.getList("Items").ifPresent(nbtItems -> {
                         for (var nbtItemElem : nbtItems) {
@@ -137,7 +137,7 @@ public class MaterialListUtils
             }
         }
 
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
 
         Object2IntOpenHashMap<ItemType> itemTypesTotal = fromBlockStateCount(countsTotal, countsItemsTotal);
         Object2IntOpenHashMap<ItemType> itemTypesMissing = itemTypesTotal.clone();
@@ -145,13 +145,13 @@ public class MaterialListUtils
         return getMaterialList(itemTypesTotal, itemTypesMissing, null, mc.player);
     }
 
-    public static Optional<net.minecraft.util.Pair<ItemType, Integer>> fromNbtCompound(NbtCompound nbt) {
+    public static Optional<Pair<ItemType, Integer>> fromNbtCompound(CompoundTag nbt) {
         return nbt.getString("id")
-            .map(idString -> Identifier.of(idString))
-            .map(id -> Registries.ITEM.get(id))
+            .map(idString -> Identifier.withDefaultNamespace(idString))
+            .flatMap(id -> BuiltInRegistries.ITEM.get(id))
             .map(item -> {
                 int count = nbt.getInt("count").orElse(1);
-                return new net.minecraft.util.Pair<ItemType, Integer>(new ItemType(new ItemStack(item), false, false), count);
+                return Pair.of(new ItemType(new ItemStack(item), false, false), count);
             });
     }
 
@@ -161,7 +161,7 @@ public class MaterialListUtils
             Object2IntOpenHashMap<ItemType> itemTypesTotal,
             Object2IntOpenHashMap<ItemType> itemTypesMissing,
             Object2IntOpenHashMap<ItemType> itemTypesMismatch,
-            PlayerEntity player)
+            Player player)
     {
         List<MaterialListEntry> list = new ArrayList<>();
 
@@ -212,13 +212,13 @@ public class MaterialListUtils
             // Add water bucket for waterlogged blocks
             if (isWaterloggedBlock(state))
             {
-                itemTypesOut.addTo(new ItemType(new ItemStack(net.minecraft.item.Items.WATER_BUCKET), false, false), count);
+                itemTypesOut.addTo(new ItemType(new ItemStack(net.minecraft.world.item.Items.WATER_BUCKET), false, false), count);
             }
 
             // Convert block to items
             if (cache.requiresMultipleItems(stateToConvert))
             {
-                for (ItemStack stack : cache.getItems(stateToConvert))
+                for (ItemStack stack : cache.getItems(state))
                 {
                     if (!stack.isEmpty())
                     {
@@ -237,7 +237,7 @@ public class MaterialListUtils
         }
     }
 
-    public static void updateAvailableCounts(List<MaterialListEntry> list, PlayerEntity player)
+    public static void updateAvailableCounts(List<MaterialListEntry> list, Player player)
     {
         if (player == null) return;
         Object2IntOpenHashMap<ItemType> playerInvItems = getInventoryItemCounts(player.getInventory());
@@ -250,14 +250,14 @@ public class MaterialListUtils
         }
     }
 
-    public static Object2IntOpenHashMap<ItemType> getInventoryItemCounts(Inventory inv)
+    public static Object2IntOpenHashMap<ItemType> getInventoryItemCounts(Container inv)
     {
         Object2IntOpenHashMap<ItemType> map = new Object2IntOpenHashMap<>();
-        final int slots = inv.size();
+        final int slots = inv.getContainerSize();
 
         for (int slot = 0; slot < slots; ++slot)
         {
-            ItemStack stack = inv.getStack(slot);
+            ItemStack stack = inv.getItem(slot);
 
             if (stack.isEmpty() == false)
             {
@@ -300,7 +300,7 @@ public class MaterialListUtils
     public static Object2IntOpenHashMap<ItemType> getStoredItemCounts(ItemStack stackShulkerBox)
     {
         Object2IntOpenHashMap<ItemType> map = new Object2IntOpenHashMap<>();
-        DefaultedList<ItemStack> items = InventoryUtils.getStoredItems(stackShulkerBox);
+        NonNullList<ItemStack> items = InventoryUtils.getStoredItems(stackShulkerBox);
 
         for (ItemStack boxStack : items)
         {
@@ -327,7 +327,7 @@ public class MaterialListUtils
     public static Object2IntOpenHashMap<ItemType> getBundleItemCounts(ItemStack stackBundle)
     {
         Object2IntOpenHashMap<ItemType> map = new Object2IntOpenHashMap<>();
-        DefaultedList<ItemStack> items = InventoryUtils.getBundleItems(stackBundle);
+        NonNullList<ItemStack> items = InventoryUtils.getBundleItems(stackBundle);
 
         for (ItemStack bundleStack : items)
         {
@@ -353,15 +353,15 @@ public class MaterialListUtils
 
     private static boolean isWaterloggedBlock(BlockState state)
     {
-        return state.contains(net.minecraft.state.property.Properties.WATERLOGGED) &&
-               state.get(net.minecraft.state.property.Properties.WATERLOGGED);
+        return state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED) &&
+               state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED);
     }
 
     private static BlockState getBaseBlockState(BlockState state)
     {
-        if (state.contains(net.minecraft.state.property.Properties.WATERLOGGED))
+        if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED))
         {
-            return state.with(net.minecraft.state.property.Properties.WATERLOGGED, false);
+            return state.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED, false);
         }
         return state;
     }

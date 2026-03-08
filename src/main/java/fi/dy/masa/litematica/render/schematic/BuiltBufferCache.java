@@ -2,27 +2,31 @@ package fi.dy.masa.litematica.render.schematic;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import com.mojang.blaze3d.vertex.MeshData;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.render.BuiltBuffer;
-import net.minecraft.client.render.RenderLayer;
-
 public class BuiltBufferCache implements AutoCloseable
 {
-    private final ConcurrentHashMap<BlockRenderLayer, BuiltBuffer> blockBuffers = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<RenderLayer, BuiltBuffer> layerBuffers = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<OverlayRenderType, BuiltBuffer> overlayBuffers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ChunkSectionLayer, MeshData> blockBuffers;
+    private final ConcurrentHashMap<RenderType, MeshData> layerBuffers;
+    private final ConcurrentHashMap<OverlayRenderType, MeshData> overlayBuffers;
 
-    protected BuiltBufferCache() { }
+    protected BuiltBufferCache()
+    {
+	    this.blockBuffers = new ConcurrentHashMap<>();
+	    this.layerBuffers = new ConcurrentHashMap<>();
+	    this.overlayBuffers = new ConcurrentHashMap<>();
+    }
 
-    protected boolean hasBuiltBufferByBlockLayer(BlockRenderLayer layer)
+    protected boolean hasBuiltBufferByBlockLayer(ChunkSectionLayer layer)
     {
         return this.blockBuffers.containsKey(layer);
     }
 
-    protected boolean hasBuiltBufferByLayer(RenderLayer layer)
+    protected boolean hasBuiltBufferByLayer(RenderType layer)
     {
         return this.layerBuffers.containsKey(layer);
     }
@@ -32,7 +36,7 @@ public class BuiltBufferCache implements AutoCloseable
         return this.overlayBuffers.containsKey(type);
     }
 
-    protected void storeBuiltBufferByBlockLayer(BlockRenderLayer layer, @Nonnull BuiltBuffer newBuffer)
+    protected void storeBuiltBufferByBlockLayer(ChunkSectionLayer layer, @Nonnull MeshData newBuffer)
     {
         if (this.hasBuiltBufferByBlockLayer(layer))
         {
@@ -44,7 +48,7 @@ public class BuiltBufferCache implements AutoCloseable
         }
     }
 
-    protected void storeBuiltBufferByLayer(RenderLayer layer, @Nonnull BuiltBuffer newBuffer)
+    protected void storeBuiltBufferByLayer(RenderType layer, @Nonnull MeshData newBuffer)
     {
         if (this.hasBuiltBufferByLayer(layer))
         {
@@ -56,7 +60,7 @@ public class BuiltBufferCache implements AutoCloseable
         }
     }
 
-    protected void storeBuiltBufferByType(OverlayRenderType type, @Nonnull BuiltBuffer newBuffer)
+    protected void storeBuiltBufferByType(OverlayRenderType type, @Nonnull MeshData newBuffer)
     {
         if (this.hasBuiltBufferByType(type))
         {
@@ -69,26 +73,26 @@ public class BuiltBufferCache implements AutoCloseable
     }
 
     @Nullable
-    protected BuiltBuffer getBuiltBufferByBlockLayer(BlockRenderLayer layer)
+    protected MeshData getBuiltBufferByBlockLayer(ChunkSectionLayer layer)
     {
         return this.blockBuffers.get(layer);
     }
 
     @Nullable
-    protected BuiltBuffer getBuiltBufferByLayer(RenderLayer layer)
+    protected MeshData getBuiltBufferByLayer(RenderType layer)
     {
         return this.layerBuffers.get(layer);
     }
 
     @Nullable
-    protected BuiltBuffer getBuiltBufferByType(OverlayRenderType type)
+    protected MeshData getBuiltBufferByType(OverlayRenderType type)
     {
         return this.overlayBuffers.get(type);
     }
 
     protected void closeAll()
     {
-        ArrayList<BuiltBuffer> builtBuffers;
+        ArrayList<MeshData> builtBuffers;
 
         synchronized (this.blockBuffers)
         {
@@ -107,7 +111,7 @@ public class BuiltBufferCache implements AutoCloseable
         }
         try
         {
-            builtBuffers.forEach(BuiltBuffer::close);
+            builtBuffers.forEach(MeshData::close);
         }
         catch (Exception ignored) { }
     }

@@ -1,14 +1,7 @@
 package fi.dy.masa.litematica.gui;
 
 import javax.annotation.Nullable;
-import net.minecraft.client.MinecraftClient;
-import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.gui.widgets.WidgetListSchematicVersions;
-import fi.dy.masa.litematica.gui.widgets.WidgetSchematicVersion;
-import fi.dy.masa.litematica.schematic.projects.SchematicProject;
-import fi.dy.masa.litematica.schematic.projects.SchematicVersion;
-import fi.dy.masa.litematica.selection.SelectionManager;
-import fi.dy.masa.litematica.util.SchematicUtils;
+import net.minecraft.client.Minecraft;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.GuiConfirmAction;
 import fi.dy.masa.malilib.gui.GuiListBase;
@@ -20,6 +13,13 @@ import fi.dy.masa.malilib.interfaces.ICompletionListener;
 import fi.dy.masa.malilib.interfaces.IConfirmationListener;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.StringUtils;
+import fi.dy.masa.litematica.data.DataManager;
+import fi.dy.masa.litematica.gui.widgets.WidgetListSchematicVersions;
+import fi.dy.masa.litematica.gui.widgets.WidgetSchematicVersion;
+import fi.dy.masa.litematica.schematic.projects.SchematicProject;
+import fi.dy.masa.litematica.schematic.projects.SchematicVersion;
+import fi.dy.masa.litematica.selection.SelectionManager;
+import fi.dy.masa.litematica.util.SchematicUtils;
 
 public class GuiSchematicProjectManager extends GuiListBase<SchematicVersion, WidgetSchematicVersion, WidgetListSchematicVersions>
                                         implements ISelectionListener<SchematicVersion>, ICompletionListener
@@ -89,7 +89,7 @@ public class GuiSchematicProjectManager extends GuiListBase<SchematicVersion, Wi
     private void reCreateGuiElements()
     {
         this.clearButtons();
-        this.clearWidgets();
+        this.clearWidgets();        // todo check
 
         this.createElements();
     }
@@ -203,12 +203,12 @@ public class GuiSchematicProjectManager extends GuiListBase<SchematicVersion, Wi
             private final String translationKey;
             @Nullable private final String hoverText;
 
-            private Type(String label)
+            Type(String label)
             {
                 this(label, null);
             }
 
-            private Type(String translationKey, String hoverText)
+            Type(String translationKey, @Nullable String hoverText)
             {
                 this.translationKey = translationKey;
                 this.hoverText = hoverText;
@@ -248,7 +248,7 @@ public class GuiSchematicProjectManager extends GuiListBase<SchematicVersion, Wi
         @Override
         public boolean onActionConfirmed()
         {
-            DataManager.getSchematicProjectsManager().deleteLastSeenArea(MinecraftClient.getInstance());
+            DataManager.getSchematicProjectsManager().deleteLastSeenArea(Minecraft.getInstance());
             return true;
         }
 

@@ -1,17 +1,16 @@
 package fi.dy.masa.litematica.util;
 
 import java.util.IdentityHashMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.block.enums.SlabType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import fi.dy.masa.litematica.mixin.block.IMixinAbstractBlock;
 
 public class ItemUtils
@@ -23,16 +22,16 @@ public class ItemUtils
         ItemStack ref = stackReference.copy();
         ItemStack check = stackToCheck.copy();
 
-        if (ref.isDamageable() && ref.isDamaged())
+        if (ref.isDamageableItem() && ref.isDamaged())
         {
-            ref.setDamage(0);
+            ref.setDamageValue(0);
         }
-        if (check.isDamageable() && check.isDamaged())
+        if (check.isDamageableItem() && check.isDamaged())
         {
-            check.setDamage(0);
+            check.setDamageValue(0);
         }
 
-        return ItemStack.areItemsAndComponentsEqual(ref, check);
+        return ItemStack.isSameItemSameComponents(ref, check);
     }
 
     public static ItemStack getItemForState(BlockState state)
@@ -41,7 +40,7 @@ public class ItemUtils
         return stack != null ? stack : ItemStack.EMPTY;
     }
 
-    public static void setItemForBlock(World world, BlockPos pos, BlockState state)
+    public static void setItemForBlock(Level world, BlockPos pos, BlockState state)
     {
         if (ITEMS_FOR_STATES.containsKey(state) == false)
         {
@@ -49,7 +48,7 @@ public class ItemUtils
         }
     }
 
-    public static ItemStack getItemForBlock(World world, BlockPos pos, BlockState state, boolean checkCache)
+    public static ItemStack getItemForBlock(Level world, BlockPos pos, BlockState state, boolean checkCache)
     {
         if (checkCache)
         {
@@ -103,7 +102,7 @@ public class ItemUtils
 
     private static void overrideStackSize(BlockState state, ItemStack stack)
     {
-        if (state.getBlock() instanceof SlabBlock && state.get(SlabBlock.TYPE) == SlabType.DOUBLE)
+        if (state.getBlock() instanceof SlabBlock && state.getValue(SlabBlock.TYPE) == SlabType.DOUBLE)
         {
             stack.setCount(2);
         }
@@ -113,10 +112,10 @@ public class ItemUtils
     {
         if (stack.isEmpty() == false)
         {
-            Identifier rl = Registries.ITEM.getId(stack.getItem());
+            Identifier rl = BuiltInRegistries.ITEM.getKey(stack.getItem());
 
             return String.format("[%s - display: %s - NBT: %s] (%s)",
-                                 rl != null ? rl.toString() : "null", stack.getName().getString(),
+                                 rl != null ? rl.toString() : "null", stack.getHoverName().getString(),
                                  stack.getComponents() != null ? stack.getComponents().toString() : "<no NBT>", stack);
         }
 

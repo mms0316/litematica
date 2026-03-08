@@ -2,24 +2,20 @@ package fi.dy.masa.litematica.gui.widgets;
 
 import java.util.List;
 import javax.annotation.Nullable;
-import org.joml.Matrix3x2fStack;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.gui.widgets.WidgetListEntrySortable;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.StringUtils;
@@ -168,9 +164,9 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
     }
 
     @Override
-    protected boolean onMouseClickedImpl(int mouseX, int mouseY, int mouseButton)
+    protected boolean onMouseClickedImpl(MouseButtonEvent click, boolean doubleClick)
     {
-        if (super.onMouseClickedImpl(mouseX, mouseY, mouseButton))
+        if (super.onMouseClickedImpl(click, doubleClick))
         {
             return true;
         }
@@ -180,7 +176,7 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
             return false;
         }
 
-        int column = this.getMouseOverColumn(mouseX, mouseY);
+        int column = this.getMouseOverColumn((int) click.x(), (int) click.y());
 
         switch (column)
         {
@@ -204,9 +200,9 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
     }
 
     @Override
-    public boolean canSelectAt(int mouseX, int mouseY, int mouseButton)
+    public boolean canSelectAt(MouseButtonEvent click)
     {
-        return (this.buttonIgnore == null || mouseX < this.buttonIgnore.getX()) && super.canSelectAt(mouseX, mouseY, mouseButton);
+        return (this.buttonIgnore == null || click.x() < this.buttonIgnore.getX()) && super.canSelectAt(click);
     }
 
     protected boolean shouldRenderAsSelected()
@@ -224,7 +220,7 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
     }
 
     @Override
-    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void render(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
         selected = this.shouldRenderAsSelected();
 
@@ -246,11 +242,11 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
             color = 0xA0101010;
         }
 
-        RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, color);
+        RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, color);
 
         if (selected)
         {
-            RenderUtils.drawOutline(drawContext, this.x, this.y, this.width, this.height, 0xFFE0E0E0);
+            RenderUtils.drawOutline(ctx, this.x, this.y, this.width, this.height, 0xFFE0E0E0);
         }
 
         int x1 = this.getColumnPosX(0);
@@ -264,85 +260,81 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
             //Custom Additions (easier to resolve future merge conflicts)
             if (this.listWidget.getSearchBarWidget().isSearchOpen() == false)
             {
-                this.drawString(drawContext, x1, y, color, this.header1);
-                this.drawString(drawContext, x2, y, color, this.header2);
-                this.drawString(drawContext, x3, y, color, this.header3);
+                this.drawString(ctx, x1, y, color, this.header1);
+                this.drawString(ctx, x2, y, color, this.header2);
+                this.drawString(ctx, x3, y, color, this.header3);
 
-                this.renderColumnHeader(drawContext, mouseX, mouseY, Icons.ARROW_DOWN, Icons.ARROW_UP);
+                this.renderColumnHeader(ctx, mouseX, mouseY, Icons.ARROW_DOWN, Icons.ARROW_UP);
             }
         }
         else if (this.header1 != null)
         {
-            this.drawString(drawContext, this.x + 4, this.y + 7, color, this.header1);
+            this.drawString(ctx, this.x + 4, this.y + 7, color, this.header1);
         }
         else if (this.mismatchInfo != null &&
                 (this.mismatchEntry.mismatchType != MismatchType.CORRECT_STATE ||
                  this.mismatchEntry.blockMismatch.stateExpected.isAir() == false)) 
         {
-            this.drawString(drawContext, x1 + 20, y, color, this.mismatchInfo.nameExpected);
+            this.drawString(ctx, x1 + 20, y, color, this.mismatchInfo.nameExpected);
 
             if (this.mismatchEntry.mismatchType != MismatchType.CORRECT_STATE)
             {
-                this.drawString(drawContext, x2 + 20, y, color, this.mismatchInfo.nameFound);
+                this.drawString(ctx, x2 + 20, y, color, this.mismatchInfo.nameFound);
             }
 
-            this.drawString(drawContext, x3, y, color, String.valueOf(this.count));
+            this.drawString(ctx, x3, y, color, String.valueOf(this.count));
 
             y = this.y + 3;
-            RenderUtils.drawRect(drawContext, x1, y, 16, 16, 0x20FFFFFF); // light background for the item
+            RenderUtils.drawRect(ctx, x1, y, 16, 16, 0x20FFFFFF); // light background for the item
 
 //            boolean useBlockModelConfig = Configs.Visuals.SCHEMATIC_VERIFIER_BLOCK_MODELS.getBooleanValue();
             boolean useBlockModelConfig = false;
-            boolean hasModelExpected = this.mismatchInfo.stateExpected.getRenderType() == BlockRenderType.MODEL;
-            boolean hasModelFound    = this.mismatchInfo.stateFound.getRenderType() == BlockRenderType.MODEL;
+            boolean hasModelExpected = this.mismatchInfo.stateExpected.getRenderShape() == RenderShape.MODEL;
+            boolean hasModelFound    = this.mismatchInfo.stateFound.getRenderShape() == RenderShape.MODEL;
             boolean isAirItemExpected = this.mismatchInfo.stackExpected.isEmpty();
             boolean isAirItemFound    = this.mismatchInfo.stackFound.isEmpty();
             boolean useBlockModelExpected = hasModelExpected && (isAirItemExpected || useBlockModelConfig || this.mismatchInfo.stateExpected.getBlock() == Blocks.FLOWER_POT);
             boolean useBlockModelFound    = hasModelFound    && (isAirItemFound    || useBlockModelConfig || this.mismatchInfo.stateFound.getBlock() == Blocks.FLOWER_POT);
-
-            //RenderUtils.enableDiffuseLightingGui3D();
-
 //            BlockStateModel model;
 
             if (useBlockModelExpected && RenderUtils.stateModelHasQuads(this.mismatchInfo.stateExpected))
             {
 //                model = this.blockModelShapes.getModel(this.mismatchInfo.stateExpected);
-                renderModelInGui(drawContext, x1, y, 1, this.mismatchInfo.stateExpected);
+                renderModelInGui(ctx, x1, y, 1, this.mismatchInfo.stateExpected);
             }
             else
             {
-                drawContext.drawItem(this.mismatchInfo.stackExpected, x1, y);
-                drawContext.drawStackOverlay(this.textRenderer, this.mismatchInfo.stackExpected, x1, y);
+	            ctx.renderItem(this.mismatchInfo.stackExpected, x1, y);
+	            ctx.renderItemDecorations(this.textRenderer, this.mismatchInfo.stackExpected, x1, y);
             }
 
             if (this.mismatchEntry.mismatchType != MismatchType.CORRECT_STATE)
             {
-                RenderUtils.drawRect(drawContext, x2, y, 16, 16, 0x20FFFFFF); // light background for the item
+                RenderUtils.drawRect(ctx, x2, y, 16, 16, 0x20FFFFFF); // light background for the item
 
                 if (useBlockModelFound && RenderUtils.stateModelHasQuads(this.mismatchInfo.stateFound))
                 {
 //                    model = this.blockModelShapes.getModel(this.mismatchInfo.stateFound);
-                    renderModelInGui(drawContext, x2, y, 1, this.mismatchInfo.stateFound);
+                    renderModelInGui(ctx, x2, y, 1, this.mismatchInfo.stateFound);
                 }
                 else
                 {
-                    drawContext.drawItem(this.mismatchInfo.stackFound, x2, y);
-                    drawContext.drawStackOverlay(this.textRenderer, this.mismatchInfo.stackFound, x2, y);
+	                ctx.renderItem(this.mismatchInfo.stackFound, x2, y);
+	                ctx.renderItemDecorations(this.textRenderer, this.mismatchInfo.stackFound, x2, y);
                 }
             }
         }
 
-        super.render(drawContext, mouseX, mouseY, selected);
+        super.render(ctx, mouseX, mouseY, selected);
     }
 
     @Override
-    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void postRenderHovered(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
         if (this.mismatchInfo != null && this.buttonIgnore != null && mouseX < this.buttonIgnore.getX())
         {
-            Matrix3x2fStack matrixStack = drawContext.getMatrices();
-            matrixStack.pushMatrix();
-            matrixStack.translate(0, 0);    // 200
+	        ctx.pose().pushMatrix();
+	        ctx.pose().translate(0, 0);    // 200
 
             int x = mouseX + 10;
             int y = mouseY;
@@ -360,9 +352,9 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
             }
 
             this.mismatchInfo.toggleUseBackgroundMask(true);
-            this.mismatchInfo.render(drawContext, x, y, this.mc);
+            this.mismatchInfo.render(ctx, x, y);
 
-            matrixStack.popMatrix();
+	        ctx.pose().popMatrix();
         }
     }
 
@@ -391,8 +383,8 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
 
             Block blockExpected = this.stateExpected.getBlock();
             Block blockFound = this.stateFound.getBlock();
-            Identifier rl1 = Registries.BLOCK.getId(blockExpected);
-            Identifier rl2 = Registries.BLOCK.getId(blockFound);
+            Identifier rl1 = BuiltInRegistries.BLOCK.getKey(blockExpected);
+            Identifier rl2 = BuiltInRegistries.BLOCK.getKey(blockFound);
 
             this.blockRegistrynameExpected = rl1 != null ? rl1.toString() : "<null>";
             this.blockRegistrynameFound = rl2 != null ? rl2.toString() : "<null>";
@@ -416,9 +408,9 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
         public static String getDisplayName(BlockState state, ItemStack stack)
         {
             Block block = state.getBlock();
-            String key = block.getTranslationKey() + ".name";
+            String key = block.getDescriptionId() + ".name";
             String name = StringUtils.translate(key);
-            name = key.equals(name) == false ? name : stack.getName().getString();
+            name = key.equals(name) == false ? name : stack.getHoverName().getString();
 
             return name;
         }
@@ -438,37 +430,32 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
             this.useBackgroundMask = toggle;
         }
 
-        public void render(DrawContext drawContext, int x, int y, MinecraftClient mc)
+        public void render(GuiContext ctx, int x, int y)
         {
             if (this.stateExpected != null && this.stateFound != null)
             {
                 if (this.useBackgroundMask)
                 {
-                    fi.dy.masa.litematica.render.RenderUtils.renderBackgroundMask(drawContext, x + 1, y + 1, this.totalWidth - 1, this.totalHeight - 1);
+                    fi.dy.masa.litematica.render.RenderUtils.renderBackgroundMask(ctx, x + 1, y + 1, this.totalWidth - 1, this.totalHeight - 1);
                 }
 
-//                Matrix3x2fStack matrixStack = drawContext.getMatrices();
-//                matrixStack.push();
-
-                RenderUtils.drawOutlinedBox(drawContext, x, y, this.totalWidth, this.totalHeight, 0xFF000000, GuiBase.COLOR_HORIZONTAL_BAR);
+                RenderUtils.drawOutlinedBox(ctx, x, y, this.totalWidth, this.totalHeight, 0xFF000000, GuiBase.COLOR_HORIZONTAL_BAR);
 
                 int x1 = x + 10;
                 int x2 = x + this.columnWidthExpected + 30;
                 y += 4;
 
-                TextRenderer textRenderer = mc.textRenderer;
                 String pre = GuiBase.TXT_WHITE + GuiBase.TXT_BOLD;
                 String strExpected = pre + StringUtils.translate("litematica.gui.label.schematic_verifier.expected") + GuiBase.TXT_RST;
                 String strFound =    pre + StringUtils.translate("litematica.gui.label.schematic_verifier.found") + GuiBase.TXT_RST;
-                drawContext.drawText(textRenderer, strExpected, x1, y, 0xFFFFFFFF,false);
-                drawContext.drawText(textRenderer, strFound,    x2, y, 0xFFFFFFFF,false);
-
+	            ctx.drawString(ctx.fontRenderer(), strExpected, x1, y, 0xFFFFFFFF,false);
+	            ctx.drawString(ctx.fontRenderer(), strFound,    x2, y, 0xFFFFFFFF,false);
                 y += 12;
 
 //                boolean useBlockModelConfig = Configs.Visuals.SCHEMATIC_VERIFIER_BLOCK_MODELS.getBooleanValue();
                 boolean useBlockModelConfig = false;
-                boolean hasModelExpected = this.stateExpected.getRenderType() == BlockRenderType.MODEL;
-                boolean hasModelFound    = this.stateFound.getRenderType() == BlockRenderType.MODEL;
+                boolean hasModelExpected = this.stateExpected.getRenderShape() == RenderShape.MODEL;
+                boolean hasModelFound    = this.stateFound.getRenderShape() == RenderShape.MODEL;
                 boolean isAirItemExpected = this.stackExpected.isEmpty();
                 boolean isAirItemFound    = this.stackFound.isEmpty();
                 boolean useBlockModelExpected = hasModelExpected && (isAirItemExpected || useBlockModelConfig || this.stateExpected.getBlock() == Blocks.FLOWER_POT);
@@ -476,62 +463,55 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
 //                BlockRenderManager blockModelShapes = mc.getBlockRenderManager();
 
                 //mc.getRenderItem().zLevel += 100;
-                RenderUtils.drawRect(drawContext, x1, y, 16, 16, 0x50C0C0C0); // light background for the item
-                RenderUtils.drawRect(drawContext, x2, y, 16, 16, 0x50C0C0C0); // light background for the item
+                RenderUtils.drawRect(ctx, x1, y, 16, 16, 0x50C0C0C0); // light background for the item
+                RenderUtils.drawRect(ctx, x2, y, 16, 16, 0x50C0C0C0); // light background for the item
 
                 int iconY = y;
 
-                //RenderSystem.disableBlend();
-                //RenderUtils.disableDiffuseLighting();
-
-                drawContext.drawText(textRenderer, this.nameExpected, x1 + 20, y + 4, 0xFFFFFFFF,false);
-                drawContext.drawText(textRenderer, this.nameFound,    x2 + 20, y + 4, 0xFFFFFFFF,false);
+	            ctx.drawString(ctx.fontRenderer(), this.nameExpected, x1 + 20, y + 4, 0xFFFFFFFF,false);
+	            ctx.drawString(ctx.fontRenderer(), this.nameFound,    x2 + 20, y + 4, 0xFFFFFFFF,false);
 
                 y += 20;
-                drawContext.drawText(textRenderer, this.blockRegistrynameExpected, x1, y, 0xFF4060FF,false);
-                drawContext.drawText(textRenderer, this.blockRegistrynameFound,    x2, y, 0xFF4060FF,false);
+	            ctx.drawString(ctx.fontRenderer(), this.blockRegistrynameExpected, x1, y, 0xFF4060FF,false);
+	            ctx.drawString(ctx.fontRenderer(), this.blockRegistrynameFound,    x2, y, 0xFF4060FF,false);
                 y += StringUtils.getFontHeight() + 4;
 
                 List<String> propsExpected = BlockUtils.getFormattedBlockStateProperties(this.stateExpected, " = ");
                 List<String> propsFound = BlockUtils.getFormattedBlockStateProperties(this.stateFound, " = ");
-                RenderUtils.renderText(drawContext, x1, y, 0xFFB0B0B0, propsExpected);
-                RenderUtils.renderText(drawContext, x2, y, 0xFFB0B0B0, propsFound);
+                RenderUtils.renderText(ctx, x1, y, 0xFFB0B0B0, propsExpected);
+                RenderUtils.renderText(ctx, x2, y, 0xFFB0B0B0, propsFound);
 
 //                BlockStateModel model;
-
-                //TODO: RenderSystem.disableLighting();
-                //RenderUtils.enableDiffuseLightingGui3D();
 
                 if (useBlockModelExpected &&
                     RenderUtils.stateModelHasQuads(this.stateExpected))
                 {
 //                    model = blockModelShapes.getModel(this.stateExpected);
-                    renderModelInGui(drawContext, x1, iconY, 1, this.stateExpected);
+                    renderModelInGui(ctx, x1, iconY, 1, this.stateExpected);
                 }
                 else
                 {
-                    drawContext.drawItem(this.stackExpected, x1, iconY);
-                    drawContext.drawStackOverlay(textRenderer, this.stackExpected, x1, iconY);
+	                ctx.renderItem(this.stackExpected, x1, iconY);
+	                ctx.renderItemDecorations(ctx.fontRenderer(), this.stackExpected, x1, iconY);
                 }
 
                 if (useBlockModelFound)
                 {
 //                    model = blockModelShapes.getModel(this.stateFound);
-                    renderModelInGui(drawContext, x2, iconY, 1, this.stateFound);
+                    renderModelInGui(ctx, x2, iconY, 1, this.stateFound);
                 }
                 else
                 {
-                    drawContext.drawItem(this.stackFound, x2, iconY);
-                    drawContext.drawStackOverlay(textRenderer, this.stackFound, x2, iconY);
+	                ctx.renderItem(this.stackFound, x2, iconY);
+	                ctx.renderItemDecorations(ctx.fontRenderer(), this.stackFound, x2, iconY);
                 }
 
 //                mc.getRenderItem().zLevel -= 100;
-//                matrixStack.pop();
             }
         }
     }
 
-    public static void renderModelInGui(DrawContext drawContext, int x, int y, float z, BlockState state)
+    public static void renderModelInGui(GuiContext ctx, int x, int y, float z, BlockState state)
     {
 //        Matrix3x2fStack matrixStack = drawContext.getMatrices();
 
@@ -605,78 +585,69 @@ public class WidgetSchematicVerificationResult extends WidgetListEntrySortable<B
 //            renderQuads(part.getQuads(null), brightness, light, matrixEntry, builder);
 //        }
 //
-////        immediate.draw();
-////        allocator.close();
-//        try
-//        {
-//            BuiltBuffer meshData = builder.endNullable();
-//
-//            if (meshData != null)
-//            {
-//                ctx.draw(meshData, false);
-//                meshData.close();
-//            }
-//
-//            ctx.close();
-//        }
-//        catch (Exception err)
-//        {
-//        }
-//    }
-//
-//    private static void renderQuads(List<BakedQuad> quads, float[] brightness, int[] light,
-//                                    MatrixStack.Entry matrixEntry, BufferBuilder builder)
-//    {
-//        for (BakedQuad quad : quads)
-//        {
-//            renderQuad(quad, brightness, light, matrixEntry, builder);
-//        }
-//    }
-//
-//    private static void renderQuad(BakedQuad quad, float[] brightness, int[] light,
-//                                   MatrixStack.Entry matrixEntry, BufferBuilder builder)
-//    {
-//        builder.quad(matrixEntry, quad, brightness, 1.0f, 1.0f, 1.0f, 1.0f, light, OverlayTexture.DEFAULT_UV, true);
-//    }
 
-    private static class ButtonListener implements IButtonActionListener
-    {
-        private final ButtonType type;
-        private final GuiSchematicVerifier guiSchematicVerifier;
-        private final BlockMismatchEntry mismatchEntry;
+	/// /        immediate.draw();
+	/// /        allocator.close();
+	//        try
+	//        {
+	//            BuiltBuffer meshData = builder.endNullable();
+	//
+	//            if (meshData != null)
+	//            {
+	//                ctx.draw(meshData, false);
+	//                meshData.close();
+	//            }
+	//
+	//            ctx.close();
+	//        }
+	//        catch (Exception err)
+	//        {
+	//        }
+	//    }
+	//
+	//    private static void renderQuads(List<BakedQuad> quads, float[] brightness, int[] light,
+	//                                    MatrixStack.Entry matrixEntry, BufferBuilder builder)
+	//    {
+	//        for (BakedQuad quad : quads)
+	//        {
+	//            renderQuad(quad, brightness, light, matrixEntry, builder);
+	//        }
+	//    }
+	//
+	//    private static void renderQuad(BakedQuad quad, float[] brightness, int[] light,
+	//                                   MatrixStack.Entry matrixEntry, BufferBuilder builder)
+	//    {
+	//        builder.quad(matrixEntry, quad, brightness, 1.0f, 1.0f, 1.0f, 1.0f, light, OverlayTexture.DEFAULT_UV, true);
+	//    }
 
-        public ButtonListener(ButtonType type, BlockMismatchEntry mismatchEntry, GuiSchematicVerifier guiSchematicVerifier)
-        {
-            this.type = type;
-            this.mismatchEntry = mismatchEntry;
-            this.guiSchematicVerifier = guiSchematicVerifier;
-        }
+	private record ButtonListener(ButtonType type, BlockMismatchEntry mismatchEntry,
+	                              GuiSchematicVerifier guiSchematicVerifier) implements IButtonActionListener
+	{
+		@Override
+		public void actionPerformedWithButton(ButtonBase button, int mouseButton)
+		{
+			if (this.type == ButtonType.IGNORE_MISMATCH)
+			{
+				this.guiSchematicVerifier.getPlacement().getSchematicVerifier().ignoreStateMismatch(this.mismatchEntry.blockMismatch);
+				this.guiSchematicVerifier.initGui();
+			}
+		}
 
-        @Override
-        public void actionPerformedWithButton(ButtonBase button, int mouseButton)
-        {
-            if (this.type == ButtonType.IGNORE_MISMATCH)
-            {
-                this.guiSchematicVerifier.getPlacement().getSchematicVerifier().ignoreStateMismatch(this.mismatchEntry.blockMismatch);
-                this.guiSchematicVerifier.initGui();
-            }
-        }
+		public enum ButtonType
+		{
+			IGNORE_MISMATCH("litematica.gui.button.schematic_verifier.ignore");
 
-        public enum ButtonType
-        {
-            IGNORE_MISMATCH ("litematica.gui.button.schematic_verifier.ignore");
+			private final String translationKey;
 
-            private final String translationKey;
+			ButtonType(String translationKey)
+			{
+				this.translationKey = translationKey;
+			}
 
-            ButtonType(String translationKey)
-            {
-                this.translationKey = translationKey;
-            }
-
-            public String getDisplayName()
-            {
-                return StringUtils.translate(this.translationKey);
-            }
-        }
-    }
+			public String getDisplayName()
+			{
+				return StringUtils.translate(this.translationKey);
+			}
+		}
+	}
 }

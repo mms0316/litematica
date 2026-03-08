@@ -4,18 +4,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import javax.annotation.Nullable;
-import com.google.common.collect.Queues;
-
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableTextContent;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.profiler.Profiler;
-
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ChunkPos;
+import com.google.common.collect.Queues;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.util.ToBooleanFunction;
@@ -40,7 +38,7 @@ public abstract class TaskProcessChunkMultiPhase extends TaskProcessChunkBase
     protected boolean shouldEnableFeedback;
 
     protected final Queue<String> queuedCommands = Queues.newArrayDeque();
-    protected ToBooleanFunction<Text> gameRuleListener = this::checkCommandFeedbackGameRuleState;
+    protected ToBooleanFunction<Component> gameRuleListener = this::checkCommandFeedbackGameRuleState;
     protected Runnable initTask = this::initPhaseStartProbe;
     protected Runnable probeTask = this::probePhase;
     protected Runnable waitForChunkTask = this::fetchNextChunk;
@@ -64,10 +62,10 @@ public abstract class TaskProcessChunkMultiPhase extends TaskProcessChunkBase
         this.useWorldEdit = Configs.Generic.COMMAND_USE_WORLDEDIT.getBooleanValue();
     }
 
-    protected boolean executeMultiPhase(Profiler profiler)
+    protected boolean executeMultiPhase(ProfilerFiller profiler)
     {
         profiler.push("chunk_multi_phase");
-        this.taskStartTimeForCurrentTick = Util.getMeasuringTimeNano();
+        this.taskStartTimeForCurrentTick = Util.getNanos();
         this.sentCommandsThisTick = 0;
         this.processedChunksThisTick = 0;
 
@@ -95,7 +93,7 @@ public abstract class TaskProcessChunkMultiPhase extends TaskProcessChunkBase
         while (this.sentCommandsThisTick < this.maxCommandsPerTick &&
                (this.sentCommandsThisTick > commandsLast || this.processedChunksThisTick != processedChunksLast))
         {
-            long currentTime = Util.getMeasuringTimeNano();
+            long currentTime = Util.getNanos();
             long elapsedTickTime = (currentTime - this.taskStartTimeForCurrentTick);
 
             if (elapsedTickTime >= 25000000L)
@@ -142,8 +140,8 @@ public abstract class TaskProcessChunkMultiPhase extends TaskProcessChunkBase
         if (Configs.Generic.COMMAND_DISABLE_FEEDBACK.getBooleanValue() && this.isInWorld())
         {
             DataManager.addChatListener(this.gameRuleListener);
-            this.sendCommand("gamerule sendCommandFeedback");
-            this.gameRuleProbeTimeout = Util.getMeasuringTimeNano() + this.maxGameRuleProbeTime;
+            this.sendCommand("gamerule send_command_feedback");
+            this.gameRuleProbeTimeout = Util.getNanos() + this.maxGameRuleProbeTime;
             this.phase = TaskPhase.GAME_RULE_PROBE;
         }
         else
@@ -155,17 +153,17 @@ public abstract class TaskProcessChunkMultiPhase extends TaskProcessChunkBase
 
     protected void probePhase()
     {
-        if (Util.getMeasuringTimeNano() > this.gameRuleProbeTimeout)
+        if (Util.getNanos() > this.gameRuleProbeTimeout)
         {
             this.shouldEnableFeedback = false;
             this.phase = TaskPhase.WAIT_FOR_CHUNKS;
         }
     }
 
-    protected boolean checkCommandFeedbackGameRuleState(Text message)
+    protected boolean checkCommandFeedbackGameRuleState(Component message)
     {
-        if (this.isInWorld() && message instanceof MutableText mutableText &&
-            mutableText.getContent() instanceof TranslatableTextContent text)
+        if (this.isInWorld() && message instanceof MutableComponent mutableText &&
+            mutableText.getContents() instanceof TranslatableContents text)
         {
             if ("commands.gamerule.query".equals(text.getKey()))
             {
@@ -175,7 +173,7 @@ public abstract class TaskProcessChunkMultiPhase extends TaskProcessChunkBase
 
                 if (this.shouldEnableFeedback)
                 {
-                    this.sendCommand("gamerule sendCommandFeedback false");
+                    this.sendCommand("gamerule send_command_feedback false");
                 }
 
                 return true;
@@ -266,9 +264,9 @@ public abstract class TaskProcessChunkMultiPhase extends TaskProcessChunkBase
         this.sendCommand(cmd, this.mc.player);
     }
 
-    protected void sendCommand(String command, ClientPlayerEntity player)
+    protected void sendCommand(String command, LocalPlayer player)
     {
-        player.networkHandler.sendChatCommand(command);
+        player.connection.sendCommand(command);
         ++this.sentCommandsThisTick;
     }
 
@@ -297,7 +295,7 @@ public abstract class TaskProcessChunkMultiPhase extends TaskProcessChunkBase
 
             if (this.shouldEnableFeedback)
             {
-                this.sendCommand("gamerule sendCommandFeedback true");
+                this.sendCommand("gamerule send_command_feedback true");
             }
         }
     }

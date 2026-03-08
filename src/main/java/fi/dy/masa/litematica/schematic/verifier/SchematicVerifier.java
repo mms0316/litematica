@@ -2,6 +2,17 @@ package fi.dy.masa.litematica.schematic.verifier;
 
 import java.util.*;
 import javax.annotation.Nullable;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
@@ -9,25 +20,15 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.world.chunk.Chunk;
-
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.interfaces.ICompletionListener;
 import fi.dy.masa.malilib.util.IntBoundingBox;
+import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.data.Color4f;
-import fi.dy.masa.malilib.util.game.BlockUtils;
+import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.render.infohud.IInfoHudRenderer;
@@ -36,26 +37,18 @@ import fi.dy.masa.litematica.render.infohud.RenderPhase;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
 import fi.dy.masa.litematica.scheduler.tasks.TaskBase;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
-import fi.dy.masa.litematica.util.BlockInfoListType;
-import fi.dy.masa.litematica.util.ItemUtils;
-import fi.dy.masa.litematica.util.PositionUtils;
-import fi.dy.masa.litematica.util.IgnoreBlockRegistry;
-import fi.dy.masa.litematica.util.WorldUtils;
+import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
+import fi.dy.masa.litematica.util.*;
 import fi.dy.masa.litematica.world.WorldSchematic;
 
-
-import fi.dy.masa.litematica.util.AddonUtils;
-import fi.dy.masa.litematica.util.OverlayType;
+//Custom Additions (easier to resolve future merge conflicts)
 import com.google.common.collect.ImmutableMap;
-import fi.dy.masa.malilib.util.LayerMode;
-import fi.dy.masa.litematica.Litematica;
-import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
 import fi.dy.masa.litematica.selection.Box;
 
 public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 {
     private static final MutablePair<BlockState, BlockState> MUTABLE_PAIR = new MutablePair<>();
-    private static final BlockPos.Mutable MUTABLE_POS = new BlockPos.Mutable();
+    private static final BlockPos.MutableBlockPos MUTABLE_POS = new BlockPos.MutableBlockPos();
     private static final List<SchematicVerifier> ACTIVE_VERIFIERS = new ArrayList<>();
 
     private final ArrayListMultimap<Pair<BlockState, BlockState>, BlockPos> missingBlocksPositions = ArrayListMultimap.create();
@@ -82,8 +75,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     //Custom Additions (easier to resolve future merge conflicts)
     private final Set<ChunkPos> recheckChunkQueue = new HashSet<>();
 
-    private final MinecraftClient mc = MinecraftClient.getInstance();
-    private ClientWorld worldClient;
+    private final Minecraft mc = Minecraft.getInstance();
+    private ClientLevel worldClient;
     private WorldSchematic worldSchematic;
     private SchematicPlacement schematicPlacement;
     private final List<MismatchRenderPos> mismatchPositionsForRender = new ArrayList<>();
@@ -116,18 +109,18 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     public static void markVerifierBlockChanges(BlockPos pos)
     {
-        for (int i = 0; i < ACTIVE_VERIFIERS.size(); ++i)
-        {
-            ACTIVE_VERIFIERS.get(i).markBlockChanged(pos);
-        }
+	    for (SchematicVerifier activeVerifier : ACTIVE_VERIFIERS)
+	    {
+		    activeVerifier.markBlockChanged(pos);
+	    }
     }
 
     //Custom Additions (easier to resolve future merge conflicts)
     public static void markVerifierChunkChanges(int cx, int cz)
     {
-        for (int i = 0; i < ACTIVE_VERIFIERS.size(); ++i)
-        {
-            ACTIVE_VERIFIERS.get(i).markChunkChanged(cx, cz);
+	    for (SchematicVerifier activeVerifier : ACTIVE_VERIFIERS)
+	    {
+            activeVerifier.markChunkChanged(cx, cz);
         }
     }
 
@@ -334,7 +327,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
     }
 
     @Override
-    public boolean execute(Profiler profiler)
+    public boolean execute(ProfilerFiller profiler)
     {
         //Custom Additions (easier to resolve future merge conflicts)
         int chunksBefore = 0;
@@ -387,10 +380,10 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         }
 
         //Updates infohud
-        if (mc.player != null && !mc.player.getChunkPos().equals(lastPlayerPos) &&
+        if (mc.player != null && !mc.player.chunkPosition().equals(lastPlayerPos) &&
                 (this.selectedCategories.size() > 0 || this.selectedEntries.size() > 0))
         {
-            lastPlayerPos = mc.player.getChunkPos();
+            lastPlayerPos = mc.player.chunkPosition();
             this.updateMismatchOverlays = true;
         }
 
@@ -435,7 +428,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         // Don't call notifyListeners
     }
 
-    public void startVerification(ClientWorld worldClient, WorldSchematic worldSchematic,
+    public void startVerification(ClientLevel worldClient, WorldSchematic worldSchematic,
             SchematicPlacement schematicPlacement, ICompletionListener completionListener)
     {
         this.reset();
@@ -578,7 +571,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
             if (mismatch != null)
             {
-                this.recheckQueue.add(pos.toImmutable());
+                this.recheckQueue.add(pos.immutable());
             }
 
             //Custom Additions (easier to resolve future merge conflicts)
@@ -591,9 +584,9 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 if (this.requiredChunks.contains(chunkPos) == false &&
                     //Ignore blocks outside the schematic (fast attempt)
                     //(recheckQueue will do the actual check)
-                    this.worldSchematic.getChunkProvider().isChunkLoaded(chunkPos.x, chunkPos.z))
+                    this.worldSchematic.getChunkProvider().hasChunk(chunkPos.x, chunkPos.z))
                 {
-                    this.recheckQueue.add(pos.toImmutable());
+                    this.recheckQueue.add(pos.immutable());
                 }
             }
         }
@@ -612,7 +605,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         }
     }
 
-    private void checkChangedPositions(Profiler profiler)
+    private void checkChangedPositions(ProfilerFiller profiler)
     {
         profiler.push("verify_check_pos");
 
@@ -625,9 +618,9 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
             {
                 BlockPos pos = iter.next();
                 @SuppressWarnings("deprecation")
-                boolean isLoadedClient = this.worldClient.isChunkLoaded(pos);
+                boolean isLoadedClient = this.worldClient.hasChunkAt(pos);
                 @SuppressWarnings("deprecation")
-                boolean isLoadedSchematic = this.worldSchematic.isChunkLoaded(pos);
+                boolean isLoadedSchematic = this.worldSchematic.hasChunkAt(pos);
 
                 if (isLoadedClient && isLoadedSchematic)
                 {
@@ -670,12 +663,12 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                             final int x = pos.getX();
                             final int y = pos.getY();
                             final int z = pos.getZ();
-                            final int startX = ranged && axis == Direction.Axis.X ? Math.max(box.minX, range.getLayerMin()) : box.minX;
-                            final int startY = ranged && axis == Direction.Axis.Y ? Math.max(box.minY, range.getLayerMin()) : box.minY;
-                            final int startZ = ranged && axis == Direction.Axis.Z ? Math.max(box.minZ, range.getLayerMin()) : box.minZ;
-                            final int endX = ranged && axis == Direction.Axis.X ? Math.min(box.maxX, range.getLayerMax()) : box.maxX;
-                            final int endY = ranged && axis == Direction.Axis.Y ? Math.min(box.maxY, range.getLayerMax()) : box.maxY;
-                            final int endZ = ranged && axis == Direction.Axis.Z ? Math.min(box.maxZ, range.getLayerMax()) : box.maxZ;
+                            final int startX = ranged && axis == Direction.Axis.X ? Math.max(box.minX(), range.getLayerMin()) : box.minX();
+                            final int startY = ranged && axis == Direction.Axis.Y ? Math.max(box.minY(), range.getLayerMin()) : box.minY();
+                            final int startZ = ranged && axis == Direction.Axis.Z ? Math.max(box.minZ(), range.getLayerMin()) : box.minZ();
+                            final int endX = ranged && axis == Direction.Axis.X ? Math.min(box.maxX(), range.getLayerMax()) : box.maxX();
+                            final int endY = ranged && axis == Direction.Axis.Y ? Math.min(box.maxY(), range.getLayerMax()) : box.maxY();
+                            final int endZ = ranged && axis == Direction.Axis.Z ? Math.min(box.maxZ(), range.getLayerMax()) : box.maxZ();
 
                             if (x >= startX && x <= endX &&
                                 y >= startY && y <= endY &&
@@ -716,7 +709,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
     //Custom Additions (easier to resolve future merge conflicts)
     /* Before:
-    private boolean verifyChunks(Profiler profiler)
+    private boolean verifyChunks(ProfilerFiller profiler)
     {
         profiler.push("verify_chunks");
         if (this.verificationActive)
@@ -746,10 +739,10 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 }
 
                 // Require the surrounding chunks in the client world to be loaded as well
-                if (count == 9 && this.worldSchematic.getChunkProvider().isChunkLoaded(pos.x, pos.z))
+                if (count == 9 && this.worldSchematic.getChunkProvider().hasChunk(pos.x, pos.z))
                 {
-                    Chunk chunkClient = this.worldClient.getChunk(pos.x, pos.z);
-                    Chunk chunkSchematic = this.worldSchematic.getChunk(pos.x, pos.z);
+                    ChunkAccess chunkClient = this.worldClient.getChunk(pos.x, pos.z);
+                    ChunkAccess chunkSchematic = this.worldSchematic.getChunk(pos.x, pos.z);
                     Map<String, IntBoundingBox> boxes = this.schematicPlacement.getBoxesWithinChunk(pos.x, pos.z);
 
                     for (IntBoundingBox box : boxes.values())
@@ -781,7 +774,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         return this.verificationActive == false; // finished or stopped
     }
      */
-    private void verifyChunks(Profiler profiler)
+    private void verifyChunks(ProfilerFiller profiler)
     {
         profiler.push("verify_chunks");
         if (this.verificationActive)
@@ -930,8 +923,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         try
         {
             list.sort((o1, o2) -> {
-                String name1 = Registries.BLOCK.getId(o1.getLeft().getBlock()).toString();
-                String name2 = Registries.BLOCK.getId(o2.getLeft().getBlock()).toString();
+                String name1 = BuiltInRegistries.BLOCK.getKey(o1.getLeft().getBlock()).toString();
+                String name2 = BuiltInRegistries.BLOCK.getKey(o2.getLeft().getBlock()).toString();
 
                 int val = name1.compareTo(name2);
 
@@ -945,8 +938,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 }
                 else
                 {
-                    name1 = Registries.BLOCK.getId(o1.getRight().getBlock()).toString();
-                    name2 = Registries.BLOCK.getId(o2.getRight().getBlock()).toString();
+                    name1 = BuiltInRegistries.BLOCK.getKey(o1.getRight().getBlock()).toString();
+                    name2 = BuiltInRegistries.BLOCK.getKey(o2.getRight().getBlock()).toString();
 
                     return name1.compareTo(name2);
                 }
@@ -960,18 +953,18 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         return list;
     }
 
-    private void verifyChunk(Chunk chunkClient, Chunk chunkSchematic, IntBoundingBox box, boolean firstPass)
+    private void verifyChunk(ChunkAccess chunkClient, ChunkAccess chunkSchematic, IntBoundingBox box, boolean firstPass)
     {
         LayerRange range = DataManager.getRenderLayerRange();
         Direction.Axis axis = range.getAxis();
         boolean ranged = this.schematicPlacement.getSchematicVerifierType() == BlockInfoListType.RENDER_LAYERS;
 
-        final int startX = ranged && axis == Direction.Axis.X ? Math.max(box.minX, range.getLayerMin()) : box.minX;
-        final int startY = ranged && axis == Direction.Axis.Y ? Math.max(box.minY, range.getLayerMin()) : box.minY;
-        final int startZ = ranged && axis == Direction.Axis.Z ? Math.max(box.minZ, range.getLayerMin()) : box.minZ;
-        final int endX = ranged && axis == Direction.Axis.X ? Math.min(box.maxX, range.getLayerMax()) : box.maxX;
-        final int endY = ranged && axis == Direction.Axis.Y ? Math.min(box.maxY, range.getLayerMax()) : box.maxY;
-        final int endZ = ranged && axis == Direction.Axis.Z ? Math.min(box.maxZ, range.getLayerMax()) : box.maxZ;
+        final int startX = ranged && axis == Direction.Axis.X ? Math.max(box.minX(), range.getLayerMin()) : box.minX();
+        final int startY = ranged && axis == Direction.Axis.Y ? Math.max(box.minY(), range.getLayerMin()) : box.minY();
+        final int startZ = ranged && axis == Direction.Axis.Z ? Math.max(box.minZ(), range.getLayerMin()) : box.minZ();
+        final int endX = ranged && axis == Direction.Axis.X ? Math.min(box.maxX(), range.getLayerMax()) : box.maxX();
+        final int endY = ranged && axis == Direction.Axis.Y ? Math.min(box.maxY(), range.getLayerMax()) : box.maxY();
+        final int endZ = ranged && axis == Direction.Axis.Z ? Math.min(box.maxZ(), range.getLayerMax()) : box.maxZ();
 
         for (int y = startY; y <= endY; ++y)
         {
@@ -1061,10 +1054,10 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
         boolean checkedSome = false;
 
-        if (this.worldSchematic.getChunkProvider().isChunkLoaded(pos.x, pos.z))
+        if (this.worldSchematic.getChunkProvider().hasChunk(pos.x, pos.z))
         {
-            Chunk chunkClient = this.worldClient.getChunk(pos.x, pos.z);
-            Chunk chunkSchematic = this.worldSchematic.getChunk(pos.x, pos.z);
+            LevelChunk chunkClient = this.worldClient.getChunk(pos.x, pos.z);
+            LevelChunk chunkSchematic = this.worldSchematic.getChunk(pos.x, pos.z);
             Map<String, IntBoundingBox> boxes = PositionUtils.getBoxesWithinChunk(pos.x, pos.z, this.subRegions);
 
             for (IntBoundingBox box : boxes.values())
@@ -1145,7 +1138,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
             int maxEntries = Configs.InfoOverlays.VERIFIER_ERROR_HILIGHT_MAX_POSITIONS.getIntegerValue();
 
             // This needs to happen first
-            BlockPos centerPos = BlockPos.ofFloored(this.mc.player.getPos());
+            BlockPos centerPos = BlockPos.containing(this.mc.player.position());
             this.updateClosestPositions(centerPos, maxEntries);
             this.combineClosestPositions(centerPos, maxEntries);
 
@@ -1279,7 +1272,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
             final int count = Math.min(positionList.size(), Configs.InfoOverlays.INFO_HUD_MAX_LINES.getIntegerValue());
 
             //Custom Additions (easier to resolve future merge conflicts)
-            BlockPos playerPos = mc.player != null ? mc.player.getBlockPos() : null;
+            BlockPos playerPos = mc.player != null ? mc.player.blockPosition() : null;
 
             for (int i = 0; i < count; ++i)
             {
@@ -1426,8 +1419,8 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         @Override
         public int compare(MismatchRenderPos pos1, MismatchRenderPos pos2)
         {
-            double dist1 = pos1.pos.getSquaredDistance(this.posReference);
-            double dist2 = pos2.pos.getSquaredDistance(this.posReference);
+            double dist1 = pos1.pos.distSqr(this.posReference);
+            double dist2 = pos2.pos.distSqr(this.posReference);
 
             if (dist1 == dist2)
             {
@@ -1452,7 +1445,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
         private final String colorCode;
         private final Color4f color;
 
-        private MismatchType(int color, String unlocName, String colorCode)
+        MismatchType(int color, String unlocName, String colorCode)
         {
             this.color = Color4f.fromColor(color, 1f);
             this.unlocName = unlocName;

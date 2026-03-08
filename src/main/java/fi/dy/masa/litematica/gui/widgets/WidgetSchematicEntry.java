@@ -1,21 +1,19 @@
 package fi.dy.masa.litematica.gui.widgets;
 
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.math.BlockPos;
-
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.gui.widgets.WidgetFileBrowserBase;
 import fi.dy.masa.malilib.gui.widgets.WidgetListEntryBase;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.StringUtils;
@@ -74,36 +72,30 @@ public class WidgetSchematicEntry extends WidgetListEntryBase<LitematicaSchemati
     }
 
     @Override
-    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void render(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
-//        RenderUtils.color(1f, 1f, 1f, 1f);
-
         // Draw a lighter background for the hovered and the selected entry
         if (selected || this.isMouseOver(mouseX, mouseY))
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x70FFFFFF);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0x70FFFFFF);
         }
         else if (this.isOdd)
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x20FFFFFF);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0x20FFFFFF);
         }
         // Draw a slightly lighter background for even entries
         else
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x50FFFFFF);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0x50FFFFFF);
         }
 
         boolean modified = this.schematic.getMetadata().wasModifiedSinceSaved();
         String schematicName = this.schematic.getMetadata().getName();
         int color = modified ? 0xFFFF9010 : 0xFFFFFFFF;
-        this.drawString(drawContext, this.x + 20, this.y + 7, color, schematicName);
-
-//        RenderUtils.color(1f, 1f, 1f, 1f);
+        this.drawString(ctx, this.x + 20, this.y + 7, color, schematicName);
 
         Path schematicFile = this.schematic.getFile();
         String fileName = schematicFile != null ? schematicFile.getFileName().toString() : null;
-//        this.parent.bindTexture(Icons.TEXTURE, drawContext);
-
         Icons icon;
 
         if (fileName != null)
@@ -115,27 +107,25 @@ public class WidgetSchematicEntry extends WidgetListEntryBase<LitematicaSchemati
             icon = Icons.SCHEMATIC_TYPE_MEMORY;
         }
 
-        icon.renderAt(drawContext, this.typeIconX, this.typeIconY, this.zLevel, false, false);
+        icon.renderAt(ctx, this.typeIconX, this.typeIconY, this.zLevel, false, false);
 
         if (modified)
         {
-            Icons.NOTICE_EXCLAMATION_11.renderAt(drawContext, this.buttonsStartX - 13, this.y + 6, this.zLevel, false, false);
+            Icons.NOTICE_EXCLAMATION_11.renderAt(ctx, this.buttonsStartX - 13, this.y + 6, this.zLevel, false, false);
         }
 
-        this.drawSubWidgets(drawContext, mouseX, mouseY);
+        this.drawSubWidgets(ctx, mouseX, mouseY);
     }
 
     @Override
-    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void postRenderHovered(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
-//        RenderUtils.color(1f, 1f, 1f, 1f);
-
         if (this.schematic.getMetadata().wasModifiedSinceSaved() &&
             GuiBase.isMouseOver(mouseX, mouseY, this.buttonsStartX - 13, this.y + 6, 11, 11))
         {
             String str = WidgetFileBrowserBase.DATE_FORMAT.format(new Date(this.schematic.getMetadata().getTimeModified()));
             List<String> strs = ImmutableList.of(StringUtils.translate("litematica.gui.label.loaded_schematic.modified_on", str));
-            RenderUtils.drawHoverText(drawContext, mouseX, mouseY, strs);
+            RenderUtils.drawHoverText(ctx, mouseX, mouseY, strs);
         }
         else if (GuiBase.isMouseOver(mouseX, mouseY, this.x, this.y, this.buttonsStartX - 12, this.height))
         {
@@ -152,91 +142,80 @@ public class WidgetSchematicEntry extends WidgetListEntryBase<LitematicaSchemati
                 lines.add(StringUtils.translate("litematica.gui.label.schematic_placement.in_memory"));
             }
 
-            RenderUtils.drawHoverText(drawContext, mouseX, mouseY, lines);
+            RenderUtils.drawHoverText(ctx, mouseX, mouseY, lines);
         }
 
-//        RenderUtils.color(1f, 1f, 1f, 1f);
-
-        super.postRenderHovered(drawContext, mouseX, mouseY, selected);
+        super.postRenderHovered(ctx, mouseX, mouseY, selected);
     }
 
-    private static class ButtonListener implements IButtonActionListener
-    {
-        private final Type type;
-        private final WidgetSchematicEntry widget;
+	private record ButtonListener(Type type, WidgetSchematicEntry widget) implements IButtonActionListener
+	{
+		@Override
+		public void actionPerformedWithButton(ButtonBase button, int mouseButton)
+		{
+			if (this.type == Type.CREATE_PLACEMENT && this.widget.mc.player != null)
+			{
+				BlockPos pos = BlockPos.containing(this.widget.mc.player.position());
+				LitematicaSchematic entry = this.widget.schematic;
+				String name = entry.getMetadata().getName();
+				boolean enabled = GuiBase.isShiftDown() == false;
 
-        public ButtonListener(Type type, WidgetSchematicEntry widget)
-        {
-            this.type = type;
-            this.widget = widget;
-        }
+				SchematicPlacementManager manager = DataManager.getSchematicPlacementManager();
+				SchematicPlacement placement = SchematicPlacement.createFor(entry, pos, name, enabled, enabled);
+				manager.addSchematicPlacement(placement, true);
+				manager.setSelectedSchematicPlacement(placement);
+			}
+			else if (this.type == Type.SAVE_TO_FILE)
+			{
+				GuiSchematicSave gui = new GuiSchematicSave(this.widget.schematic);
+				gui.setParent(GuiUtils.getCurrentScreen());
+				GuiBase.openGui(gui);
+			}
+			else if (this.type == Type.RELOAD)
+			{
+				this.widget.schematic.readFromFile();
+				SchematicPlacementManager manager = DataManager.getSchematicPlacementManager();
+				manager.getAllPlacementsOfSchematic(this.widget.schematic).forEach(manager::markChunksForRebuild);
+			}
+			else if (this.type == Type.UNLOAD)
+			{
+				SchematicHolder.getInstance().removeSchematic(this.widget.schematic);
+				this.widget.parent.refreshEntries();
+			}
+		}
 
-        @Override
-        public void actionPerformedWithButton(ButtonBase button, int mouseButton)
-        {
-            if (this.type == Type.CREATE_PLACEMENT)
-            {
-                BlockPos pos = BlockPos.ofFloored(this.widget.mc.player.getPos());
-                LitematicaSchematic entry = this.widget.schematic;
-                String name = entry.getMetadata().getName();
-                boolean enabled = GuiBase.isShiftDown() == false;
+		public enum Type
+		{
+			CREATE_PLACEMENT("litematica.gui.button.create_placement"),
+			RELOAD("litematica.gui.button.reload", "litematica.gui.button.hover.schematic_list.reload_schematic"),
+			SAVE_TO_FILE("litematica.gui.button.save_to_file"),
+			UNLOAD("litematica.gui.button.unload");
 
-                SchematicPlacementManager manager = DataManager.getSchematicPlacementManager();
-                SchematicPlacement placement = SchematicPlacement.createFor(entry, pos, name, enabled, enabled);
-                manager.addSchematicPlacement(placement, true);
-                manager.setSelectedSchematicPlacement(placement);
-            }
-            else if (this.type == Type.SAVE_TO_FILE)
-            {
-                LitematicaSchematic entry = this.widget.schematic;
-                GuiSchematicSave gui = new GuiSchematicSave(entry);
-                gui.setParent(GuiUtils.getCurrentScreen());
-                GuiBase.openGui(gui);
-            }
-            else if (this.type == Type.RELOAD)
-            {
-                this.widget.schematic.readFromFile();
-                SchematicPlacementManager manager = DataManager.getSchematicPlacementManager();
-                manager.getAllPlacementsOfSchematic(this.widget.schematic).forEach(manager::markChunksForRebuild);
-            }
-            else if (this.type == Type.UNLOAD)
-            {
-                SchematicHolder.getInstance().removeSchematic(this.widget.schematic);
-                this.widget.parent.refreshEntries();
-            }
-        }
+			private final String translationKey;
+			@Nullable
+			private final String hoverKey;
 
-        public enum Type
-        {
-            CREATE_PLACEMENT    ("litematica.gui.button.create_placement"),
-            RELOAD              ("litematica.gui.button.reload", "litematica.gui.button.hover.schematic_list.reload_schematic"),
-            SAVE_TO_FILE        ("litematica.gui.button.save_to_file"),
-            UNLOAD              ("litematica.gui.button.unload");
+			Type(String translationKey)
+			{
+				this(translationKey, null);
+			}
 
-            private final String translationKey;
-            @Nullable private final String hoverKey;
+			Type(String translationKey, @Nullable String hoverKey)
+			{
+				this.translationKey = translationKey;
+				this.hoverKey = hoverKey;
+			}
 
-            Type(String translationKey)
-            {
-                this(translationKey, null);
-            }
+			@Nullable
+			public String getHoverKey()
+			{
+				return this.hoverKey;
+			}
 
-            Type(String translationKey, @Nullable String hoverKey)
-            {
-                this.translationKey = translationKey;
-                this.hoverKey = hoverKey;
-            }
-
-            @Nullable
-            public String getHoverKey()
-            {
-                return this.hoverKey;
-            }
-
-            public String getDisplayName()
-            {
-                return StringUtils.translate(this.translationKey);
-            }
-        }
-    }
+			public String getDisplayName()
+			{
+				return StringUtils.translate(this.translationKey);
+			}
+		}
+	}
 }

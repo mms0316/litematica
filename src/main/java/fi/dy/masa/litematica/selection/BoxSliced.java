@@ -1,6 +1,6 @@
 package fi.dy.masa.litematica.selection;
 
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
 
 public class BoxSliced extends Box
 {
@@ -16,7 +16,7 @@ public class BoxSliced extends Box
 
     /**
      * Returns the inclusive relative start offset from pos1
-     * @return
+     * @return ()
      */
     public int getSliceStart()
     {
@@ -25,7 +25,7 @@ public class BoxSliced extends Box
 
     /**
      * Returns the exclusive relative end offset from pos1
-     * @return
+     * @return ()
      */
     public int getSliceEnd()
     {
@@ -39,13 +39,13 @@ public class BoxSliced extends Box
 
     public int getMaxSliceLength()
     {
-        switch (this.sliceDirection.getAxis())
-        {
-            case X: return this.getSize().getX();
-            case Y: return this.getSize().getY();
-            case Z: return this.getSize().getZ();
-            default: return 1;
-        }
+	    return switch (this.sliceDirection.getAxis())
+	    {
+		    case X -> this.getSize().getX();
+		    case Y -> this.getSize().getY();
+		    case Z -> this.getSize().getZ();
+		    default -> 1;
+	    };
     }
 
     public void setSliceDirection(Direction sliceDirection)

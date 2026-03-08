@@ -2,8 +2,8 @@ package fi.dy.masa.litematica.scheduler.tasks;
 
 import java.util.Collection;
 import java.util.Set;
+import net.minecraft.world.level.ChunkPos;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.util.math.ChunkPos;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.litematica.config.Configs;
@@ -98,7 +98,7 @@ public abstract class TaskPasteSchematicPerChunkBase extends TaskProcessChunkMul
     @Override
     protected boolean canProcessChunk(ChunkPos pos)
     {
-        if (this.schematicWorld.getChunkProvider().isChunkLoaded(pos.x, pos.z) == false ||
+        if (this.schematicWorld.getChunkProvider().hasChunk(pos.x, pos.z) == false ||
             DataManager.getSchematicPlacementManager().hasPendingRebuildFor(pos))
         {
             return false;

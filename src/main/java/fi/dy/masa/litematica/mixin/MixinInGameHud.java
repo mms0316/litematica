@@ -7,16 +7,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import fi.dy.masa.litematica.util.AddonUtils;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-@Mixin(InGameHud.class)
+@Mixin(Gui.class)
 public class MixinInGameHud {
 
-    //Mixin at
+    //Mixin before 1.21.8
     /*
     private void renderHotbarItem(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed) {
       if (!stack.isEmpty()) {
@@ -38,9 +38,32 @@ public class MixinInGameHud {
       }
     }
      */
-    @Inject(method = "renderHotbarItem(Lnet/minecraft/client/gui/DrawContext;IILnet/minecraft/client/render/RenderTickCounter;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/item/ItemStack;I)V", at = @At(value = "RETURN"))
-    private void litematica_onRenderHotbarItem(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed, CallbackInfo ci)
+    //Mixin after 1.21.11
+    /*
+    private void renderSlot(GuiGraphics guiGraphics, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack itemStack, int seed) {
+      if (!itemStack.isEmpty()) {
+         float f = (float)itemStack.getPopTime() - deltaTracker.getGameTimeDeltaPartialTick(false);
+         if (f > 0.0F) {
+            float g = 1.0F + f / 5.0F;
+            guiGraphics.pose().pushMatrix();
+            guiGraphics.pose().translate((float)(x + 8), (float)(y + 12));
+            guiGraphics.pose().scale(1.0F / g, (g + 1.0F) / 2.0F);
+            guiGraphics.pose().translate((float)(-(x + 8)), (float)(-(y + 12)));
+         }
+
+         guiGraphics.renderItem(player, itemStack, x, y, seed);
+         if (f > 0.0F) {
+            guiGraphics.pose().popMatrix();
+         }
+
+         guiGraphics.renderItemDecorations(this.minecraft.font, itemStack, x, y);
+      }
+    }
+     */
+
+    @Inject(method = "renderSlot(Lnet/minecraft/client/gui/GuiGraphics;IILnet/minecraft/client/DeltaTracker;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;I)V", at = @At(value = "RETURN"))
+    private void litematica_onRenderHotbarItem(GuiGraphics guiGraphics, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack itemStack, int seed, CallbackInfo ci)
     {
-        AddonUtils.renderHotbarItem(context, x, y, stack);
+        AddonUtils.renderHotbarItem(guiGraphics, x, y, itemStack);
     }
 }

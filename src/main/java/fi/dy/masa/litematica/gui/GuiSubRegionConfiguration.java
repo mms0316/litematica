@@ -1,11 +1,9 @@
 package fi.dy.masa.litematica.gui;
 
 import javax.annotation.Nullable;
-
-import net.minecraft.util.BlockMirror;
-import net.minecraft.util.BlockRotation;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.GuiTextFieldInteger;
 import fi.dy.masa.malilib.gui.Message.MessageType;
@@ -116,7 +114,7 @@ public class GuiSubRegionConfiguration extends GuiBase
         // The sub-region placements are relative
         BlockPos pos = this.placement.getPos();
         pos = PositionUtils.getTransformedBlockPos(pos, this.schematicPlacement.getMirror(), this.schematicPlacement.getRotation());
-        pos = pos.add(this.schematicPlacement.getOrigin());
+        pos = pos.offset(this.schematicPlacement.getOrigin());
         String text = "";
 
         switch (type)
@@ -126,7 +124,7 @@ public class GuiSubRegionConfiguration extends GuiBase
             case Z: text = String.valueOf(pos.getZ()); break;
         }
 
-        GuiTextFieldInteger textField = new GuiTextFieldInteger(x + offset, y + 2, width, 14, this.textRenderer);
+        GuiTextFieldInteger textField = new GuiTextFieldInteger(x + offset, y + 2, width, 14, this.font);
         textField.setTextWrapper(text);
         TextFieldListener listener = new TextFieldListener(type, this.schematicPlacement, this.placement, this);
         this.addTextField(textField, listener);
@@ -235,6 +233,7 @@ public class GuiSubRegionConfiguration extends GuiBase
         @Override
         public void actionPerformedWithButton(ButtonBase button, int mouseButton)
         {
+            if (this.parent.mc.player == null) return;
             int amount = mouseButton == 1 ? -1 : 1;
             if (GuiBase.isShiftDown()) { amount *= 8; }
             if (GuiBase.isAltDown()) { amount *= 4; }
@@ -243,7 +242,7 @@ public class GuiSubRegionConfiguration extends GuiBase
             // absolute position and subtracts the placement origin internally)
             BlockPos posOld = this.placement.getPos();
             posOld = PositionUtils.getTransformedBlockPos(posOld, this.schematicPlacement.getMirror(), this.schematicPlacement.getRotation());
-            posOld = posOld.add(this.schematicPlacement.getOrigin());
+            posOld = posOld.offset(this.schematicPlacement.getOrigin());
             this.parent.setNextMessageType(MessageType.ERROR);
 
             switch (this.type)
@@ -255,7 +254,7 @@ public class GuiSubRegionConfiguration extends GuiBase
                 case ROTATE:
                 {
                     boolean reverse = mouseButton == 1;
-                    BlockRotation rotation = PositionUtils.cycleRotation(this.placement.getRotation(), reverse);
+                    Rotation rotation = PositionUtils.cycleRotation(this.placement.getRotation(), reverse);
                     this.schematicPlacement.setSubRegionRotation(this.subRegionName, rotation, this.parent);
                     break;
                 }
@@ -263,25 +262,25 @@ public class GuiSubRegionConfiguration extends GuiBase
                 case MIRROR:
                 {
                     boolean reverse = mouseButton == 1;
-                    BlockMirror mirror = PositionUtils.cycleMirror(this.placement.getMirror(), reverse);
+                    Mirror mirror = PositionUtils.cycleMirror(this.placement.getMirror(), reverse);
                     this.schematicPlacement.setSubRegionMirror(this.subRegionName, mirror, this.parent);
                     break;
                 }
 
                 case MOVE_TO_PLAYER:
-                    this.schematicPlacement.moveSubRegionTo(this.subRegionName, BlockPos.ofFloored(this.parent.mc.player.getPos()), this.parent);
+                    this.schematicPlacement.moveSubRegionTo(this.subRegionName, BlockPos.containing(this.parent.mc.player.position()), this.parent);
                     break;
 
                 case NUDGE_COORD_X:
-                    this.schematicPlacement.moveSubRegionTo(this.subRegionName, posOld.add(amount, 0, 0), this.parent);
+                    this.schematicPlacement.moveSubRegionTo(this.subRegionName, posOld.offset(amount, 0, 0), this.parent);
                     break;
 
                 case NUDGE_COORD_Y:
-                    this.schematicPlacement.moveSubRegionTo(this.subRegionName, posOld.add(0, amount, 0), this.parent);
+                    this.schematicPlacement.moveSubRegionTo(this.subRegionName, posOld.offset(0, amount, 0), this.parent);
                     break;
 
                 case NUDGE_COORD_Z:
-                    this.schematicPlacement.moveSubRegionTo(this.subRegionName, posOld.add(0, 0, amount), this.parent);
+                    this.schematicPlacement.moveSubRegionTo(this.subRegionName, posOld.offset(0, 0, amount), this.parent);
                     break;
 
                 case TOGGLE_ENABLED:
@@ -325,12 +324,12 @@ public class GuiSubRegionConfiguration extends GuiBase
             private final String translationKey;
             @Nullable private final String hoverText;
 
-            private Type(String translationKey)
+            Type(String translationKey)
             {
                 this(translationKey, null);
             }
 
-            private Type(String translationKey, @Nullable String hoverText)
+            Type(String translationKey, @Nullable String hoverText)
             {
                 this.translationKey = translationKey;
                 this.hoverText = hoverText;
@@ -348,68 +347,59 @@ public class GuiSubRegionConfiguration extends GuiBase
         }
     }
 
-    private static class TextFieldListener implements ITextFieldListener<GuiTextFieldInteger>
-    {
-        private final GuiSubRegionConfiguration parent;
-        private final SchematicPlacement schematicPlacement;
-        private final SubRegionPlacement placement;
-        private final CoordinateType type;
-
-        public TextFieldListener(CoordinateType type, SchematicPlacement schematicPlacement, SubRegionPlacement placement, GuiSubRegionConfiguration parent)
+    private record TextFieldListener(CoordinateType type, SchematicPlacement schematicPlacement,
+                                     SubRegionPlacement placement,
+                                     GuiSubRegionConfiguration parent) implements ITextFieldListener<GuiTextFieldInteger>
         {
-            this.schematicPlacement = schematicPlacement;
-            this.placement = placement;
-            this.type = type;
-            this.parent = parent;
-        }
-
-        @Override
-        public boolean onTextChange(GuiTextFieldInteger textField)
-        {
-            try
+            @Override
+            public boolean onTextChange(GuiTextFieldInteger textField)
             {
-                int value = Integer.parseInt(textField.getTextWrapper());
-                // The sub-region placements are relative (but the setter below uses the
-                // absolute position and subtracts the placement origin internally)
-                BlockPos posOld = this.placement.getPos();
-                posOld = PositionUtils.getTransformedBlockPos(posOld, this.schematicPlacement.getMirror(), this.schematicPlacement.getRotation());
-                posOld = posOld.add(this.schematicPlacement.getOrigin());
-                BlockPos pos = posOld;
-
-                switch (this.type)
+                try
                 {
-                    case X: pos = new BlockPos(value        , posOld.getY(), posOld.getZ()); break;
-                    case Y: pos = new BlockPos(posOld.getX(), value        , posOld.getZ()); break;
-                    case Z: pos = new BlockPos(posOld.getX(), posOld.getY(), value        ); break;
+                    int value = Integer.parseInt(textField.getTextWrapper());
+                    // The sub-region placements are relative (but the setter below uses the
+                    // absolute position and subtracts the placement origin internally)
+                    BlockPos posOld = this.placement.getPos();
+                    posOld = PositionUtils.getTransformedBlockPos(posOld, this.schematicPlacement.getMirror(), this.schematicPlacement.getRotation());
+                    posOld = posOld.offset(this.schematicPlacement.getOrigin());
+                    BlockPos pos = posOld;
+
+                    switch (this.type)
+                    {
+                        case X:
+                            pos = new BlockPos(value, posOld.getY(), posOld.getZ());
+                            break;
+                        case Y:
+                            pos = new BlockPos(posOld.getX(), value, posOld.getZ());
+                            break;
+                        case Z:
+                            pos = new BlockPos(posOld.getX(), posOld.getY(), value);
+                            break;
+                    }
+
+                    this.parent.setNextMessageType(MessageType.ERROR);
+                    this.schematicPlacement.moveSubRegionTo(this.placement.getName(), pos, this.parent);
+                    this.parent.updateElements();
+                }
+                catch (NumberFormatException ignored)
+                {
                 }
 
-                this.parent.setNextMessageType(MessageType.ERROR);
-                this.schematicPlacement.moveSubRegionTo(this.placement.getName(), pos, this.parent);
-                this.parent.updateElements();
+                return false;
             }
-            catch (NumberFormatException e)
+        }
+
+    private record CoordinateLockListener(CoordinateType type,
+                                          SubRegionPlacement placement) implements ISelectionListener<WidgetCheckBox>
+        {
+            @Override
+            public void onSelectionChange(WidgetCheckBox entry)
             {
+                if (entry == null)
+                {
+                    return;
+                }
+                this.placement.setCoordinateLocked(this.type, entry.isChecked());
             }
-
-            return false;
         }
-    }
-
-    private static class CoordinateLockListener implements ISelectionListener<WidgetCheckBox>
-    {
-        private final SubRegionPlacement placement;
-        private final CoordinateType type;
-
-        private CoordinateLockListener(CoordinateType type, SubRegionPlacement placement)
-        {
-            this.type = type;
-            this.placement = placement;
-        }
-
-        @Override
-        public void onSelectionChange(WidgetCheckBox entry)
-        {
-            this.placement.setCoordinateLocked(this.type, entry.isChecked());
-        }
-    }
 }

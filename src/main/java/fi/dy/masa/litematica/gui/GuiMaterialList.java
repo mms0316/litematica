@@ -2,9 +2,7 @@ package fi.dy.masa.litematica.gui;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-
-import net.minecraft.client.MinecraftClient;
-
+import net.minecraft.client.Minecraft;
 import fi.dy.masa.malilib.data.DataDump;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.GuiListBase;
@@ -34,18 +32,12 @@ import fi.dy.masa.litematica.render.infohud.InfoHud;
 import fi.dy.masa.litematica.util.BlockInfoListType;
 
 //Custom Additions (easier to resolve future merge conflicts)
-import fi.dy.masa.litematica.Reference;
-import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.gui.GuiMainMenu.ButtonListenerChangeMenu;
-import fi.dy.masa.litematica.gui.widgets.WidgetListMaterialList;
-import fi.dy.masa.litematica.gui.widgets.WidgetMaterialListEntry;
 import fi.dy.masa.litematica.materials.MaterialCache;
 import fi.dy.masa.litematica.materials.MaterialListAreaAnalyzer;
 import fi.dy.masa.litematica.materials.MaterialListBase;
 import fi.dy.masa.litematica.materials.MaterialListEntry;
 import fi.dy.masa.litematica.materials.MaterialListSorter;
 import fi.dy.masa.litematica.materials.MaterialListUtils;
-import fi.dy.masa.litematica.util.BlockInfoListType;
 
 public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMaterialListEntry, WidgetListMaterialList>
                              implements ICompletionListener
@@ -103,7 +95,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
         int w = this.getStringWidth(str);
         this.addLabel(this.getScreenWidth() - w - 56, y + 5, w, 12, 0xFFFFFFFF, str);
 
-        GuiTextFieldInteger tf = new GuiTextFieldInteger(this.getScreenWidth() - 52, y + 2, 40, 16, this.textRenderer);
+        GuiTextFieldInteger tf = new GuiTextFieldInteger(this.getScreenWidth() - 52, y + 2, 40, 16, this.font);
         tf.setTextWrapper(String.valueOf(this.materialList.getMultiplier()));
         MultiplierListener listener = new MultiplierListener(this.materialList, this);
         this.addTextField(tf, listener);
@@ -358,7 +350,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                     break;
 
                 case WRITE_TO_JSON:
-                    MinecraftClient mc = MinecraftClient.getInstance();
+                    Minecraft mc = Minecraft.getInstance();
                     Path jsonDir = FileUtils.getConfigDirectoryAsPath().resolve(Reference.MOD_ID);
                     boolean missingOnly = GuiBase.isShiftDown();
                     boolean craftingOnly = GuiBase.isAltDown();
@@ -452,7 +444,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                 int available = entry.getCountAvailable();
 
                 //Custom Additions (easier to resolve future merge conflicts)
-                int maxStackSize = entry.getStack().getMaxCount();
+                int maxStackSize = entry.getStack().getMaxStackSize();
                 if (splitMeasures)
                 {
                     if (csv)
@@ -468,14 +460,14 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                         final int availableStacks = available % boxSize;
                         final int availableRemainder = available % maxStackSize;
 
-                        dump.addData(entry.getStack().getName().getString(),
+                        dump.addData(entry.getStack().getHoverName().getString(),
                                 String.valueOf(total), String.valueOf(totalBoxCount), String.valueOf(totalStacks), String.valueOf(totalRemainder),
                                 String.valueOf(missing), String.valueOf(missingBoxCount), String.valueOf(missingStacks), String.valueOf(missingRemainder),
                                 String.valueOf(available), String.valueOf(availableBoxCount), String.valueOf(availableStacks), String.valueOf(availableRemainder));
                     }
                     else
                     {
-                        dump.addData(entry.getStack().getName().getString(),
+                        dump.addData(entry.getStack().getHoverName().getString(),
                                 getFormattedCountString(total, maxStackSize),
                                 getFormattedCountString(missing, maxStackSize),
                                 getFormattedCountString(available, maxStackSize));
@@ -483,7 +475,7 @@ public class GuiMaterialList extends GuiListBase<MaterialListEntry, WidgetMateri
                 }
                 else
                 {
-                    dump.addData(entry.getStack().getName().getString(), String.valueOf(total), String.valueOf(missing), String.valueOf(available));
+                    dump.addData(entry.getStack().getHoverName().getString(), String.valueOf(total), String.valueOf(missing), String.valueOf(available));
                 }
             }
 

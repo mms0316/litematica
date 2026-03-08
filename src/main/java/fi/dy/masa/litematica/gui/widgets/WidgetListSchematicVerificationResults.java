@@ -1,15 +1,16 @@
 package fi.dy.masa.litematica.gui.widgets;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.item.ItemStack;
-
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import fi.dy.masa.malilib.gui.widgets.WidgetListBase;
+import fi.dy.masa.malilib.render.GuiContext;
+import fi.dy.masa.malilib.util.ItemType;
+import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.gui.GuiSchematicVerifier;
 import fi.dy.masa.litematica.gui.GuiSchematicVerifier.BlockMismatchEntry;
@@ -17,17 +18,16 @@ import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.BlockMismatch;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.MismatchType;
 import fi.dy.masa.litematica.schematic.verifier.VerifierResultSorter;
 import fi.dy.masa.litematica.util.ItemUtils;
-import fi.dy.masa.malilib.gui.widgets.WidgetListBase;
-import fi.dy.masa.malilib.util.ItemType;
-import fi.dy.masa.malilib.util.StringUtils;
 
 //Custom Additions (easier to resolve future merge conflicts)
 import java.util.Collection;
+import java.util.Collections;
+
 import fi.dy.masa.litematica.gui.Icons;
 import fi.dy.masa.malilib.gui.LeftRight;
-import net.minecraft.block.Block;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 
 public class WidgetListSchematicVerificationResults extends WidgetListBase<BlockMismatchEntry, WidgetSchematicVerificationResult>
@@ -54,9 +54,9 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
     }
 
     @Override
-    public void drawContents(DrawContext drawContext, int mouseX, int mouseY, float partialTicks)
+    public void drawContents(GuiContext ctx, int mouseX, int mouseY, float partialTicks)
     {
-        super.drawContents(drawContext, mouseX, mouseY, partialTicks);
+        super.drawContents(ctx, mouseX, mouseY, partialTicks);
         lastScrollbarPosition = this.scrollBar.getValue();
     }
 
@@ -181,7 +181,7 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
             list = this.guiSchematicVerifier.getPlacement().getSchematicVerifier().getMismatchOverviewFor(type);
         }
 
-        Collections.sort(list, this.sorter);
+        list.sort(this.sorter);
 
         for (BlockMismatch mismatch : list)
         {
@@ -233,14 +233,14 @@ public class WidgetListSchematicVerificationResults extends WidgetListBase<Block
         List<String> list = new ArrayList<>();
 
         Block block = entry.blockMismatch.stateExpected.getBlock();
-        Identifier rl = Registries.ITEM.getId(block.asItem());
+        Identifier rl = BuiltInRegistries.ITEM.getKey(block.asItem());
 
         list.add(block.getName().getString().toLowerCase());
         if (rl != null)
             list.add(rl.toString().toLowerCase());
 
         block = entry.blockMismatch.stateFound.getBlock();
-        rl = Registries.ITEM.getId(block.asItem());
+        rl = BuiltInRegistries.ITEM.getKey(block.asItem());
 
         list.add(block.getName().getString().toLowerCase());
         if (rl != null)

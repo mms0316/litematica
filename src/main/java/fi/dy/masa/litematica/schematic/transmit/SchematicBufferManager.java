@@ -3,9 +3,7 @@ package fi.dy.masa.litematica.schematic.transmit;
 import java.nio.file.Path;
 import java.util.HashMap;
 import javax.annotation.Nullable;
-
-import net.minecraft.nbt.NbtCompound;
-
+import net.minecraft.nbt.CompoundTag;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
@@ -14,7 +12,7 @@ import fi.dy.masa.litematica.util.FileType;
 public class SchematicBufferManager
 {
     private final HashMap<Long, SchematicBuffer> fileBuffers;
-    private final HashMap<Long, NbtCompound> optionalNbt;
+    private final HashMap<Long, CompoundTag> optionalNbt;
 
     public SchematicBufferManager()
     {
@@ -27,12 +25,12 @@ public class SchematicBufferManager
         this.createBuffer(name, FileType.LITEMATICA_SCHEMATIC, sessionKey, null);
     }
 
-    public void createBuffer(String name, final long sessionKey, @Nullable NbtCompound optional)
+    public void createBuffer(String name, final long sessionKey, @Nullable CompoundTag optional)
     {
         this.createBuffer(name, FileType.LITEMATICA_SCHEMATIC, sessionKey, optional);
     }
 
-    public void createBuffer(String name, FileType type, final long sessionKey, @Nullable NbtCompound optional)
+    public void createBuffer(String name, FileType type, final long sessionKey, @Nullable CompoundTag optional)
     {
         if (this.fileBuffers.containsKey(sessionKey) || this.optionalNbt.containsKey(sessionKey))
         {
@@ -59,14 +57,14 @@ public class SchematicBufferManager
         return null;
     }
 
-    public NbtCompound getOptionalNbt(final long sessionKey)
+    public CompoundTag getOptionalNbt(final long sessionKey)
     {
         if (this.optionalNbt.containsKey(sessionKey))
         {
             return this.optionalNbt.get(sessionKey);
         }
 
-        return new NbtCompound();
+        return new CompoundTag();
     }
 
     public void receiveSlice(final long sessionKey, final int slice, byte[] dataIn, final int size)

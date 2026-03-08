@@ -1,19 +1,19 @@
 package fi.dy.masa.litematica.selection;
 
+import javax.annotation.Nonnull;
+import net.minecraft.util.StringRepresentable;
 import com.google.common.collect.ImmutableList;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringIdentifiable;
-
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
-public enum SelectionMode implements IConfigOptionListEntry, StringIdentifiable
+public enum SelectionMode implements IConfigOptionListEntry, StringRepresentable
 {
     NORMAL  ("normal", "litematica.gui.label.area_selection.mode.normal"),
     SIMPLE  ("simple", "litematica.gui.label.area_selection.mode.simple");
 
-    public static final StringIdentifiable.EnumCodec<SelectionMode> CODEC = StringIdentifiable.createCodec(SelectionMode::values);
+    public static final StringRepresentable.EnumCodec<SelectionMode> CODEC = StringRepresentable.fromEnum(SelectionMode::values);
     public static final ImmutableList<SelectionMode> VALUES = ImmutableList.copyOf(values());
 
     private final String configString;
@@ -89,7 +89,7 @@ public enum SelectionMode implements IConfigOptionListEntry, StringIdentifiable
     }
 
     @Override
-    public String asString()
+    public @Nonnull String getSerializedName()
     {
         return this.configString;
     }

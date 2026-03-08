@@ -1,13 +1,12 @@
 package fi.dy.masa.litematica.gui.widgets;
 
-import net.minecraft.client.gui.DrawContext;
-
 import fi.dy.masa.litematica.scheduler.ITask;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.gui.widgets.WidgetListEntryBase;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 
@@ -30,61 +29,50 @@ public class WidgetTaskEntry extends WidgetListEntryBase<ITask>
     }
 
     @Override
-    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
+    public void render(GuiContext ctx, int mouseX, int mouseY, boolean selected)
     {
-//        RenderUtils.color(1f, 1f, 1f, 1f);
-
         // Draw a lighter background for the hovered and the selected entry
         if (selected || this.isMouseOver(mouseX, mouseY))
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x70FFFFFF);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0x70FFFFFF);
         }
         else if (this.isOdd)
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x20FFFFFF);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0x20FFFFFF);
         }
         // Draw a slightly lighter background for even entries
         else
         {
-            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x50FFFFFF);
+            RenderUtils.drawRect(ctx, this.x, this.y, this.width, this.height, 0x50FFFFFF);
         }
 
         String name = this.getEntry().getDisplayName();
-        this.drawString(drawContext, this.x + 4, this.y + 7, 0xFFFFFFFF, name);
 
-        this.drawSubWidgets(drawContext, mouseX, mouseY);
+        this.drawString(ctx, this.x + 4, this.y + 7, 0xFFFFFFFF, name);
+        this.drawSubWidgets(ctx, mouseX, mouseY);
     }
 
-    private static class ButtonListener implements IButtonActionListener
-    {
-        private final Type type;
-        private final WidgetTaskEntry widget;
+	private record ButtonListener(Type type, WidgetTaskEntry widget) implements IButtonActionListener
+	{
+		@Override
+		public void actionPerformedWithButton(ButtonBase button, int mouseButton)
+		{
+			if (this.type == Type.REMOVE)
+			{
+				ITask task = this.widget.getEntry();
 
-        public ButtonListener(Type type, WidgetTaskEntry widget)
-        {
-            this.type = type;
-            this.widget = widget;
-        }
+				if (TaskScheduler.getInstanceClient().removeTask(task) == false)
+				{
+					TaskScheduler.getInstanceServer().removeTask(task);
+				}
 
-        @Override
-        public void actionPerformedWithButton(ButtonBase button, int mouseButton)
-        {
-            if (this.type == Type.REMOVE)
-            {
-                ITask task = this.widget.getEntry();
+				this.widget.parent.refreshEntries();
+			}
+		}
 
-                if (TaskScheduler.getInstanceClient().removeTask(task) == false)
-                {
-                    TaskScheduler.getInstanceServer().removeTask(task);
-                }
-
-                this.widget.parent.refreshEntries();
-            }
-        }
-
-        public enum Type
-        {
-            REMOVE
-        }
-    }
+		public enum Type
+		{
+			REMOVE
+		}
+	}
 }

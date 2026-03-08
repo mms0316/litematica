@@ -1,50 +1,50 @@
 //Custom Additions (easier to resolve future merge conflicts)
 package fi.dy.masa.litematica.util;
 
-import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.malilib.util.InventoryUtils;
 
-import net.minecraft.block.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.BundleItem;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.state.property.Properties;
-import net.minecraft.state.property.Property;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BundleItem;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec3;
+
+import net.minecraft.world.level.Level;
+
+
+import net.minecraft.world.level.block.state.BlockState;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 
 public class AddonUtils {
     private static final List<String[]> SUBSTITUTIONS = new ArrayList<>();
-    private static final HashMap<AbstractBlock, Boolean> HAS_USE_ACTION_CACHE = new HashMap<>();
 
     private static final List<ItemStack> ranOutItems = new ArrayList<>();
     private static final List<ItemStack> refillItems = new ArrayList<>();
@@ -65,33 +65,33 @@ public class AddonUtils {
         }
 
         var orientationProperties = new Property<?>[] {
-                Properties.FACING, //pistons
-                Properties.BLOCK_HALF, //stairs, trapdoors
-                Properties.HOPPER_FACING,
-                Properties.DOOR_HINGE,
-                Properties.HORIZONTAL_FACING, //small dripleaf
-                Properties.AXIS, //logs
-                Properties.SLAB_TYPE,
-                Properties.VERTICAL_DIRECTION,
-                Properties.ROTATION, //banners
-                Properties.HANGING, //lanterns
-                Properties.BLOCK_FACE, //lever
-                Properties.ATTACHMENT, //bell (double-check for single-wall / double-wall)
-                //Properties.HORIZONTAL_AXIS, //Nether portals, though they aren't directly placeable
-                //Properties.ORIENTATION, //jigsaw blocks
+                BlockStateProperties.FACING, //pistons
+                BlockStateProperties.HALF, //stairs, trapdoors
+                BlockStateProperties.FACING_HOPPER,
+                BlockStateProperties.DOOR_HINGE,
+                BlockStateProperties.HORIZONTAL_FACING, //small dripleaf
+                BlockStateProperties.AXIS, //logs
+                BlockStateProperties.SLAB_TYPE,
+                BlockStateProperties.VERTICAL_DIRECTION,
+                BlockStateProperties.ROTATION_16, //banners
+                BlockStateProperties.HANGING, //lanterns
+                BlockStateProperties.ATTACH_FACE, //lever
+                BlockStateProperties.BELL_ATTACHMENT, //bell (double-check for single-wall / double-wall)
+                //BlockStateProperties.HORIZONTAL_AXIS, //Nether portals, though they aren't directly placeable
+                //BlockStateProperties.ORIENTATION, //jigsaw blocks
         };
 
         for (var property : orientationProperties)
         {
-            boolean hasProperty1 = state1.contains(property);
-            boolean hasProperty2 = state2.contains(property);
+            boolean hasProperty1 = state1.hasProperty(property);
+            boolean hasProperty2 = state2.hasProperty(property);
 
             if (hasProperty1 != hasProperty2)
                 return false;
             if (!hasProperty1)
                 continue;
 
-            if (state1.get(property) != state2.get(property))
+            if (state1.getValue(property) != state2.getValue(property))
                 return false;
         }
 
@@ -99,20 +99,21 @@ public class AddonUtils {
         return true;
     }
 
-    public static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    public static boolean isMatchingStateRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction direction, Vec3 hitVecIn, Minecraft mc, InteractionHand hand)
     {
         final var updatedHitResult = new BlockHitResult(hitVecIn, direction, pos, false);
-        final var ctx = new ItemPlacementContext(mc.player, hand, mc.player.getStackInHand(hand), updatedHitResult);
-        final var attemptState = stateSchematic.getBlock().getPlacementState(ctx);
+        final var ctx = new BlockPlaceContext(mc.player, hand, mc.player.getItemInHand(hand), updatedHitResult);
+        final var attemptState = stateSchematic.getBlock().getStateForPlacement(ctx);
         return isMatchingStateRestrictedProtocol(attemptState, stateSchematic);
     }
 
-    public static Triple<BlockPos, Direction, Vec3d> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3d hitVecIn, MinecraftClient mc, Hand hand)
+    public static Triple<BlockPos, Direction, Vec3> applyRestrictedProtocol(BlockPos pos, BlockState stateSchematic, Direction sideIn, Vec3 hitVecIn, Minecraft mc, InteractionHand hand)
     {
         var block = stateSchematic.getBlock();
-        if (block instanceof AbstractTorchBlock) //Torch, Soul Torch, Redstone Torch
+
+        if (block instanceof BaseTorchBlock) //Torch, Soul Torch, Redstone Torch
         {
-            boolean isOnWall = block instanceof WallTorchBlock || block instanceof WallRedstoneTorchBlock;
+            boolean isOnWall = block instanceof WallTorchBlock || block instanceof RedstoneWallTorchBlock;
             return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
         }
         else if (block instanceof AbstractBannerBlock)
@@ -120,7 +121,7 @@ public class AddonUtils {
             boolean isOnWall = block instanceof WallBannerBlock;
             return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
         }
-        else if (block instanceof AbstractSignBlock)
+        else if (block instanceof SignBlock)
         {
             boolean isOnWall = block instanceof WallSignBlock;
             return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
@@ -130,20 +131,20 @@ public class AddonUtils {
             boolean isOnWall = block instanceof WallSkullBlock;
             return getWallPlaceableOrientation(pos, stateSchematic, hitVecIn, mc, hand, isOnWall);
         }
-        else if (block instanceof MultifaceGrowthBlock) //Sculk Vein, Glow Lichen
+        else if (block instanceof MultifaceSpreadeableBlock) //Sculk Vein, Glow Lichen
         {
-            final var clientState = mc.world.getBlockState(pos);
+            final var clientState = mc.level.getBlockState(pos);
             final boolean isSameClass = clientState.getBlock().getClass().equals(block.getClass());
 
             Direction direction = sideIn.getOpposite();
-            if (isSameClass && MultifaceGrowthBlock.hasDirection(clientState, direction))
+            if (isSameClass && MultifaceSpreadeableBlock.hasFace(clientState, direction))
                 // This direction is already placed.
                 return null;
 
-            final var posSupport = pos.offset(direction);
+            final var posSupport = pos.relative(direction);
 
             // Check if supporting block exists
-            if (!MultifaceGrowthBlock.canGrowOn(mc.world, direction, pos, mc.world.getBlockState(posSupport)))
+            if (!MultifaceSpreadeableBlock.canAttachTo(mc.level, direction, pos, mc.level.getBlockState(posSupport)))
                 return null;
 
             return Triple.of(posSupport, sideIn, hitVecIn);
@@ -156,33 +157,33 @@ public class AddonUtils {
                 .orElse(null);
     }
 
-    private static Triple<BlockPos, Direction, Vec3d> getWallPlaceableOrientation(BlockPos pos, BlockState stateSchematic, Vec3d hitVecOut, MinecraftClient mc, Hand hand, boolean isOnWall) {
+    private static Triple<BlockPos, Direction, Vec3> getWallPlaceableOrientation(BlockPos pos, BlockState stateSchematic, Vec3 hitVecOut, Minecraft mc, InteractionHand hand, boolean isOnWall) {
         Direction sideOut;
         BlockPos posOrig = pos;
 
         if (isOnWall)
         {
-            if (!stateSchematic.contains(Properties.HORIZONTAL_FACING))
+            if (!stateSchematic.hasProperty(BlockStateProperties.HORIZONTAL_FACING))
             {
                 //Shouldn't happen, fail instead of crashing just in case
                 return null;
             }
 
-            sideOut = stateSchematic.get(Properties.HORIZONTAL_FACING);
-            pos = pos.offset(sideOut.getOpposite());
+            sideOut = stateSchematic.getValue(BlockStateProperties.HORIZONTAL_FACING);
+            pos = pos.relative(sideOut.getOpposite());
         }
         else
         {
             sideOut = Direction.UP;
-            pos = pos.down();
+            pos = pos.below();
         }
-        BlockState stateFacing = mc.world.getBlockState(pos);
+        BlockState stateFacing = mc.level.getBlockState(pos);
 
         if (stateFacing == null || stateFacing.isAir())
             return null;
 
         //Check for blocks that have rotation property (Banners, Signs, Skulls)
-        if (stateSchematic.contains(Properties.ROTATION))
+        if (stateSchematic.hasProperty(BlockStateProperties.ROTATION_16))
         {
             if (!isMatchingStateRestrictedProtocol(posOrig, stateSchematic, sideOut, hitVecOut, mc, hand))
                 return null;
@@ -191,54 +192,54 @@ public class AddonUtils {
         return Triple.of(pos, sideOut, hitVecOut);
     }
 
-    public static ActionResult checkEasyPlaceFluidBucket(MinecraftClient mc) {
+    public static InteractionResult checkEasyPlaceFluidBucket(Minecraft mc) {
         //Re-run traces to stop wasting liquid on liquid, and ignoring easyPlaceFirst config, as interactItem works differently
 
-        final double traceMaxRange = mc.player.getBlockInteractionRange();
-        final World world = SchematicWorldHandler.getSchematicWorld();
+        final double traceMaxRange = mc.player.blockInteractionRange();
+        final Level world = SchematicWorldHandler.getSchematicWorld();
 
         //Raytrace first non-liquid block
-        var hitResult = RayTraceUtils.getRayTraceFromEntity(mc.world, mc.player, false, traceMaxRange);
+        var hitResult = RayTraceUtils.getRayTraceFromEntity(mc.level, mc.player, false, traceMaxRange);
         if (hitResult.getType() != HitResult.Type.BLOCK)
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         var blockHitResult = (BlockHitResult)hitResult;
         final var blockPosLast = blockHitResult.getBlockPos();
         //Keep block before first non-liquid block
-        final var blockPosBeforeLast = blockPosLast.offset(blockHitResult.getSide());
+        final var blockPosBeforeLast = blockPosLast.relative(blockHitResult.getDirection());
 
         //Raytrace first block including liquid
-        hitResult = RayTraceUtils.getRayTraceFromEntity(mc.world, mc.player, true, traceMaxRange);
+        hitResult = RayTraceUtils.getRayTraceFromEntity(mc.level, mc.player, true, traceMaxRange);
         if (hitResult.getType() != HitResult.Type.BLOCK)
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         final var blockPosFirst = ((BlockHitResult)hitResult).getBlockPos();
 
         //Fail if there are liquids in-between
         //If there are liquids in-between, it'd waste liquid or create obsidian
-        if (blockPosFirst.toCenterPos().squaredDistanceTo(blockPosBeforeLast.toCenterPos()) > 1.0 + Math.ulp(1.0))
-            return ActionResult.FAIL;
+        if (blockPosFirst.getCenter().distanceTo(blockPosBeforeLast.getCenter()) > 1.0 + Math.ulp(1.0))
+            return InteractionResult.FAIL;
 
         final var blockStateSchematic = world.getBlockState(blockPosBeforeLast);
         final var blockSchematic = blockStateSchematic.getBlock();
-        final var blockStateVanilla = mc.world.getBlockState(blockPosBeforeLast);
+        final var blockStateVanilla = mc.level.getBlockState(blockPosBeforeLast);
         final var blockVanilla = blockStateVanilla.getBlock();
 
         //Fail if target is not to be a liquid source
-        if (!(blockSchematic instanceof FluidBlock))
-            return ActionResult.FAIL;
+        if (!(blockSchematic instanceof LiquidBlock))
+            return InteractionResult.FAIL;
 
         if (!blockStateVanilla.isAir())
         {
             //Fail if target is not of the desired fluid
             // (this comparison works because all Blocks are pointers to a single instance)
             if (blockSchematic != blockVanilla)
-                return ActionResult.FAIL;
+                return InteractionResult.FAIL;
 
             //Fail if world already has block as a liquid source
-            if (blockStateVanilla.get(FluidBlock.LEVEL) == 0)
-                return ActionResult.FAIL;
+            if (blockStateVanilla.getValue(LiquidBlock.LEVEL) == 0)
+                return InteractionResult.FAIL;
         }
 
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
 
@@ -248,19 +249,18 @@ public class AddonUtils {
      * @param threshold the number of items at or below which the re-stocking will happen
      * @param allowHotbar whether or not to allow taking items from other hotbar slots
      */
-    public static boolean preRestockHand(PlayerEntity player, Hand hand, int threshold, boolean allowHotbar)
+    public static boolean preRestockHand(Player player, InteractionHand hand, int threshold, boolean allowHotbar)
     {
         boolean changed = false;
-        final ItemStack stackHand = player.getEquippedStack(hand == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
+        final ItemStack stackHand = player.getItemInHand(hand);
         final int count = stackHand.getCount();
-        final int max = stackHand.getMaxCount();
+        final int max = stackHand.getMaxStackSize();
 
         if (stackHand.isEmpty() == false &&
                 (count <= threshold && count < max))
         {
-            MinecraftClient mc = MinecraftClient.getInstance();
-            ScreenHandler container = player.playerScreenHandler;
-            //mc.interactionManager.clickSlot() considers these slot numbers: https://minecraft.wiki/w/Java_Edition_protocol/Inventory
+            Minecraft mc = Minecraft.getInstance();
+            //mc.gameMode.handleInventoryMouseClick() considers these slot numbers: https://minecraft.wiki/w/Java_Edition_protocol/Inventory
             //36 - 44: hotbar
             //9 - 35: main inventory
             //45: offhand
@@ -269,9 +269,9 @@ public class AddonUtils {
             //9 - 35: main inventory
             //40: offhand
             int endSlot = allowHotbar ? 44 : 35;
-            PlayerInventory inventory = player.getInventory();
+            Inventory inventory = player.getInventory();
             int currentMainHandSlot = inventory.getSelectedSlot() + 36;
-            int currentSlot = hand == Hand.MAIN_HAND ? currentMainHandSlot : 45;
+            int currentSlot = hand == InteractionHand.MAIN_HAND ? currentMainHandSlot : 45;
 
             for (int slotNum = 9; slotNum <= endSlot; ++slotNum)
             {
@@ -280,23 +280,23 @@ public class AddonUtils {
                     continue;
                 }
 
-                ItemStack stackSlot = inventory.getStack(slotNum >= 36 ? slotNum - 36 : slotNum);
+                ItemStack stackSlot = inventory.getItem(slotNum >= 36 ? slotNum - 36 : slotNum);
 
                 if (InventoryUtils.areStacksEqualIgnoreNbt(stackHand, stackSlot))
                 {
-                    if (hand == Hand.OFF_HAND)
+                    if (hand == InteractionHand.OFF_HAND)
                     {
                         // If all the items from the found slot can fit into the current
                         // stack in hand, then left click, otherwise right click to split the stack
                         int button = stackSlot.getCount() + count <= max ? 0 : 1;
 
-                        mc.interactionManager.clickSlot(container.syncId, slotNum, button, SlotActionType.PICKUP, player);
-                        mc.interactionManager.clickSlot(container.syncId, currentSlot, 0, SlotActionType.PICKUP, player);
+                        mc.gameMode.handleInventoryMouseClick(player.inventoryMenu.containerId, slotNum, button, ClickType.PICKUP, player);
+                        mc.gameMode.handleInventoryMouseClick(player.inventoryMenu.containerId, currentSlot, 0, ClickType.PICKUP, player);
                     }
                     else
                     {
                         //Do shift-click
-                        mc.interactionManager.clickSlot(container.syncId, slotNum, 0, SlotActionType.QUICK_MOVE, player);
+                        mc.gameMode.handleInventoryMouseClick(player.inventoryMenu.containerId, slotNum, 0, ClickType.QUICK_MOVE, player);
                     }
                     changed = true;
 
@@ -360,17 +360,15 @@ public class AddonUtils {
 
     public static boolean hasEqualProperties(BlockState blockState1, BlockState blockState2)
     {
-        final var properties1 = blockState1.getEntries();
-        final var properties2 = blockState2.getEntries();
+        final var properties1 = blockState1.getProperties();
+        final var properties2 = blockState2.getProperties();
 
-        if (properties1 == properties2) return true;
+        if (properties1.equals(properties2)) return true;
         if (properties1.size() != properties2.size()) return false;
 
-        for (var entry : properties1.entrySet()) {
-            var val1 = entry.getValue();
-            var val2 = properties2.get(entry.getKey());
-
-            if (val1 != val2) return false;
+        for (var property1 : properties1) {
+            if (properties2.contains(property1) == false) return false;
+            if (blockState1.getValue(property1) != blockState2.getValue(property1)) return false;
         }
 
         return true;
@@ -397,7 +395,7 @@ public class AddonUtils {
                 {
                     return OverlayType.NONE;
                 }
-                else if (ignoreClientWorldFluids && stateClient.isLiquid())
+                else if (ignoreClientWorldFluids && stateClient.liquid())
                 {
                     return OverlayType.NONE;
                 }
@@ -412,7 +410,7 @@ public class AddonUtils {
             }
             else
             {
-                if (clientHasAir || (ignoreClientWorldFluids && stateClient.isLiquid()))
+                if (clientHasAir || (ignoreClientWorldFluids && stateClient.liquid()))
                 {
                     return OverlayType.MISSING;
                 }
@@ -437,8 +435,8 @@ public class AddonUtils {
                 //Custom Additions (easier to resolve future merge conflicts)
                 final Block schematicBlock = stateSchematic.getBlock();
                 final Block clientBlock = stateClient.getBlock();
-                final Identifier schematicBlockName = Registries.BLOCK.getId(schematicBlock);
-                final Identifier clientBlockName = Registries.BLOCK.getId(clientBlock);
+                final Identifier schematicBlockName = BuiltInRegistries.BLOCK.getKey(schematicBlock);
+                final Identifier clientBlockName = BuiltInRegistries.BLOCK.getKey(clientBlock);
 
                 if (!maySubstitute(schematicBlockName, clientBlockName))
                 {
@@ -453,30 +451,6 @@ public class AddonUtils {
                 return OverlayType.NONE;
             }
         }
-    }
-
-    public static boolean hasUseAction(AbstractBlock block) {
-        Boolean val = HAS_USE_ACTION_CACHE.get(block);
-
-        if (val == null) {
-            val = false;
-            try {
-                var methods = block.getClass().getDeclaredMethods();
-                for (var method : methods) {
-                    //protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit)
-                    if (method.getName().equals("method_55766")) {
-                        val = !(method.getDeclaringClass().equals(AbstractBlock.class));
-                        break;
-                    }
-                }
-            } catch (Exception e) {
-                Litematica.LOGGER.warn("AddonUtils: Failed to reflect method AbstractBlock::onUse", e);
-            }
-
-            HAS_USE_ACTION_CACHE.put(block, val);
-        }
-
-        return val;
     }
 
     public static void addRanOutItem(ItemStack stack) {
@@ -530,7 +504,7 @@ public class AddonUtils {
         final long now = System.currentTimeMillis();
         if (now - lastRefillTimeCheck <= 5_000L) return;
 
-        final var player = MinecraftClient.getInstance().player;
+        final var player = Minecraft.getInstance().player;
         if (player == null) return;
         final var inv = player.getInventory();
         if (inv == null) return;
@@ -541,7 +515,7 @@ public class AddonUtils {
         lastRefillTimeCheck = now;
     }
 
-    public static void renderHotbarItem(DrawContext context, int x, int y, ItemStack stack) {
+    public static void renderHotbarItem(GuiGraphics context, int x, int y, ItemStack stack) {
         if (!Configs.Generic.HIGHLIGHT_REFILL_IN_INV.getBooleanValue()) return;
 
         if (stack.isEmpty()) return;
@@ -566,9 +540,9 @@ public class AddonUtils {
         int borderColor = Configs.Colors.HIGHLIGHT_REFILL_IN_INV_COLOR.getColor().intValue;
         int borderThickness = 2;
 
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         context.fill(x - borderThickness, y - borderThickness, x + 16 + borderThickness, y + 16 + borderThickness, borderColor);
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
 
     public static String getFormattedCountString(int count, int maxStackSize, boolean bigFormat) {

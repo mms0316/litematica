@@ -4,13 +4,11 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import fi.dy.masa.malilib.render.GuiContext;
 import com.google.common.collect.ImmutableList;
-
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-
 import fi.dy.masa.litematica.gui.GuiMaterialList;
 import fi.dy.masa.litematica.gui.Icons;
 import fi.dy.masa.litematica.materials.MaterialListEntry;
@@ -40,9 +38,9 @@ public class WidgetListMaterialList extends WidgetListBase<MaterialListEntry, Wi
     }
 
     @Override
-    public void drawContents(DrawContext drawContext, int mouseX, int mouseY, float partialTicks)
+    public void drawContents(GuiContext ctx, int mouseX, int mouseY, float partialTicks)
     {
-        super.drawContents(drawContext, mouseX, mouseY, partialTicks);
+        super.drawContents(ctx, mouseX, mouseY, partialTicks);
         lastScrollbarPosition = this.scrollBar.getValue();
     }
 
@@ -82,15 +80,15 @@ public class WidgetListMaterialList extends WidgetListBase<MaterialListEntry, Wi
     protected List<String> getEntryStringsForFilter(MaterialListEntry entry)
     {
         ItemStack stack = entry.getStack();
-        Identifier rl = Registries.ITEM.getId(stack.getItem());
+        Identifier rl = BuiltInRegistries.ITEM.getKey(stack.getItem());
 
         if (rl != null)
         {
-            return ImmutableList.of(stack.getName().getString().toLowerCase(), rl.toString().toLowerCase());
+            return ImmutableList.of(stack.getHoverName().getString().toLowerCase(), rl.toString().toLowerCase());
         }
         else
         {
-            return ImmutableList.of(stack.getName().getString().toLowerCase());
+            return ImmutableList.of(stack.getHoverName().getString().toLowerCase());
         }
     }
 

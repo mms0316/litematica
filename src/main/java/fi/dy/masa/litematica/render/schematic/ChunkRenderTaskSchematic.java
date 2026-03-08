@@ -3,9 +3,9 @@ package fi.dy.masa.litematica.render.schematic;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import net.minecraft.world.phys.Vec3;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
-import net.minecraft.util.math.Vec3d;
 import fi.dy.masa.litematica.Litematica;
 
 public class ChunkRenderTaskSchematic implements Comparable<ChunkRenderTaskSchematic>
@@ -14,28 +14,31 @@ public class ChunkRenderTaskSchematic implements Comparable<ChunkRenderTaskSchem
     private final ChunkRenderTaskSchematic.Type type;
     // Threaded
     //private final ConcurrentLinkedQueue<Runnable> finishRunnables = new ConcurrentLinkedQueue<>();
-    private final List<Runnable> listFinishRunnables = Lists.newArrayList();
-    private final ReentrantLock lock = new ReentrantLock();
+    private final List<Runnable> listFinishRunnables;
+    private final ReentrantLock lock;
     //
-    private final Supplier<Vec3d> cameraPosSupplier;
+    private final Supplier<Vec3> cameraPosSupplier;
     private final double distanceSq;
     private BufferAllocatorCache allocatorCache;
     private ChunkRenderDataSchematic chunkRenderData;
     // Threaded
     //private final AtomicReference<ChunkRenderTaskSchematic.Status> status = new AtomicReference<>(Status.PENDING);
-    private ChunkRenderTaskSchematic.Status status = ChunkRenderTaskSchematic.Status.PENDING;
+    private ChunkRenderTaskSchematic.Status status;
     private boolean finished;
     //
 
-    public ChunkRenderTaskSchematic(ChunkRendererSchematicVbo renderChunkIn, ChunkRenderTaskSchematic.Type typeIn, Supplier<Vec3d> cameraPosSupplier, double distanceSqIn)
+    public ChunkRenderTaskSchematic(ChunkRendererSchematicVbo renderChunkIn, ChunkRenderTaskSchematic.Type typeIn, Supplier<Vec3> cameraPosSupplier, double distanceSqIn)
     {
         this.chunkRenderer = renderChunkIn;
         this.type = typeIn;
+		this.listFinishRunnables = Lists.newArrayList();
+	    this.lock = new ReentrantLock();
         this.cameraPosSupplier = cameraPosSupplier;
         this.distanceSq = distanceSqIn;
+	    this.status = ChunkRenderTaskSchematic.Status.PENDING;
     }
 
-    public Supplier<Vec3d> getCameraPosSupplier()
+    public Supplier<Vec3> getCameraPosSupplier()
     {
         return this.cameraPosSupplier;
     }

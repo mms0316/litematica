@@ -4,71 +4,97 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
+import net.minecraft.util.profiling.ProfilerFiller;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.render.BlockRenderLayerGroup;
-import net.minecraft.util.profiler.Profiler;
 
 public record ChunkRenderBatchDraw(
-        EnumMap<BlockRenderLayer, List<RenderPass.RenderObject<GpuBufferSlice[]>>> drawData,
-        boolean renderCollidingBlocks, boolean renderTranslucent,
+		GpuTextureView atlasTexture,
+        EnumMap<ChunkSectionLayer, List<RenderPass.Draw<GpuBufferSlice[]>>> drawData,
+        boolean renderCollidingBlocks,
+		boolean renderTranslucent,
         int maxIndicesRequired,
-        GpuBufferSlice[] dynamicTransforms
-) {
-    public void draw(BlockRenderLayerGroup group, Profiler profiler)
+		GpuBufferSlice[] dynamicTransforms,
+		GpuBuffer chunkFixUBO)
+{
+    public void draw(ChunkSectionLayerGroup group, GpuSampler sampler, ProfilerFiller profiler)
     {
-        RenderSystem.ShapeIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.DrawMode.QUADS);
-        GpuBuffer gpuBuffer = this.maxIndicesRequired == 0 ? null : shapeIndexBuffer.getIndexBuffer(this.maxIndicesRequired);
-        VertexFormat.IndexType indexType = this.maxIndicesRequired == 0 ? null : shapeIndexBuffer.getIndexType();
-        BlockRenderLayer[] layers = group.getLayers();
-        MinecraftClient mc = MinecraftClient.getInstance();
-        Framebuffer fb = group.getFramebuffer();
+        RenderSystem.AutoStorageIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+        GpuBuffer gpuBuffer = this.maxIndicesRequired() == 0 ? null : shapeIndexBuffer.getBuffer(this.maxIndicesRequired());
+        VertexFormat.IndexType indexType = this.maxIndicesRequired() == 0 ? null : shapeIndexBuffer.type();
+        ChunkSectionLayer[] layers = group.layers();
+        Minecraft mc = Minecraft.getInstance();
+        RenderTarget fb = group.outputTarget();
 
         profiler.push("draw_group");
 
-        try (RenderPass pass = RenderSystem.getDevice()
-                                           .createCommandEncoder()
-                                           .createRenderPass(
-                                                   () -> "litematica:schematic_chunk/"+group.getName(),
-                                                   fb.getColorAttachmentView(),
-                                                   OptionalInt.empty(),
-                                                   fb.getDepthAttachmentView(),
-                                                   OptionalDouble.empty()
-                                           ))
-        {
-            RenderSystem.bindDefaultUniforms(pass);
-            pass.bindSampler("Sampler2", mc.gameRenderer.getLightmapTextureManager().getGlTextureView());
+		try (RenderPass pass = RenderSystem.getDevice()
+		                                   .createCommandEncoder()
+		                                   .createRenderPass(
+				                                   () -> "litematica:schematic_chunk/" + group.label(),
+				                                   fb.getColorTextureView(),
+				                                   OptionalInt.empty(),
+				                                   fb.getDepthTextureView(),
+				                                   OptionalDouble.empty()
+		                                   ))
+		{
+			RenderSystem.bindDefaultUniforms(pass);
 
-            for (BlockRenderLayer layer : layers)
-            {
-                List<RenderPass.RenderObject<GpuBufferSlice[]>> list = this.drawData.get(layer);
+//			if (renderTranslucent() && this.dynamicTransform() != null)
+//			{
+//				pass.setUniform("DynamicTransforms", this.dynamicTransform());
+//			}
 
-                profiler.swap("draw_group_"+layer.getName());
-                if (!list.isEmpty())
-                {
-                    if (layer == BlockRenderLayer.TRANSLUCENT)
-                    {
-                        list = list.reversed();
-                    }
+			pass.setUniform("ChunkFix", this.chunkFixUBO);
+			pass.bindTexture("Sampler2",
+			                 mc.gameRenderer.lightTexture().getTextureView(),
+			                 RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR)
+			);
 
-                    pass.setPipeline(
-                            this.renderCollidingBlocks() ?
-                            ChunkRenderLayers.PIPELINE_MAP.get(layer).getRight() :
-                            ChunkRenderLayers.PIPELINE_MAP.get(layer).getLeft()
-                    );
+			for (ChunkSectionLayer layer : layers)
+			{
+				List<RenderPass.Draw<GpuBufferSlice[]>> list = this.drawData().get(layer);
 
-                    pass.bindSampler("Sampler0", layer.getTextureView());
-                    pass.drawMultipleIndexed(list, gpuBuffer, indexType, List.of("DynamicTransforms"), this.dynamicTransforms);
-                }
-            }
-        }
+				profiler.popPush("draw_group_" + layer.label());
+				if (!list.isEmpty())
+				{
+					if (layer == ChunkSectionLayer.TRANSLUCENT)
+					{
+						list = list.reversed();
+					}
+
+					if (this.renderTranslucent())
+					{
+						pass.setPipeline(this.renderCollidingBlocks()
+						                 ? ChunkRenderLayers.PIPELINE_MAP.get(ChunkSectionLayer.TRANSLUCENT).getRight()
+						                 : ChunkRenderLayers.PIPELINE_MAP.get(ChunkSectionLayer.TRANSLUCENT).getLeft()
+						);
+					}
+					else
+					{
+						pass.setPipeline(this.renderCollidingBlocks()
+						                 ? ChunkRenderLayers.PIPELINE_MAP.get(layer).getRight()
+						                 : ChunkRenderLayers.PIPELINE_MAP.get(layer).getLeft()
+						);
+					}
+
+					pass.bindTexture("Sampler0", this.atlasTexture(), sampler);
+//					pass.drawMultipleIndexed(list, gpuBuffer, indexType, List.of("ChunkSection"), this.chunkSections());
+					pass.drawMultipleIndexed(list, gpuBuffer, indexType, List.of("DynamicTransforms"), this.dynamicTransforms());
+				}
+			}
+		}
+		catch (Exception ignored) { }
 
         profiler.pop();
     }

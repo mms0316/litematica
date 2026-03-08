@@ -1,20 +1,20 @@
 package fi.dy.masa.litematica.scheduler.tasks;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
 import fi.dy.masa.litematica.materials.IMaterialList;
 import fi.dy.masa.litematica.selection.AreaSelection;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 //Custom Additions (easier to resolve future merge conflicts)
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 
 public class TaskCountBlocksArea extends TaskCountBlocksBase
@@ -37,9 +37,9 @@ public class TaskCountBlocksArea extends TaskCountBlocksBase
 
     //Custom Additions (easier to resolve future merge conflicts)
     @Override
-    protected void countAtBox(net.minecraft.util.math.Box box)
+    protected void countAtBox(AABB box)
     {
-        List<Entity> entities = this.clientWorld.getOtherEntities(null, box);
+        List<Entity> entities = this.clientWorld.getEntities(null, box);
         if (entities != null && !entities.isEmpty())
         {
             for (Entity entity : entities)
@@ -52,8 +52,8 @@ public class TaskCountBlocksArea extends TaskCountBlocksBase
     private void countEntity(Entity clientEntity)
     {
         EntityType<?> entityType = clientEntity.getType();
-        Identifier id = EntityType.getId(entityType);
-        Item item = Registries.ITEM.get(id);
+        Identifier id = EntityType.getKey(entityType);
+        Item item = BuiltInRegistries.ITEM.getValue(id);
         if (item != null)
         {
             // Check for entity itself
@@ -65,16 +65,16 @@ public class TaskCountBlocksArea extends TaskCountBlocksBase
             // - clientWorld has empty Inventory, so it's not possible to count Block Entities' inventories
 
             // Item Frames
-            if (clientEntity instanceof ItemFrameEntity clientItemFrameEntity)
+            if (clientEntity instanceof ItemFrame clientItemFrameEntity)
             {
-                ItemStack clientHeldItem = clientItemFrameEntity.getHeldItemStack();
+                ItemStack clientHeldItem = clientItemFrameEntity.getItem();
 
                 this.addItemStackToCount(clientHeldItem, this.itemTypesTotal);
             }
             // Armor Stands
-            else if (clientEntity instanceof ArmorStandEntity clientArmorStandEntity) {
+            else if (clientEntity instanceof ArmorStand clientArmorStandEntity) {
                 List<ItemStack> clientEquipments = EquipmentSlot.VALUES.stream()
-                    .map(slot -> clientArmorStandEntity.getEquippedStack(slot))
+                    .map(slot -> clientArmorStandEntity.getItemBySlot(slot))
                     .filter(stack -> stack != null && !stack.isEmpty())
                     .toList();
 

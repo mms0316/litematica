@@ -1,15 +1,15 @@
 package fi.dy.masa.litematica.util;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.Minecraft;
 
 /**
  * Post Re-Write code
  */
 public class CompatUtils
 {
-    public static boolean isKeyHeld(InputUtil.Key key)
+    public static boolean isKeyHeld(InputConstants.Key key)
     {
-        return InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), key.getCode());
+        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), key.getValue());
     }
 }

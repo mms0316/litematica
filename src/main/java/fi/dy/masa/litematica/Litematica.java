@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger;
 import net.fabricmc.api.ModInitializer;
 
 import fi.dy.masa.malilib.event.InitializationHandler;
-import fi.dy.masa.malilib.event.RenderEventHandler;
 import fi.dy.masa.litematica.config.Configs;
 
 public class Litematica implements ModInitializer

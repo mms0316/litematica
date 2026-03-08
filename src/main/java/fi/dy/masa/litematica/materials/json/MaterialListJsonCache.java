@@ -5,26 +5,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
+import net.minecraft.world.item.crafting.display.RecipeDisplayId;
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import fi.dy.masa.malilib.data.CachedTagUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.NetworkRecipeId;
-import net.minecraft.recipe.book.RecipeBookCategory;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.math.MathHelper;
-
 import fi.dy.masa.malilib.util.game.RecipeBookUtils;
 import fi.dy.masa.litematica.data.CachedTagManager;
 
@@ -94,7 +94,7 @@ public class MaterialListJsonCache
     {
         if (!this.entriesCombined.isEmpty())
         {
-            RegistryEntry<Item> item = input.rawItem();
+            Holder<Item> item = input.rawItem();
             final int total = input.total();
             List<Result> results = input.results();
 
@@ -124,22 +124,22 @@ public class MaterialListJsonCache
      */
     public List<Entry> combineUnpackedItems(Entry currentItem)
     {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        RegistryEntry<Item> baseItem = currentItem.rawItem();
-        if (baseItem == null || mc.world == null) return List.of(currentItem);
+        Minecraft mc = Minecraft.getInstance();
+        Holder<Item> baseItem = currentItem.rawItem();
+        if (baseItem == null || mc.level == null) return List.of(currentItem);
 
-        if (CachedTagManager.matchItemTag(CachedTagManager.UNPACKED_BLOCK_ITEMS_KEY, baseItem))
+        if (CachedTagUtils.matchItemTag(CachedTagManager.UNPACKED_BLOCK_ITEMS_KEY, baseItem))
         {
             final int total = currentItem.total();
-            Triple<RegistryEntry<Item>, Float, Integer> pair = MaterialListJsonOverrides.INSTANCE.matchPackingOverride(baseItem, total);
-            RegistryKey<Item> ironNugget = Registries.ITEM.getEntry(Items.IRON_NUGGET).getKey().orElseThrow();
-            RegistryKey<Item> goldNugget = Registries.ITEM.getEntry(Items.GOLD_NUGGET).getKey().orElseThrow();
+            Triple<Holder<Item>, Float, Integer> pair = MaterialListJsonOverrides.INSTANCE.matchPackingOverride(baseItem, total);
+            ResourceKey<Item> ironNugget = BuiltInRegistries.ITEM.wrapAsHolder(Items.IRON_NUGGET).unwrapKey().orElseThrow();
+            ResourceKey<Item> goldNugget = BuiltInRegistries.ITEM.wrapAsHolder(Items.GOLD_NUGGET).unwrapKey().orElseThrow();
             List<Entry> list = new ArrayList<>();
 
             // Repack Nuggets into Ingots first
-            if (baseItem.matchesId(ironNugget.getValue()) || baseItem.matchesId(goldNugget.getValue()))
+            if (baseItem.is(ironNugget.identifier()) || baseItem.is(goldNugget.identifier()))
             {
-                final int floor = MathHelper.floor(pair.getMiddle());
+                final int floor = Mth.floor(pair.getMiddle());
                 final int multiplier = pair.getRight();
                 final float remainCalc = multiplier * (pair.getMiddle() - floor);
                 final int remainder = Math.round(remainCalc);
@@ -157,10 +157,10 @@ public class MaterialListJsonCache
                 pair = MaterialListJsonOverrides.INSTANCE.matchPackingOverride(baseItem, (floor));
             }
 
-            if (!pair.getLeft().matchesKey(baseItem.getKey().orElseThrow()) && pair.getMiddle() > 0.0F)
+            if (!pair.getLeft().is(baseItem.unwrapKey().orElseThrow()) && pair.getMiddle() > 0.0F)
             {
                 // Check if it's div by 9, then check if div by 4; or else mul by 1
-                final int floor = MathHelper.floor(pair.getMiddle());
+                final int floor = Mth.floor(pair.getMiddle());
                 final int multiplier = pair.getRight();
                 final float remainCalc = multiplier * (pair.getMiddle() - floor);
                 final int remainder = Math.round(remainCalc);
@@ -211,7 +211,7 @@ public class MaterialListJsonCache
 
         for (Step entry : left)
         {
-            RegistryEntry<Item> item = entry.stepItem();
+            Holder<Item> item = entry.stepItem();
             final int count = entry.count();
             boolean matched = false;
 
@@ -272,7 +272,7 @@ public class MaterialListJsonCache
 
         for (Result entry : left)
         {
-            RegistryEntry<Item> item = entry.resultItem();
+            Holder<Item> item = entry.resultItem();
             final int count = entry.total();
             boolean matched = false;
 
@@ -351,7 +351,7 @@ public class MaterialListJsonCache
 
     public Pair<Step, List<Step>> buildStepsBase(MaterialListJsonBase base, List<Step> lastSteps, Result result)
     {
-        RegistryEntry<Item> resultItem = base.getInput();
+        Holder<Item> resultItem = base.getInput();
         final int total = base.getCount();
 
 //        if (result != null)
@@ -471,19 +471,19 @@ public class MaterialListJsonCache
         return this.buildStepsBase(base, lastSteps, result);
     }
 
-    public Pair<Step, List<MaterialListJsonBase>> buildStepsEntryEach(RegistryEntry<Item> resultItem, MaterialListJsonEntry materials, RecipeBookUtils.Type typeIn)
+    public Pair<Step, List<MaterialListJsonBase>> buildStepsEntryEach(Holder<Item> resultItem, MaterialListJsonEntry materials, RecipeBookUtils.Type typeIn)
     {
-        RegistryEntry<Item> stepItem = materials.getInputItem();
+        Holder<Item> stepItem = materials.getInputItem();
         final int stepCount = materials.getTotal();
 
 //        LOGGER.debug("buildStepsEntryEach: resultItem: [{}], typeIn [{}]", resultItem.getIdAsString(), typeIn.name());
 
         if (materials.hasOutput())
         {
-            NetworkRecipeId stepNetworkId = materials.getPrimaryId();
+            RecipeDisplayId stepNetworkId = materials.getPrimaryId();
 //            HashMap<NetworkRecipeId, List<Ingredient>> stepIngs = materials.getRecipeRequirements();
-            HashMap<NetworkRecipeId, RecipeBookCategory> stepCats = materials.getRecipeCategory();
-            HashMap<NetworkRecipeId, RecipeBookUtils.Type> stepTypes = materials.getRecipeTypes();
+            HashMap<RecipeDisplayId, RecipeBookCategory> stepCats = materials.getRecipeCategory();
+            HashMap<RecipeDisplayId, RecipeBookUtils.Type> stepTypes = materials.getRecipeTypes();
 
 //            List<MaterialListJsonBase> requirements = materials.getRequirements();
 //            List<Ingredient> ings = stepIngs.get(stepNetworkId);
@@ -710,11 +710,11 @@ public class MaterialListJsonCache
         }
     }
 
-    public record Step(RegistryEntry<Item> stepItem, Integer count, RecipeBookUtils.Type type, String category, Integer networkId)
+    public record Step(Holder<Item> stepItem, Integer count, RecipeBookUtils.Type type, String category, Integer networkId)
     {
         public static final Codec<Step> CODEC = RecordCodecBuilder.create(
                 inst -> inst.group(
-                        Item.ENTRY_CODEC.fieldOf("StepItem").forGetter(get -> get.stepItem),
+                        Item.CODEC.fieldOf("StepItem").forGetter(get -> get.stepItem),
                         PrimitiveCodec.INT.fieldOf("StepCount").forGetter(get -> get.count),
                         RecipeBookUtils.Type.CODEC.fieldOf("RecipeType").forGetter(get -> get.type),
                         PrimitiveCodec.STRING.fieldOf("RecipeCategory").forGetter(get -> get.category),
@@ -739,11 +739,11 @@ public class MaterialListJsonCache
 //        }
     }
 
-    public record Result(RegistryEntry<Item> resultItem, Integer total)
+    public record Result(Holder<Item> resultItem, Integer total)
     {
         public static final Codec<Result> CODEC = RecordCodecBuilder.create(
                 inst -> inst.group(
-                        Item.ENTRY_CODEC.fieldOf("ResultItem").forGetter(get -> get.resultItem),
+                        Item.CODEC.fieldOf("ResultItem").forGetter(get -> get.resultItem),
                         PrimitiveCodec.INT.fieldOf("ResultTotal").forGetter(get -> get.total)
                 ).apply(inst, Result::new)
         );
@@ -761,11 +761,11 @@ public class MaterialListJsonCache
 //        }
     }
 
-    public record Entry(RegistryEntry<Item> rawItem, Integer total, List<Step> steps, List<Result> results)
+    public record Entry(Holder<Item> rawItem, Integer total, List<Step> steps, List<Result> results)
     {
         public static final Codec<Entry> CODEC = RecordCodecBuilder.create(
                 inst -> inst.group(
-                        Item.ENTRY_CODEC.fieldOf("RawItem").forGetter(get -> get.rawItem),
+                        Item.CODEC.fieldOf("RawItem").forGetter(get -> get.rawItem),
                         PrimitiveCodec.INT.fieldOf("TotalEstimate").forGetter(get -> get.total),
                         Codec.list(Step.CODEC).fieldOf("Steps").forGetter(get -> get.steps),
                         Codec.list(Result.CODEC).fieldOf("Results").forGetter(get -> get.results)

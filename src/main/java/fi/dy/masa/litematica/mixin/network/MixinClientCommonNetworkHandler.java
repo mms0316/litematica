@@ -4,24 +4,28 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.client.network.ClientCommonNetworkHandler;
-import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.data.DataManager;
+import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 
 /**
  * They keep moving where the effective CustomPayload handling is... keeping them both
  */
-@Mixin(ClientCommonNetworkHandler.class)
+@Mixin(ClientCommonPacketListenerImpl.class)
 public class MixinClientCommonNetworkHandler
 {
-    @Inject(method = "onCustomPayload(Lnet/minecraft/network/packet/s2c/common/CustomPayloadS2CPacket;)V", at = @At("HEAD"))
-    private void litematica_onCustomPayload(CustomPayloadS2CPacket packet, CallbackInfo ci)
+    @Inject(method = "handleCustomPayload(Lnet/minecraft/network/protocol/common/ClientboundCustomPayloadPacket;)V", at = @At("HEAD"))
+    private void litematica_onCustomPayload(ClientboundCustomPayloadPacket packet, CallbackInfo ci)
     {
-        if (packet.payload().getId().id().equals(DataManager.CARPET_HELLO))
+        if (packet.payload().type().id().equals(DataManager.CARPET_HELLO))
         {
             Litematica.debugLog("ClientCommonNetworkHandler#litematica_onCustomPayload(): received carpet hello packet");
             DataManager.setIsCarpetServer(true);
+        }
+        else if (packet.payload().type().id().getNamespace().equals("servux"))
+        {
+            DataManager.setHasServuxServer(true);
         }
     }
 }

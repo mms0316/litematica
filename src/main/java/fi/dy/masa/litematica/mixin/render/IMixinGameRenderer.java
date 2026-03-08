@@ -1,7 +1,7 @@
 package fi.dy.masa.litematica.mixin.render;
 
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.fog.FogRenderer;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.fog.FogRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -11,6 +11,6 @@ public interface IMixinGameRenderer
     @Accessor("fogRenderer")
     FogRenderer litematica_getFogRenderer();
 
-    @Accessor("blockOutlineEnabled")
+    @Accessor("renderBlockOutline")
     boolean litematica_isBlockOutlineEnabled();
 }

@@ -1,34 +1,35 @@
 package fi.dy.masa.litematica.scheduler.tasks;
 
 import java.util.Collection;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.materials.IMaterialList;
-import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
-import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement.RequiredEnabled;
-import fi.dy.masa.litematica.selection.Box;
-import fi.dy.masa.litematica.util.BlockInfoListType;
-
 //Custom Additions (easier to resolve future merge conflicts)
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+
 import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.data.DataManager;
+import fi.dy.masa.litematica.materials.IMaterialList;
+import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
+import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement.RequiredEnabled;
+import fi.dy.masa.litematica.selection.Box;
+import fi.dy.masa.litematica.util.BlockInfoListType;
 import fi.dy.masa.malilib.util.InventoryUtils;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
 public class TaskCountBlocksPlacement extends TaskCountBlocksBase
 {
@@ -96,34 +97,34 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
 
             //Custom Additions (easier to resolve future merge conflicts)
             BlockEntity schematicBlockEntity = this.schematicWorld.getBlockEntity(pos);
-            if (schematicBlockEntity instanceof Inventory schematicInventory)
+            if (schematicBlockEntity instanceof Container schematicInventory)
             {
                 schematicInventory.forEach(itemStack -> addItemStackToCount(itemStack, this.itemTypesTotal));
                 BlockEntity clientBlockEntity = this.clientWorld.getBlockEntity(pos);
-                if (!(clientBlockEntity instanceof Inventory))
+                if (!(clientBlockEntity instanceof Container))
                 {
                     schematicInventory.forEach(itemStack -> addItemStackToCount(itemStack, this.itemTypesMissing));
                 }
-                // clientWorld has empty Inventory, so it's not possible to compare
+                // clientWorld has empty Container, so it's not possible to compare
             }
         }
     }
 
     //Custom Additions (easier to resolve future merge conflicts)
     @Override
-    protected void countAtBox(net.minecraft.util.math.Box box)
+    protected void countAtBox(AABB box)
     {
         Map<UUID, Entity> schematicEntities = new HashMap<>();
 
-        List<Entity> entities = this.schematicWorld.getOtherEntities(null, box);
+        List<Entity> entities = this.schematicWorld.getEntities(null, box);
         if (entities != null && !entities.isEmpty())
         {
             for (Entity entity : entities)
             {
                 // Mark entities processed, because they may reside in multiple chunks
-                if (entity.getUuid() != null && schematicEntities.containsKey(entity.getUuid()))
+                if (entity.getUUID() != null && schematicEntities.containsKey(entity.getUUID()))
                     continue;
-                schematicEntities.put(entity.getUuid(), entity);
+                schematicEntities.put(entity.getUUID(), entity);
 
                 this.countEntity(entity);
             }
@@ -133,8 +134,8 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
     protected void countEntity(Entity schematicEntity)
     {
         EntityType<?> entityType = schematicEntity.getType();
-        Identifier id = EntityType.getId(entityType);
-        Item item = Registries.ITEM.get(id);
+        Identifier id = EntityType.getKey(entityType);
+        Item item = BuiltInRegistries.ITEM.getValue(id);
         if (item != null)
         {
             // Check for entity itself
@@ -144,7 +145,7 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
 
             boolean entityMissing = false;
 
-            List<Entity> clientEntities = this.clientWorld.getOtherEntities(null, schematicEntity.getBoundingBox().expand(0.1));
+            List<Entity> clientEntities = this.clientWorld.getEntities(null, schematicEntity.getBoundingBox().inflate(0.1));
             Stream<Entity> clientMatchingEntities = clientEntities.stream().filter(entity -> entity.getType() == entityType);
             if (clientMatchingEntities.count() == 0)
             {
@@ -156,7 +157,7 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
             // Check for items inside the entity
 
             // Minecarts with Chests / Hopper, Boats with Chests
-            if (schematicEntity instanceof Inventory schematicInventory) {
+            if (schematicEntity instanceof Container schematicInventory) {
                 schematicInventory.forEach(itemStack -> {
                     this.addItemStackToCount(itemStack, this.itemTypesTotal);
                 });
@@ -169,7 +170,7 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
                     return;
                 }
 
-                List<Entity> clientInventoryEntities = clientEntities.stream().filter(entity -> entity.getType() == entityType && entity instanceof Inventory).toList();
+                List<Entity> clientInventoryEntities = clientEntities.stream().filter(entity -> entity.getType() == entityType && entity instanceof Container).toList();
 
                 if (clientInventoryEntities.size() != 1)
                 {
@@ -181,9 +182,9 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
                 // clientWorld has empty Inventory, so it's not possible to compare
             }
             // Item Frames
-            else if (schematicEntity instanceof ItemFrameEntity schematicItemFrameEntity)
+            else if (schematicEntity instanceof ItemFrame schematicItemFrameEntity)
             {
-                ItemStack schematicHeldItem = schematicItemFrameEntity.getHeldItemStack();
+                ItemStack schematicHeldItem = schematicItemFrameEntity.getItem();
 
                 this.addItemStackToCount(schematicHeldItem, this.itemTypesTotal);
                 if (entityMissing)
@@ -192,15 +193,15 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
                     return;
                 }
 
-                List<Entity> clientItemFrameEntities = clientEntities.stream().filter(entity -> entity.getType() == entityType && entity instanceof ItemFrameEntity).toList();
+                List<Entity> clientItemFrameEntities = clientEntities.stream().filter(entity -> entity.getType() == entityType && entity instanceof ItemFrame).toList();
 
                 if (clientItemFrameEntities.size() != 1)
                 {
                     // No matching inventory found in client world, or cannot compare with multiple matches
                     this.addItemStackToCount(schematicHeldItem, this.itemTypesMissing);
                 }
-                else if (clientItemFrameEntities.get(0) instanceof ItemFrameEntity clientItemFrameEntity) {
-                    ItemStack clientHeldItem = clientItemFrameEntity.getHeldItemStack();
+                else if (clientItemFrameEntities.get(0) instanceof ItemFrame clientItemFrameEntity) {
+                    ItemStack clientHeldItem = clientItemFrameEntity.getItem();
 
                     if (this.ignoreState)
                     {
@@ -218,9 +219,9 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
                 }
             }
             // Armor Stands
-            else if (schematicEntity instanceof ArmorStandEntity schematicArmorStandEntity) {
+            else if (schematicEntity instanceof ArmorStand schematicArmorStandEntity) {
                 List<ItemStack> schematicEquipments = EquipmentSlot.VALUES.stream()
-                    .map(slot -> schematicArmorStandEntity.getEquippedStack(slot))
+                    .map(slot -> schematicArmorStandEntity.getItemBySlot(slot))
                     .filter(stack -> stack != null && !stack.isEmpty())
                     .toList();
 
@@ -236,7 +237,7 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
                     return;
                 }
 
-                List<Entity> clientArmorStandEntities = clientEntities.stream().filter(entity -> entity.getType() == entityType && entity instanceof ArmorStandEntity).toList();
+                List<Entity> clientArmorStandEntities = clientEntities.stream().filter(entity -> entity.getType() == entityType && entity instanceof ArmorStand).toList();
                 if (clientArmorStandEntities.size() != 1)
                 {
                     // No matching inventory found in client world, or cannot compare with multiple matches
@@ -244,11 +245,11 @@ public class TaskCountBlocksPlacement extends TaskCountBlocksBase
                         this.addItemStackToCount(equippedStack, this.itemTypesMissing);
                     });
                 }
-                else if (clientArmorStandEntities.get(0) instanceof ArmorStandEntity clientArmorStandEntity)
+                else if (clientArmorStandEntities.get(0) instanceof ArmorStand clientArmorStandEntity)
                 {
                     for (EquipmentSlot slot : EquipmentSlot.VALUES) {
-                        ItemStack stackSchematic = schematicArmorStandEntity.getEquippedStack(slot);
-                        ItemStack stackClient = clientArmorStandEntity.getEquippedStack(slot);
+                        ItemStack stackSchematic = schematicArmorStandEntity.getItemBySlot(slot);
+                        ItemStack stackClient = clientArmorStandEntity.getItemBySlot(slot);
 
                         if (this.ignoreState)
                         {

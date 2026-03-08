@@ -1,13 +1,13 @@
 package fi.dy.masa.litematica.render.schematic;
 
 import javax.annotation.Nullable;
+import net.minecraft.world.level.ChunkPos;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import net.minecraft.util.math.ChunkPos;
 import fi.dy.masa.litematica.world.WorldSchematic;
 
 public class ChunkRenderDispatcherSchematic
 {
-    protected final Long2ObjectOpenHashMap<ChunkRendererSchematicVbo> chunkRenderers = new Long2ObjectOpenHashMap<>();
+    protected final Long2ObjectOpenHashMap<ChunkRendererSchematicVbo> chunkRenderers;
     protected final WorldRendererSchematic renderer;
     protected final IChunkRendererFactory chunkRendererFactory;
     protected final WorldSchematic world;
@@ -18,6 +18,7 @@ public class ChunkRenderDispatcherSchematic
             WorldRendererSchematic worldRenderer, IChunkRendererFactory factory)
     {
         this.chunkRendererFactory = factory;
+		this.chunkRenderers = new Long2ObjectOpenHashMap<>();
         this.renderer = worldRenderer;
         this.world = world;
         this.setViewDistanceChunks(viewDistanceChunks);
@@ -42,10 +43,9 @@ public class ChunkRenderDispatcherSchematic
 
     private boolean rendererOutOfRange(ChunkRendererSchematicVbo cr)
     {
-        if (cr.getDistanceSq() > this.viewDistanceBlocksSq)
+        if (cr.getDistanceSq() > this.viewDistanceBlocksSq || cr.isEmpty())     // Also remove "Empty" chunks, and clear resources.
         {
             cr.deleteGlResources();
-
             return true;
         }
 
@@ -70,13 +70,13 @@ public class ChunkRenderDispatcherSchematic
 
     protected ChunkRendererSchematicVbo getOrCreateChunkRenderer(int chunkX, int chunkZ)
     {
-        long index = ChunkPos.toLong(chunkX, chunkZ);
+        long index = ChunkPos.asLong(chunkX, chunkZ);
         ChunkRendererSchematicVbo renderer = this.chunkRenderers.get(index);
 
         if (renderer == null)
         {
             renderer = this.chunkRendererFactory.create(this.world, this.renderer);
-            renderer.setPosition(chunkX << 4, this.world.getBottomY(), chunkZ << 4);
+            renderer.setPosition(chunkX << 4, this.world.getMinY(), chunkZ << 4);
             this.chunkRenderers.put(index, renderer);
         }
 

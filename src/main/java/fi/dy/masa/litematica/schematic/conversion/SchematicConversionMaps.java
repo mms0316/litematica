@@ -9,19 +9,18 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.serialization.Dynamic;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.PillarBlock;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.datafixer.TypeReferences;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
-import net.minecraft.registry.RegistryEntryLookup;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.util.datafix.fixes.References;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import fi.dy.masa.malilib.util.nbt.NbtUtils;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
@@ -36,8 +35,8 @@ public class SchematicConversionMaps
     private static final Int2ObjectOpenHashMap<BlockState> ID_META_TO_BLOCKSTATE = new Int2ObjectOpenHashMap<>();
     private static final HashMap<String, String> OLD_NAME_TO_NEW_NAME = new HashMap<>();
     private static final HashMap<String, String> NEW_NAME_TO_OLD_NAME = new HashMap<>();
-    private static final HashMap<NbtCompound, NbtCompound> OLD_STATE_TO_NEW_STATE = new HashMap<>();
-    private static final HashMap<NbtCompound, NbtCompound> NEW_STATE_TO_OLD_STATE = new HashMap<>();
+    private static final HashMap<CompoundTag, CompoundTag> OLD_STATE_TO_NEW_STATE = new HashMap<>();
+    private static final HashMap<CompoundTag, CompoundTag> NEW_STATE_TO_OLD_STATE = new HashMap<>();
     private static final ArrayList<ConversionData> CACHED_DATA = new ArrayList<>();
     private static final ArrayList<ConversionDynamic> CACHED_DYNAMIC = new ArrayList<>();
 
@@ -87,16 +86,16 @@ public class SchematicConversionMaps
             {
                 if (data.oldStateStrings.length > 0)
                 {
-                    NbtCompound oldStateTag = getStateTagFromString(data.oldStateStrings[0]);
+                    CompoundTag oldStateTag = getStateTagFromString(data.oldStateStrings[0]);
 
                     if (oldStateTag != null)
                     {
-                        String name = oldStateTag.getString("Name", "");
+                        String name = oldStateTag.getStringOr("Name", "");
                         OLD_BLOCK_NAME_TO_SHIFTED_BLOCK_ID.putIfAbsent(name, data.idMeta & 0xFFF0);
                     }
                 }
 
-                NbtCompound newStateTag = getStateTagFromString(data.newStateString);
+                CompoundTag newStateTag = getStateTagFromString(data.newStateString);
 
                 if (newStateTag != null)
                 {
@@ -126,7 +125,7 @@ public class SchematicConversionMaps
                     }
                 }
 
-                NbtCompound newStateTag = (NbtCompound) entry.newState().convert(NbtOps.INSTANCE).getValue();
+                CompoundTag newStateTag = (CompoundTag) entry.newState().convert(NbtOps.INSTANCE).getValue();
 
                 if (!newStateTag.isEmpty())
                 {
@@ -146,15 +145,15 @@ public class SchematicConversionMaps
         return ID_META_TO_BLOCKSTATE.get(idMeta);
     }
 
-    public static NbtCompound get_1_13_2_StateTagFor_1_12_Tag(NbtCompound oldStateTag)
+    public static CompoundTag get_1_13_2_StateTagFor_1_12_Tag(CompoundTag oldStateTag)
     {
-        NbtCompound tag = OLD_STATE_TO_NEW_STATE.get(oldStateTag);
+        CompoundTag tag = OLD_STATE_TO_NEW_STATE.get(oldStateTag);
         return tag != null ? tag : oldStateTag;
     }
 
-    public static NbtCompound get_1_12_StateTagFor_1_13_2_Tag(NbtCompound newStateTag)
+    public static CompoundTag get_1_12_StateTagFor_1_13_2_Tag(CompoundTag newStateTag)
     {
-        NbtCompound tag = NEW_STATE_TO_OLD_STATE.get(newStateTag);
+        CompoundTag tag = NEW_STATE_TO_OLD_STATE.get(newStateTag);
         return tag != null ? tag : newStateTag;
     }
 
@@ -165,18 +164,18 @@ public class SchematicConversionMaps
 
     private static void addOverrides()
     {
-        BlockState air = Blocks.AIR.getDefaultState();
+        BlockState air = Blocks.AIR.defaultBlockState();
         BLOCKSTATE_TO_ID_META.put(air, 0);
         ID_META_TO_BLOCKSTATE.put(0, air);
 
         int idOldLog = (17 << 4) | 12;
         int idNewLog = (162 << 4) | 12;
-        ID_META_TO_BLOCKSTATE.put(idOldLog | 0, Blocks.OAK_WOOD.getDefaultState().with(PillarBlock.AXIS, Direction.Axis.Y));
-        ID_META_TO_BLOCKSTATE.put(idOldLog | 1, Blocks.SPRUCE_WOOD.getDefaultState().with(PillarBlock.AXIS, Direction.Axis.Y));
-        ID_META_TO_BLOCKSTATE.put(idOldLog | 2, Blocks.BIRCH_WOOD.getDefaultState().with(PillarBlock.AXIS, Direction.Axis.Y));
-        ID_META_TO_BLOCKSTATE.put(idOldLog | 3, Blocks.JUNGLE_WOOD.getDefaultState().with(PillarBlock.AXIS, Direction.Axis.Y));
-        ID_META_TO_BLOCKSTATE.put(idNewLog | 0, Blocks.ACACIA_WOOD.getDefaultState().with(PillarBlock.AXIS, Direction.Axis.Y));
-        ID_META_TO_BLOCKSTATE.put(idNewLog | 1, Blocks.DARK_OAK_WOOD.getDefaultState().with(PillarBlock.AXIS, Direction.Axis.Y));
+        ID_META_TO_BLOCKSTATE.put(idOldLog | 0, Blocks.OAK_WOOD.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y));
+        ID_META_TO_BLOCKSTATE.put(idOldLog | 1, Blocks.SPRUCE_WOOD.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y));
+        ID_META_TO_BLOCKSTATE.put(idOldLog | 2, Blocks.BIRCH_WOOD.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y));
+        ID_META_TO_BLOCKSTATE.put(idOldLog | 3, Blocks.JUNGLE_WOOD.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y));
+        ID_META_TO_BLOCKSTATE.put(idNewLog | 0, Blocks.ACACIA_WOOD.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y));
+        ID_META_TO_BLOCKSTATE.put(idNewLog | 1, Blocks.DARK_OAK_WOOD.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y));
 
         // These will get converted to the correct type in the state fixers
         ID_META_TO_UPDATED_NAME.put(1648, "minecraft:melon");
@@ -217,13 +216,13 @@ public class SchematicConversionMaps
         NEW_STATE_TO_OLD_STATE.clear();
     }
 
-    private static void addIdMetaToBlockState(int idMeta, NbtCompound newStateTag, String... oldStateStrings)
+    private static void addIdMetaToBlockState(int idMeta, CompoundTag newStateTag, String... oldStateStrings)
     {
         try
         {
             // The flattening map actually has outdated names for some blocks...
             // Ie. some blocks were renamed after the flattening, so we need to handle those here.
-            String newName = newStateTag.getString("Name", "");
+            String newName = newStateTag.getStringOr("Name", "");
             String overriddenName = ID_META_TO_UPDATED_NAME.get(idMeta);
 
             if (overriddenName != null)
@@ -233,9 +232,9 @@ public class SchematicConversionMaps
             }
 
             //RegistryEntryLookup<Block> lookup = Registries.BLOCK.getReadOnlyWrapper();
-            RegistryEntryLookup<Block> lookup = SchematicWorldHandler.INSTANCE.getRegistryManager().getOrThrow(RegistryKeys.BLOCK);
+            HolderGetter<Block> lookup = SchematicWorldHandler.INSTANCE.getRegistryManager().lookupOrThrow(Registries.BLOCK);
             // Store the id + meta => state maps before renaming the block for the state <=> state maps
-            BlockState state = NbtHelper.toBlockState(lookup, newStateTag);
+            BlockState state = net.minecraft.nbt.NbtUtils.readBlockState(lookup, newStateTag);
             //System.out.printf("id: %5d, state: %s, tag: %s\n", idMeta, state, newStateTag);
             ID_META_TO_BLOCKSTATE.putIfAbsent(idMeta, state);
 
@@ -244,8 +243,8 @@ public class SchematicConversionMaps
 
             if (oldStateStrings.length > 0)
             {
-                NbtCompound oldStateTag = getStateTagFromString(oldStateStrings[0]);
-                String oldName = oldStateTag.getString("Name", "");
+                CompoundTag oldStateTag = getStateTagFromString(oldStateStrings[0]);
+                String oldName = oldStateTag.getStringOr("Name", "");
 
                 // Don't run the vanilla block rename for overridden names
                 if (overriddenName == null)
@@ -269,13 +268,13 @@ public class SchematicConversionMaps
         }
     }
 
-    private static void addIdMetaToBlockStateDynamic(int idMeta, NbtCompound newStateTag, List<Dynamic<?>> oldStates)
+    private static void addIdMetaToBlockStateDynamic(int idMeta, CompoundTag newStateTag, List<Dynamic<?>> oldStates)
     {
         try
         {
             // The flattening map actually has outdated names for some blocks...
             // Ie. some blocks were renamed after the flattening, so we need to handle those here.
-            String newName = newStateTag.getString("Name", "");
+            String newName = newStateTag.getStringOr("Name", "");
             String overriddenName = ID_META_TO_UPDATED_NAME.get(idMeta);
 
             if (overriddenName != null)
@@ -285,9 +284,9 @@ public class SchematicConversionMaps
             }
 
             //RegistryEntryLookup<Block> lookup = Registries.BLOCK.getReadOnlyWrapper();
-            RegistryEntryLookup<Block> lookup = SchematicWorldHandler.INSTANCE.getRegistryManager().getOrThrow(RegistryKeys.BLOCK);
+            HolderGetter<Block> lookup = SchematicWorldHandler.INSTANCE.getRegistryManager().lookupOrThrow(Registries.BLOCK);
             // Store the id + meta => state maps before renaming the block for the state <=> state maps
-            BlockState state = NbtHelper.toBlockState(lookup, newStateTag);
+            BlockState state = net.minecraft.nbt.NbtUtils.readBlockState(lookup, newStateTag);
             //System.out.printf("id: %5d, state: %s, tag: %s\n", idMeta, state, newStateTag);
             ID_META_TO_BLOCKSTATE.putIfAbsent(idMeta, state);
 
@@ -320,14 +319,14 @@ public class SchematicConversionMaps
         }
     }
 
-    private static void addOldStateToNewState(NbtCompound newStateTagIn, String... oldStateStrings)
+    private static void addOldStateToNewState(CompoundTag newStateTagIn, String... oldStateStrings)
     {
         try
         {
             // A 1:1 mapping from the old state to the new state
             if (oldStateStrings.length == 1)
             {
-                NbtCompound oldStateTag = getStateTagFromString(oldStateStrings[0]);
+                CompoundTag oldStateTag = getStateTagFromString(oldStateStrings[0]);
 
                 if (oldStateTag != null)
                 {
@@ -340,13 +339,13 @@ public class SchematicConversionMaps
             // some of the property values were calculated in the getActualState() method.
             else if (oldStateStrings.length > 1)
             {
-                NbtCompound oldStateTag = getStateTagFromString(oldStateStrings[0]);
+                CompoundTag oldStateTag = getStateTagFromString(oldStateStrings[0]);
 
                 // Same property names and same number of properties - just remap the block name.
                 // FIXME Is this going to be correct for everything?
-                if (oldStateTag != null && newStateTagIn.getKeys().equals(oldStateTag.getKeys()))
+                if (oldStateTag != null && newStateTagIn.keySet().equals(oldStateTag.keySet()))
                 {
-                    String oldBlockName = oldStateTag.getString("Name", "");
+                    String oldBlockName = oldStateTag.getStringOr("Name", "");
                     String newBlockName = OLD_NAME_TO_NEW_NAME.get(oldBlockName);
 
                     if (newBlockName != null && newBlockName.equals(oldBlockName) == false)
@@ -357,7 +356,7 @@ public class SchematicConversionMaps
 
                             if (oldStateTag != null)
                             {
-                                NbtCompound newTag = oldStateTag.copy();
+                                CompoundTag newTag = oldStateTag.copy();
                                 newTag.putString("Name", newBlockName);
 
                                 OLD_STATE_TO_NEW_STATE.putIfAbsent(oldStateTag, newTag);
@@ -374,18 +373,18 @@ public class SchematicConversionMaps
         }
     }
 
-    private static void addOldStateToNewStateDynamic(NbtCompound newStateTagIn, List<Dynamic<?>> oldStates)
+    private static void addOldStateToNewStateDynamic(CompoundTag newStateTagIn, List<Dynamic<?>> oldStates)
     {
         try
         {
             // A 1:1 mapping from the old state to the new state
             if (oldStates.size() == 1)
             {
-                NbtCompound oldStateTag = new NbtCompound();
+                CompoundTag oldStateTag = new CompoundTag();
 
                 try
                 {
-                    oldStateTag = (NbtCompound) oldStates.getFirst().convert(NbtOps.INSTANCE).getValue();
+                    oldStateTag = (CompoundTag) oldStates.getFirst().convert(NbtOps.INSTANCE).getValue();
                 }
                 catch (Exception err)
                 {
@@ -403,11 +402,11 @@ public class SchematicConversionMaps
             // some of the property values were calculated in the getActualState() method.
             else if (oldStates.size() > 1)
             {
-                NbtCompound oldStateTag = new NbtCompound();
+                CompoundTag oldStateTag = new CompoundTag();
 
                 try
                 {
-                    oldStateTag = (NbtCompound) oldStates.getFirst().convert(NbtOps.INSTANCE).getValue();
+                    oldStateTag = (CompoundTag) oldStates.getFirst().convert(NbtOps.INSTANCE).getValue();
                 }
                 catch (Exception err)
                 {
@@ -416,9 +415,9 @@ public class SchematicConversionMaps
 
                 // Same property names and same number of properties - just remap the block name.
                 // FIXME Is this going to be correct for everything?
-                if (oldStateTag != null && newStateTagIn.getKeys().equals(oldStateTag.getKeys()))
+                if (oldStateTag != null && newStateTagIn.keySet().equals(oldStateTag.keySet()))
                 {
-                    String oldBlockName = oldStateTag.getString("Name", "");
+                    String oldBlockName = oldStateTag.getStringOr("Name", "");
                     String newBlockName = OLD_NAME_TO_NEW_NAME.get(oldBlockName);
 
                     if (newBlockName != null && !newBlockName.equals(oldBlockName))
@@ -429,7 +428,7 @@ public class SchematicConversionMaps
 
                             try
                             {
-                                oldStateTag = (NbtCompound) entry.convert(NbtOps.INSTANCE).getValue();
+                                oldStateTag = (CompoundTag) entry.convert(NbtOps.INSTANCE).getValue();
                             }
                             catch (Exception err)
                             {
@@ -438,7 +437,7 @@ public class SchematicConversionMaps
 
                             if (oldStateTag != null)
                             {
-                                NbtCompound newTag = oldStateTag.copy();
+                                CompoundTag newTag = oldStateTag.copy();
                                 newTag.putString("Name", newBlockName);
 
                                 OLD_STATE_TO_NEW_STATE.putIfAbsent(oldStateTag, newTag);
@@ -455,11 +454,11 @@ public class SchematicConversionMaps
         }
     }
 
-    public static NbtCompound getStateTagFromString(String str)
+    public static CompoundTag getStateTagFromString(String str)
     {
         try
         {
-            return StringNbtReader.readCompound(str.replace('\'', '"'));
+            return TagParser.parseCompoundFully(str.replace('\'', '"'));
         }
         catch (Exception e)
         {
@@ -469,12 +468,12 @@ public class SchematicConversionMaps
 
     public static String updateBlockName(String oldName, int oldVersion)
     {
-        NbtString tagStr = NbtString.of(oldName);
+        StringTag tagStr = StringTag.valueOf(oldName);
 
         try
         {
-            return MinecraftClient.getInstance().getDataFixer()
-                    .update(TypeReferences.BLOCK_NAME, new Dynamic<>(NbtOps.INSTANCE, tagStr), oldVersion, LitematicaSchematic.MINECRAFT_DATA_VERSION)
+            return DataFixers.getDataFixer()
+                    .update(References.BLOCK_NAME, new Dynamic<>(NbtOps.INSTANCE, tagStr), oldVersion, LitematicaSchematic.MINECRAFT_DATA_VERSION)
                     .getValue().asString()
                     .orElse(oldName);
         }
@@ -485,54 +484,63 @@ public class SchematicConversionMaps
         }
     }
 
-    /**
+	/**
      * These are the Vanilla Data Fixer's for the 1.20.x -> 1.20.5 changes
      */
-    public static NbtCompound updateBlockStates(NbtCompound oldBlockState, int oldVersion)
+    public static CompoundTag updateBlockStates(CompoundTag oldBlockState, int oldVersion)
     {
+		String oldName = oldBlockState.getStringOr("Name", "");
+		String blockName = updateBlockName(oldName, oldVersion);
+
+		if (!oldName.equalsIgnoreCase(blockName))
+		{
+			oldBlockState.putString("Name", blockName);
+//			Litematica.LOGGER.error("updateBlockName: [{}] -> [{}]", oldName, blockName);
+		}
+
         try
         {
-            return (NbtCompound) MinecraftClient.getInstance().getDataFixer().update(TypeReferences.BLOCK_STATE, new Dynamic<>(NbtOps.INSTANCE, oldBlockState), oldVersion, LitematicaSchematic.MINECRAFT_DATA_VERSION).getValue();
+            return (CompoundTag) DataFixers.getDataFixer().update(References.BLOCK_STATE, new Dynamic<>(NbtOps.INSTANCE, oldBlockState), oldVersion, LitematicaSchematic.MINECRAFT_DATA_VERSION).getValue();
         }
         catch (Exception e)
         {
             Litematica.LOGGER.warn("updateBlockStates: failed to update Block State [{}], preserving original state (data may become lost)",
-                                   oldBlockState.contains("Name") ? oldBlockState.getString("Name", "?") : "?");
+                                   oldBlockState.contains("Name") ? oldBlockState.getStringOr("Name", "?") : "?");
             return oldBlockState;
         }
     }
 
-    public static NbtCompound updateBlockEntity(NbtCompound oldBlockEntity, int oldVersion)
+    public static CompoundTag updateBlockEntity(CompoundTag oldBlockEntity, int oldVersion)
     {
         try
         {
-            return (NbtCompound) MinecraftClient.getInstance().getDataFixer().update(TypeReferences.BLOCK_ENTITY, new Dynamic<>(NbtOps.INSTANCE, oldBlockEntity), oldVersion, LitematicaSchematic.MINECRAFT_DATA_VERSION).getValue();
+            return (CompoundTag) DataFixers.getDataFixer().update(References.BLOCK_ENTITY, new Dynamic<>(NbtOps.INSTANCE, oldBlockEntity), oldVersion, LitematicaSchematic.MINECRAFT_DATA_VERSION).getValue();
         }
         catch (Exception e)
         {
             BlockPos pos = NbtUtils.readBlockPos(oldBlockEntity);
             Litematica.LOGGER.warn("updateBlockEntity: failed to update Block Entity [{}] at [{}], preserving original state (data may become lost)",
-                                   oldBlockEntity.contains("id") ? oldBlockEntity.getString("id", "?") : "?", pos != null ? pos.toShortString() : "?");
+                                   oldBlockEntity.contains("id") ? oldBlockEntity.getStringOr("id", "?") : "?", pos != null ? pos.toShortString() : "?");
             return oldBlockEntity;
         }
     }
 
-    public static NbtCompound updateEntity(NbtCompound oldEntity, int oldVersion)
+    public static CompoundTag updateEntity(CompoundTag oldEntity, int oldVersion)
     {
         try
         {
-            return (NbtCompound) MinecraftClient.getInstance().getDataFixer().update(TypeReferences.ENTITY, new Dynamic<>(NbtOps.INSTANCE, oldEntity), oldVersion, LitematicaSchematic.MINECRAFT_DATA_VERSION).getValue();
+            return (CompoundTag) DataFixers.getDataFixer().update(References.ENTITY, new Dynamic<>(NbtOps.INSTANCE, oldEntity), oldVersion, LitematicaSchematic.MINECRAFT_DATA_VERSION).getValue();
         }
         catch (Exception e)
         {
             Litematica.LOGGER.warn("updateEntity: failed to update Entity [{}], preserving original state (data may become lost)",
-                                   oldEntity.contains("id") ? oldEntity.getString("id", "?") : "?");
+                                   oldEntity.contains("id") ? oldEntity.getStringOr("id", "?") : "?");
             return oldEntity;
         }
     }
 
     // Fix missing "id" tags.  This seems to be an issue with 1.19.x litematics.
-    public static NbtCompound checkForIdTag(NbtCompound tags)
+    public static CompoundTag checkForIdTag(CompoundTag tags)
     {
         if (tags.contains("id"))
         {
@@ -541,7 +549,7 @@ public class SchematicConversionMaps
 
         if (tags.contains("Id"))
         {
-            tags.putString("id", tags.getString("Id", ""));
+            tags.putString("id", tags.getStringOr("Id", ""));
             return tags;
         }
 
@@ -647,7 +655,7 @@ public class SchematicConversionMaps
         // Fix any erroneous Items tags with the null "tag" tag.
         if (tags.contains("Items"))
         {
-            NbtList items = fixItemsTag(tags.getListOrEmpty("Items"));
+            ListTag items = fixItemsTag(tags.getListOrEmpty("Items"));
             tags.put("Items", items);
         }
 
@@ -655,17 +663,17 @@ public class SchematicConversionMaps
     }
 
     // Fix null 'tag' entries.  This seems to be an issue with 1.19.x litematics.
-    private static NbtList fixItemsTag(NbtList items)
+    private static ListTag fixItemsTag(ListTag items)
     {
-        NbtList newList = new NbtList();
+        ListTag newList = new ListTag();
 
         for (int i = 0; i < items.size(); i++)
         {
-            NbtCompound itemEntry = fixItemTypesFrom1_21_2(items.getCompoundOrEmpty(i));
+            CompoundTag itemEntry = fixItemTypesFrom1_21_2(items.getCompoundOrEmpty(i));
 
             if (itemEntry.contains("tag"))
             {
-                NbtCompound tag = null;
+                CompoundTag tag = null;
                 try
                 {
                     tag = itemEntry.getCompoundOrEmpty("tag");
@@ -682,11 +690,11 @@ public class SchematicConversionMaps
                     // Fix nested entries if they exist
                     if (tag.contains("BlockEntityTag"))
                     {
-                        NbtCompound entityEntry = tag.getCompoundOrEmpty("BlockEntityTag");
+                        CompoundTag entityEntry = tag.getCompoundOrEmpty("BlockEntityTag");
 
                         if (entityEntry.contains("Items"))
                         {
-                            NbtList nestedItems = fixItemsTag(entityEntry.getListOrEmpty("Items"));
+                            ListTag nestedItems = fixItemsTag(entityEntry.getListOrEmpty("Items"));
                             entityEntry.put("Items", nestedItems);
                         }
 
@@ -703,20 +711,20 @@ public class SchematicConversionMaps
         return newList;
     }
 
-    private static NbtCompound fixItemTypesFrom1_21_2(NbtCompound nbt)
+    private static CompoundTag fixItemTypesFrom1_21_2(CompoundTag nbt)
     {
         if (!nbt.contains("id"))
         {
             return nbt;
         }
 
-        String id = nbt.getString("id", "");
+        String id = nbt.getStringOr("id", "");
         Identifier newId = null;
 
         switch (id)
         {
-            case "minecraft:pale_oak_boat" -> newId = Identifier.ofVanilla("oak_boat");
-            case "minecraft:pale_oak_chest_boat" -> newId = Identifier.ofVanilla("oak_chest_boat");
+            case "minecraft:pale_oak_boat" -> newId = Identifier.withDefaultNamespace("oak_boat");
+            case "minecraft:pale_oak_chest_boat" -> newId = Identifier.withDefaultNamespace("oak_chest_boat");
         }
 
         if (newId != null)
@@ -727,7 +735,7 @@ public class SchematicConversionMaps
         return nbt;
     }
 
-    public static NbtCompound fixEntityTypesFrom1_21_2(NbtCompound nbt)
+    public static CompoundTag fixEntityTypesFrom1_21_2(CompoundTag nbt)
     {
         if (!nbt.contains("id"))
         {
@@ -737,11 +745,11 @@ public class SchematicConversionMaps
         // Fix any erroneous Items tags with the null "tag" tag.
         if (nbt.contains("Items"))
         {
-            NbtList items = fixItemsTag(nbt.getListOrEmpty("Items"));
+            ListTag items = fixItemsTag(nbt.getListOrEmpty("Items"));
             nbt.put("Items", items);
         }
 
-        String id = nbt.getString("id", "");
+        String id = nbt.getStringOr("id", "");
         Identifier newId = null;
         String type = "";
         boolean boatFix = false;
@@ -750,109 +758,109 @@ public class SchematicConversionMaps
         {
             case "minecraft:oak_boat", "minecraft:pale_oak_boat" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "oak";
                 boatFix = true;
             }
             case "minecraft:spruce_boat" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "spruce";
                 boatFix = true;
             }
             case "minecraft:birch_boat" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "birch";
                 boatFix = true;
             }
             case "minecraft:jungle_boat" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "jungle";
                 boatFix = true;
             }
             case "minecraft:acacia_boat" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "acacia";
                 boatFix = true;
             }
             case "minecraft:cherry_boat" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "cherry";
                 boatFix = true;
             }
             case "minecraft:dark_oak_boat" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "dark_oak";
                 boatFix = true;
             }
             case "minecraft:mangrove_boat" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "mangrove";
                 boatFix = true;
             }
             case "minecraft:bamboo_raft" ->
             {
-                newId = Identifier.ofVanilla("boat");
+                newId = Identifier.withDefaultNamespace("boat");
                 type = "bamboo";
                 boatFix = true;
             }
             case "minecraft:oak_chest_boat", "minecraft:pale_oak_chest_boat" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "oak";
                 boatFix = true;
             }
             case "minecraft:spruce_chest_boat" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "spruce";
                 boatFix = true;
             }
             case "minecraft:birch_chest_boat" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "birch";
                 boatFix = true;
             }
             case "minecraft:jungle_chest_boat" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "jungle";
                 boatFix = true;
             }
             case "minecraft:acacia_chest_boat" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "acacia";
                 boatFix = true;
             }
             case "minecraft:cherry_chest_boat" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "cherry";
                 boatFix = true;
             }
             case "minecraft:dark_oak_chest_boat" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "dark_oak";
                 boatFix = true;
             }
             case "minecraft:mangrove_chest_boat" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "mangrove";
                 boatFix = true;
             }
             case "minecraft:bamboo_chest_raft" ->
             {
-                newId = Identifier.ofVanilla("chest_boat");
+                newId = Identifier.withDefaultNamespace("chest_boat");
                 type = "bamboo";
                 boatFix = true;
             }
@@ -860,13 +868,13 @@ public class SchematicConversionMaps
             {
                 if (id.contains("_chest_boat"))
                 {
-                    newId = Identifier.ofVanilla("chest_boat");
+                    newId = Identifier.withDefaultNamespace("chest_boat");
                     type = "oak";
                     boatFix = true;
                 }
                 else if (id.contains("_boat"))
                 {
-                    newId = Identifier.ofVanilla("boat");
+                    newId = Identifier.withDefaultNamespace("boat");
                     type = "oak";
                     boatFix = true;
                 }

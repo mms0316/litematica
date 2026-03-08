@@ -1,13 +1,12 @@
 package fi.dy.masa.litematica.util;
 
+import javax.annotation.Nonnull;
+import net.minecraft.util.StringRepresentable;
 import com.google.common.collect.ImmutableList;
-
-import net.minecraft.util.StringIdentifiable;
-
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
-public enum PlacementDeletionMode implements IConfigOptionListEntry, StringIdentifiable
+public enum PlacementDeletionMode implements IConfigOptionListEntry, StringRepresentable
 {
     MATCHING_BLOCK          ("matching_block",      "litematica.gui.label.placement_deletion_mode.matching_block"),
     NON_MATCHING_BLOCK      ("non_matching_block",  "litematica.gui.label.placement_deletion_mode.non_matching_block"),
@@ -15,7 +14,7 @@ public enum PlacementDeletionMode implements IConfigOptionListEntry, StringIdent
     NO_SCHEMATIC_BLOCK      ("no_schematic_block",  "litematica.gui.label.placement_deletion_mode.no_schematic_block"),
     ENTIRE_VOLUME           ("entire_volume",       "litematica.gui.label.placement_deletion_mode.entire_volume");
 
-    public static final StringIdentifiable.EnumCodec<PlacementDeletionMode> CODEC = StringIdentifiable.createCodec(PlacementDeletionMode::values);
+    public static final StringRepresentable.EnumCodec<PlacementDeletionMode> CODEC = StringRepresentable.fromEnum(PlacementDeletionMode::values);
     public static final ImmutableList<PlacementDeletionMode> VALUES = ImmutableList.copyOf(values());
     private final String configString;
     private final String translationKey;
@@ -27,7 +26,7 @@ public enum PlacementDeletionMode implements IConfigOptionListEntry, StringIdent
     }
 
     @Override
-    public String asString()
+    public @Nonnull String getSerializedName()
     {
         return this.configString;
     }

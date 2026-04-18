@@ -30,6 +30,7 @@
     ],
     "client": [
         "MixinInGameHud",
+        "network.MixinClientPlayerInteractionManager",
 
         "client.MixinMinecraftClient",
         "block.MixinBlockStateManagers",

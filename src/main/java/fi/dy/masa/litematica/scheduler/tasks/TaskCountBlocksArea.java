@@ -1,9 +1,11 @@
 package fi.dy.masa.litematica.scheduler.tasks;
 
-import fi.dy.masa.litematica.materials.IMaterialList;
-import fi.dy.masa.litematica.selection.AreaSelection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+
+import fi.dy.masa.litematica.materials.IMaterialList;
+import fi.dy.masa.litematica.selection.AreaSelection;
+
 //Custom Additions (easier to resolve future merge conflicts)
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;

@@ -40,6 +40,8 @@ import fi.dy.masa.litematica.schematic.LitematicaSchematic.EntityInfo;
 import fi.dy.masa.litematica.schematic.container.LitematicaBlockStateContainer;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
+import fi.dy.masa.litematica.world.ChunkSchematic;
+import fi.dy.masa.litematica.world.ChunkSchematicState;
 import fi.dy.masa.litematica.world.WorldSchematic;
 
 public class SchematicPlacingUtils
@@ -311,6 +313,14 @@ public class SchematicPlacingUtils
                         }
                     }
                 }
+            }
+        }
+
+        if (world instanceof WorldSchematic ws)
+        {
+            if (!ws.getChunk(chunkPos.x, chunkPos.z).getState().atLeast(ChunkSchematicState.FILLED))
+            {
+                ws.getChunkSource().setChunkState(chunkPos.x, chunkPos.z, ChunkSchematicState.FILLED);
             }
         }
 

@@ -10,6 +10,7 @@ import fi.dy.masa.litematica.selection.SelectionManager;
 import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.util.PositionUtils.Corner;
 import fi.dy.masa.malilib.gui.GuiTextFieldGeneric;
+import fi.dy.masa.malilib.gui.wrappers.TextFieldType;
 import fi.dy.masa.malilib.util.StringUtils;
 
 public class GuiAreaSelectionEditorSimple extends GuiAreaSelectionEditorNormal
@@ -43,8 +44,8 @@ public class GuiAreaSelectionEditorSimple extends GuiAreaSelectionEditorNormal
 
         int width = 202;
         this.textFieldBoxName = new GuiTextFieldGeneric(x, y + 2, width, 16, this.font);
-        this.textFieldBoxName.setTextWrapper(this.getBox().getName());
-        this.addTextField(this.textFieldBoxName, new TextFieldListenerDummy());
+        this.textFieldBoxName.setValueWrapper(this.getBox().getName());
+        this.addTextField(this.textFieldBoxName, new TextFieldListenerDummy(), TextFieldType.STRING);
         this.createButton(x + width + 4, y, -1, ButtonListener.Type.SET_BOX_NAME);
         y += 20;
 
@@ -82,7 +83,7 @@ public class GuiAreaSelectionEditorSimple extends GuiAreaSelectionEditorNormal
     protected void renameSubRegion()
     {
         String oldName = this.selection.getCurrentSubRegionBoxName();
-        String newName = this.textFieldBoxName.getTextWrapper();
+        String newName = this.textFieldBoxName.getValueWrapper();
         this.selection.renameSubRegionBox(oldName, newName);
     }
 

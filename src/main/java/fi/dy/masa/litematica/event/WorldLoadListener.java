@@ -8,11 +8,14 @@ import net.minecraft.util.datafix.fixes.BlockStateData;
 import fi.dy.masa.malilib.interfaces.IWorldLoadListener;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.compat.jade.JadeCompat;
+import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.CachedTagManager;
 import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.data.EntitiesDataStorage;
+import fi.dy.masa.litematica.data.EntityDataManager;
 import fi.dy.masa.litematica.render.LitematicaDebugHud;
+import fi.dy.masa.litematica.render.LitematicaRenderer;
 import fi.dy.masa.litematica.schematic.conversion.SchematicConversionMaps;
+import fi.dy.masa.litematica.schematic.placement.TemporaryWorldManager;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 
 public class WorldLoadListener implements IWorldLoadListener
@@ -35,7 +38,7 @@ public class WorldLoadListener implements IWorldLoadListener
         if (worldAfter != null)
         {
             JadeCompat.checkForJade();
-            EntitiesDataStorage.getInstance().onWorldPre();
+            EntityDataManager.getInstance().onWorldPre();
             DataManager.getInstance().onWorldPre(worldAfter.registryAccess());
         }
     }
@@ -45,19 +48,24 @@ public class WorldLoadListener implements IWorldLoadListener
     {
         SchematicWorldHandler.INSTANCE.recreateSchematicWorld(worldAfter == null);
         DataManager.getInstance().reset(worldAfter == null);
-        EntitiesDataStorage.getInstance().reset(worldAfter == null);
+        EntityDataManager.getInstance().reset(worldAfter == null);
+        TemporaryWorldManager.INSTANCE.reset();
 
         if (worldAfter != null)
         {
-            DataManager.load();
             Litematica.debugLog("onWorldLoadPost(): Init BlockStateFlattening DataFixer [Test: {}]", BlockStateData.upgradeBlock("minecraft:air"));
             SchematicConversionMaps.computeMaps();
-            EntitiesDataStorage.getInstance().onWorldJoin();
+            Configs.checkBaseLanguage();
+            DataManager.load();
+            EntityDataManager.getInstance().onWorldJoin();
             CachedTagManager.startCache();
 	        LitematicaDebugHud.INSTANCE.checkConfig();
+            DataManager.getSchematicPlacementManager().onWorldJoin();
+            LitematicaRenderer.getInstance().updateConfigState();
         }
         else
         {
+            TemporaryWorldManager.INSTANCE.clear();
             DataManager.clear();
         }
     }

@@ -7,10 +7,7 @@ import org.jspecify.annotations.NonNull;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.ColorResolver;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -115,6 +112,14 @@ public class ChunkCacheSchematic implements BlockAndTintGetter, LightChunkGetter
         int j = (pos.getZ() >> 4) - this.chunkStartZ;
 
         return this.chunkArray[i][j].getBlockEntity(pos, type);
+    }
+
+    public void addBlockEntity(BlockPos pos, final BlockEntity te)
+    {
+        int i = (pos.getX() >> 4) - this.chunkStartX;
+        int j = (pos.getZ() >> 4) - this.chunkStartZ;
+
+        this.chunkArray[i][j].addAndRegisterBlockEntity(te);
     }
 
     @Override

@@ -315,8 +315,10 @@ public class WidgetMaterialListEntry extends WidgetListEntrySortable<MaterialLis
         return AddonUtils.getFormattedCountString(total, maxStackSize, true);
     }
 
-	record ButtonListener(ButtonType type, MaterialListBase materialList, MaterialListEntry entry,
-						  WidgetListMaterialList listWidget) implements IButtonActionListener
+	record ButtonListener(ButtonType type,
+                          MaterialListBase materialList, MaterialListEntry entry,
+						  WidgetListMaterialList listWidget)
+            implements IButtonActionListener
 	{
 		@Override
 		public void actionPerformedWithButton(ButtonBase button, int mouseButton)

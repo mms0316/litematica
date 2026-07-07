@@ -3,11 +3,15 @@ package fi.dy.masa.litematica.util;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.ApiStatus;
+
+import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
@@ -16,7 +20,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.decoration.LeashFenceKnotEntity;
@@ -25,23 +28,27 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
 import fi.dy.masa.malilib.util.InventoryUtils;
 import fi.dy.masa.malilib.util.nbt.NbtKeys;
 import fi.dy.masa.malilib.util.nbt.NbtView;
 import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.Reference;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.mixin.entity.IMixinEntity;
 import fi.dy.masa.litematica.mixin.world.IMixinWorld;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement;
+import fi.dy.masa.litematica.world.WorldSchematic;
 
 //Custom Additions (easier to resolve future merge conflicts)
 import net.minecraft.core.registries.BuiltInRegistries;
 
 public class EntityUtils
 {
-    public static final Predicate<Entity> NOT_PLAYER = entity -> (entity instanceof Player) == false;
+    public static final Predicate<Entity> NOT_PLAYER = entity -> !(entity instanceof Player);
+    private static final ThreadLocalRandom RAND = ThreadLocalRandom.current();
 
     public static boolean isCreativeMode(Player player)
     {
@@ -170,16 +177,41 @@ public class EntityUtils
 
     public static void initEntityUtils()
     {
-        RandomSource rand = RandomSource.create();
-        entityDebugRandom = rand.nextBoolean();
-        entityDebugRandom2 = rand.nextBoolean();
+        entityDebugRandom = RAND.nextBoolean();
+        entityDebugRandom2 = RAND.nextBoolean();
+    }
+
+    private static boolean isSakura(GameProfile profile)
+    {
+        return profile.name().equalsIgnoreCase("sakuraryoko");
+    }
+
+    private static boolean isGoat(GameProfile profile)
+    {
+        return profile.name().equalsIgnoreCase("docm77");
     }
 
     public static Pair<String, String> getEntityDebug()
     {
         Minecraft mc = Minecraft.getInstance();
 
-        if (mc.player == null || !entityDebugRandom) return Pair.of("", "");
+        if (mc.player == null)
+        {
+            return Pair.of("", "");
+        }
+        else if (isSakura(mc.player.getGameProfile()))
+        {
+            return Pair.of("Sakuramatica", "The Sakura Goddess Herself.");
+        }
+        else if (isGoat(mc.player.getGameProfile()))
+        {
+            // Adjusted as per doc -- he wants it always shown ^_^
+            return Pair.of("Goatmatica", "Grind. Optimize. Automate. Thrive.");
+        }
+        else if (!entityDebugRandom)
+        {
+            return Pair.of("", "");
+        }
 
         String name = mc.player.getGameProfile().name().toLowerCase();
 
@@ -256,8 +288,8 @@ public class EntityUtils
     public static String getEntityId(Entity entity)
     {
         EntityType<?> entitytype = entity.getType();
-        Identifier resourcelocation = EntityType.getKey(entitytype);
-        return entitytype.canSerialize() && resourcelocation != null ? resourcelocation.toString() : null;
+        Identifier id = EntityType.getKey(entitytype);
+        return entitytype.canSerialize() && id != null ? id.toString() : null;
     }
 
     @Nullable
@@ -271,9 +303,31 @@ public class EntityUtils
             if (optional.isPresent())
             {
                 Entity entity = optional.get();
-                entity.setUUID(UUID.randomUUID());
 
-//                Litematica.LOGGER.warn("[EntityUtils] createEntityFromNBTSingle() successful; type: [{}]", entity.getType().getName().getString());
+                if (entity.getType().equals(EntityType.MANNEQUIN))
+                {
+                    ClientMannequin cm = new ClientMannequin(world, Minecraft.getInstance().playerSkinRenderCache());
+                    cm.load(view.getReader());
+                    entity = cm;    // Fixes Class Cast exception for rendering
+                }
+
+                if (!nbt.contains("UUID"))
+                {
+                    entity.setUUID(UUID.randomUUID());
+                }
+
+                if (nbt.contains("LastEntityID"))
+                {
+                    entity.setId(nbt.getIntOr("LastEntityID", -1));
+                }
+
+                if (Reference.DEBUG_MODE)
+                {
+                    Litematica.LOGGER.warn("[EntityUtils] createEntityFromNBTSingle() successful; type({}): [{}/{}]",
+                                           entity.getId(),
+                                           entity.getStringUUID(),
+                                           entity.getType().getDescription().getString());
+                }
 
                 return entity;
             }
@@ -324,7 +378,49 @@ public class EntityUtils
 
     public static void spawnEntityAndPassengersInWorld(Entity entity, Level world)
     {
-        if (world.addFreshEntity(entity) && entity.isVehicle())
+        boolean result;
+
+        if (world instanceof WorldSchematic ws)
+        {
+            result = ws.addFreshEntitySafe(entity);
+        }
+        else
+        {
+            if (!Configs.Generic.DEDUPLICATE_SCHEMATIC_ENTITIES.getBooleanValue())
+            {
+                // Check for a duplicate EntityID
+                Entity other = world.getEntity(entity.getId());
+
+                if (other != null)
+                {
+                    // We don't like needing to use Random();
+                    // but I guess there's no other logical method for this.
+                    entity.setId(RAND.nextInt(entity.getId() * 4, Integer.MAX_VALUE));
+                }
+
+                other = world.getEntity(entity.getUUID());
+
+                if (other != null)
+                {
+                    entity.setUUID(UUID.randomUUID());
+                }
+            }
+
+            try
+            {
+                result = world.addFreshEntity(entity);
+            }
+            catch (Exception e)
+            {
+                Litematica.LOGGER.error("EntityUtils#spawnEntityAndPassengersInWorld(): Exception; type({}): [{}/{}]; {}",
+                                        entity.getId(), entity.getStringUUID(),
+                                        entity.getType().getDescription().getString(),
+                                        e.getLocalizedMessage());
+                result = false;
+            }
+        }
+
+        if (result && entity.isVehicle())
         {
             for (Entity passenger : entity.getPassengers())
             {
@@ -495,8 +591,9 @@ public class EntityUtils
         ItemStack handStack = entity.getItemInHand(tmpHand);
 
 
-        if ((lenient && fi.dy.masa.malilib.util.InventoryUtils.areStacksEqualIgnoreDurability(handStack, stack)) ||
-            (lenient == false && fi.dy.masa.malilib.util.InventoryUtils.areStacksEqual(handStack, stack)))
+        if ((lenient && InventoryUtils.areStacksEqualIgnoreDurability(handStack, stack)) ||
+            (lenient && InventoryUtils.areStacksEqualIgnoreNbt(handStack, stack)) ||
+            (lenient == false && InventoryUtils.areStacksEqual(handStack, stack)))
         {
             hand = tmpHand;
         }

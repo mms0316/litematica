@@ -99,27 +99,25 @@ public class GuiSchematicSave extends GuiSchematicSaveBase implements ICompletio
         }
     }
 
-    private static class ButtonListener implements IButtonActionListener
+    private record ButtonListener(ButtonType type, SelectionManager selectionManager, GuiSchematicSave gui)
+            implements IButtonActionListener
     {
-        private final GuiSchematicSave gui;
-        private final SelectionManager selectionManager;
-        private final ButtonType type;
-
-        public ButtonListener(ButtonType type, SelectionManager selectionManager, GuiSchematicSave gui)
-        {
-            this.type = type;
-            this.selectionManager = selectionManager;
-            this.gui = gui;
-        }
-
         @Override
         public void actionPerformedWithButton(ButtonBase button, int mouseButton)
         {
-            if (this.gui.getListWidget() == null) return;
+            if (this.gui.getListWidget() == null)
+            {
+                return;
+            }
             if (this.type == ButtonType.SAVE)
             {
                 Path dir = this.gui.getListWidget().getCurrentDirectory();
-                String fileName = this.gui.getTextFieldText();
+                String fileName = FileNameUtils.generateSimpleUnicodeSafeFileName(this.gui.getTextFieldText());
+
+                if (FileNameUtils.doesFileNameContainIllegalCharacters(fileName))
+                {
+                    fileName = FileNameUtils.generateSafeFileName(fileName);
+                }
 
                 if (!Files.isDirectory(dir))
                 {

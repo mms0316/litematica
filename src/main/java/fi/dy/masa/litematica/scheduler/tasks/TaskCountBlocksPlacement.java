@@ -1,22 +1,25 @@
 package fi.dy.masa.litematica.scheduler.tasks;
 
 import java.util.Collection;
-//Custom Additions (easier to resolve future merge conflicts)
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Stream;
 
-import fi.dy.masa.litematica.config.Configs;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.materials.IMaterialList;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement.RequiredEnabled;
 import fi.dy.masa.litematica.selection.Box;
 import fi.dy.masa.litematica.util.BlockInfoListType;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Stream;
+import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.malilib.util.InventoryUtils;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
@@ -28,7 +31,6 @@ import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 public class TaskCountBlocksPlacement extends TaskCountBlocksBase

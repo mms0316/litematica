@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import javax.annotation.Nullable;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
@@ -13,7 +14,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
+
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.data.Schema;
@@ -37,10 +39,10 @@ import fi.dy.masa.litematica.schematic.container.LitematicaBlockStateContainer;
 import fi.dy.masa.litematica.schematic.conversion.SchematicConversionFixers.IStateFixer;
 import fi.dy.masa.litematica.schematic.conversion.SchematicConversionMaps;
 import fi.dy.masa.litematica.schematic.conversion.SchematicConverter;
-import fi.dy.masa.litematica.util.DataFixerMode;
-import fi.dy.masa.litematica.util.EntityUtils;
-import fi.dy.masa.litematica.util.FileType;
-import fi.dy.masa.litematica.util.PositionUtils;
+import fi.dy.masa.litematica.util.*;
+import fi.dy.masa.litematica.world.ChunkSchematic;
+import fi.dy.masa.litematica.world.ChunkSchematicState;
+import fi.dy.masa.litematica.world.WorldSchematic;
 
 public class SchematicaSchematic
 {
@@ -201,7 +203,7 @@ public class SchematicaSchematic
         }
     }
 
-    public void placeSchematicDirectlyToChunks(Level world, BlockPos posStart, StructurePlaceSettings placement)
+    public void placeSchematicDirectlyToChunks(WorldSchematic world, BlockPos posStart, StructurePlaceSettings placement)
     {
         final int width = this.size.getX();
         final int height = this.size.getY();
@@ -229,7 +231,7 @@ public class SchematicaSchematic
                     final int zMinChunk = Math.max(cz << 4, posMin.getZ());
                     final int xMaxChunk = Math.min((cx << 4) + 15, posMax.getX());
                     final int zMaxChunk = Math.min((cz << 4) + 15, posMax.getZ());
-                    LevelChunk chunk = world.getChunk(cx, cz);
+                    ChunkSchematic chunk = world.getChunk(cx, cz);
 
                     if (chunk == null)
                     {
@@ -273,6 +275,7 @@ public class SchematicaSchematic
                                 }
 
                                 chunk.setBlockState(pos, state, 3);
+//                                world.setBlock(pos, state, 0x12);
 
                                 if (teNBT != null)
                                 {
@@ -297,6 +300,11 @@ public class SchematicaSchematic
                                 }
                             }
                         }
+                    }
+
+                    if (!chunk.getState().atLeast(ChunkSchematicState.FILLED))
+                    {
+                        chunk.setState(ChunkSchematicState.FILLED);
                     }
                 }
             }
@@ -409,10 +417,11 @@ public class SchematicaSchematic
     private void readEntitiesFromWorld(Level world, BlockPos posStart, BlockPos size)
     {
         this.entities.clear();
-        List<Entity> entities = world.getEntities((Entity) null, PositionUtils.createEnclosingAABB(posStart, posStart.offset(size)), (e) -> (e instanceof Player) == false);
+        List<Entity> entities = world.getEntities((Entity) null, PositionUtils.createEnclosingAABB(posStart, posStart.offset(size)), EntityUtils.NOT_PLAYER);
 
         for (Entity entity : entities)
         {
+            if (entity instanceof EnderDragonPart) { continue; }
             NbtView view = NbtView.getWriter(world.registryAccess());
             entity.saveWithoutId(view.getWriter());
             CompoundTag nbt = view.readNbt();
@@ -850,7 +859,8 @@ public class SchematicaSchematic
 
             try
             {
-                CompoundTag nbt = NbtUtils.readNbtFromFileAsPath(file);
+//                CompoundTag nbt = NbtUtils.readNbtFromFileAsPath(file);
+                CompoundTag nbt = NbtUtils.readNbtFromFile(file);
                 return this.readFromNBT(nbt);
             }
             catch (Exception e)

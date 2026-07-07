@@ -14,6 +14,7 @@ import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.gui.interfaces.ISelectionListener;
 import fi.dy.masa.malilib.gui.interfaces.ITextFieldListener;
 import fi.dy.masa.malilib.gui.widgets.WidgetCheckBox;
+import fi.dy.masa.malilib.gui.wrappers.TextFieldType;
 import fi.dy.masa.malilib.interfaces.IStringConsumerFeedback;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.position.PositionUtils.CoordinateType;
@@ -104,8 +105,8 @@ public class GuiAreaSelectionEditorNormal extends GuiListBase<String, WidgetSele
 
         int width = 202;
         this.textFieldSelectionName = new GuiTextFieldGeneric(x, y + 2, width, 16, this.font);
-        this.textFieldSelectionName.setTextWrapper(this.selection.getName());
-        this.addTextField(this.textFieldSelectionName, new TextFieldListenerDummy());
+        this.textFieldSelectionName.setValueWrapper(this.selection.getName());
+        this.addTextField(this.textFieldSelectionName, new TextFieldListenerDummy(), TextFieldType.STRING);
         x += width + 4;
         x += this.createButton(x, y, -1, ButtonListener.Type.SET_SELECTION_NAME) + 10;
         y += 20;
@@ -273,7 +274,7 @@ public class GuiAreaSelectionEditorNormal extends GuiListBase<String, WidgetSele
 
         GuiTextFieldInteger textField = new GuiTextFieldInteger(x + offset, y, width, 16, this.font);
         TextFieldListener listener = new TextFieldListener(coordType, corner, this);
-        textField.setTextWrapper(text);
+        textField.setValueWrapper(text);
         this.addTextField(textField, listener);
 
         this.createCoordinateButton(x + offset + width + 4, y, corner, coordType, type);
@@ -394,7 +395,7 @@ public class GuiAreaSelectionEditorNormal extends GuiListBase<String, WidgetSele
 
     protected void renameSelection()
     {
-        String newName = this.textFieldSelectionName.getTextWrapper();
+        String newName = this.textFieldSelectionName.getValueWrapper();
 
         if (DataManager.getSchematicProjectsManager().hasProjectOpen())
         {
@@ -600,7 +601,7 @@ public class GuiAreaSelectionEditorNormal extends GuiListBase<String, WidgetSele
         @Override
         public boolean onTextChange(GuiTextFieldGeneric textField)
         {
-            this.parent.updatePosition(textField.getTextWrapper(), this.corner, this.type);
+            this.parent.updatePosition(textField.getValueWrapper(), this.corner, this.type);
             return false;
         }
     }

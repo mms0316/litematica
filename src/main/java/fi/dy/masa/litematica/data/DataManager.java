@@ -7,15 +7,17 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+
 import fi.dy.masa.malilib.gui.interfaces.IDirectoryCache;
 import fi.dy.masa.malilib.util.*;
 import fi.dy.masa.litematica.Litematica;
@@ -415,7 +417,7 @@ public class DataManager implements IDirectoryCache
         this.schematicProjectsManager.saveCurrentProject();
         JsonObject root = this.toJson();
 
-        root.add("block_entities", EntitiesDataStorage.getInstance().toJson());
+        root.add("block_entities", EntityDataManager.getInstance().toJson());
 
         Path file = getCurrentStorageFile(false);
         JsonUtils.writeJsonToFileAsPath(root, file);
@@ -440,7 +442,7 @@ public class DataManager implements IDirectoryCache
 
             if (JsonUtils.hasObject(root, "block_entities"))
             {
-                EntitiesDataStorage.getInstance().fromJson(JsonUtils.getNestedObject(root, "block_entities", false));
+                EntityDataManager.getInstance().fromJson(JsonUtils.getNestedObject(root, "block_entities", false));
             }
         }
     }

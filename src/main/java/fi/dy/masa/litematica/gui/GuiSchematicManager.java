@@ -3,6 +3,7 @@ package fi.dy.masa.litematica.gui;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -82,16 +83,11 @@ public class GuiSchematicManager extends GuiSchematicBrowserBase implements ISel
 
             if (type == FileType.LITEMATICA_SCHEMATIC)
             {
-//                x = this.createButton(x, y, ButtonListener.Type.RENAME_SCHEMATIC);
-//                x = this.createButton(x, y, ButtonListener.Type.SET_PREVIEW);
 	            x = this.createButton(x, y, ButtonListener.Type.EDIT_SCHEMATIC);
 	            x = this.createButton(x, y, ButtonListener.Type.EDIT_TYPE);
 	            x = this.createButton(x, y, ButtonListener.Type.IMPORT_SCHEMATIC);
                 x = this.createButton(x, y, ButtonListener.Type.EXPORT_SCHEMATIC);
                 x = this.createButton(x, y, ButtonListener.Type.EXPORT_TYPE);
-//				x = this.createButton(x, y, ButtonListener.Type.RENAME_FILE);
-//				x = this.createButton(x, y, ButtonListener.Type.COPY);
-//				x = this.createButton(x, y, ButtonListener.Type.DELETE);
 	            x = this.createButton(x, y, ButtonListener.Type.FILE_OPS);
 	            x = this.createButton(x, y, ButtonListener.Type.FILE_OPS_TYPE);
 
@@ -99,9 +95,6 @@ public class GuiSchematicManager extends GuiSchematicBrowserBase implements ISel
             else if (type == FileType.SPONGE_SCHEMATIC || type == FileType.SCHEMATICA_SCHEMATIC || type == FileType.VANILLA_STRUCTURE)
             {
                 x = this.createButton(x, y, ButtonListener.Type.IMPORT_SCHEMATIC);
-//				x = this.createButton(x, y, ButtonListener.Type.RENAME_FILE);
-//				x = this.createButton(x, y, ButtonListener.Type.COPY);
-//				x = this.createButton(x, y, ButtonListener.Type.DELETE);
 	            x = this.createButton(x, y, ButtonListener.Type.FILE_OPS);
 	            x = this.createButton(x, y, ButtonListener.Type.FILE_OPS_TYPE);
 
@@ -426,18 +419,13 @@ public class GuiSchematicManager extends GuiSchematicBrowserBase implements ISel
 
 		public enum Type
 		{
-			EDIT_SCHEMATIC("litematica.gui.button.schematic_manager.edit_schematic", "litematica.gui.button.schematic_manager.edit_schematic.hover"),
-			EDIT_TYPE(""),
-//			RENAME_SCHEMATIC("litematica.gui.button.rename_schematic"),
-//			SET_PREVIEW("litematica.gui.button.set_preview", "litematica.info.schematic_manager.preview.right_click_to_cancel"),
-			IMPORT_SCHEMATIC("litematica.gui.button.import", "litematica.gui.button.import.hover"),
-			EXPORT_SCHEMATIC("litematica.gui.button.schematic_manager.export_as", "litematica.gui.button.schematic_manager.export_as.hover"),
-			EXPORT_TYPE(""),
-			FILE_OPS("litematica.gui.button.schematic_manager.file_ops", "litematica.gui.button.schematic_manager.file_ops.hover"),
-			FILE_OPS_TYPE(""),
-//			RENAME_FILE("litematica.gui.button.rename_file"),
-//			COPY("litematica.gui.button.copy"),
-//			DELETE("litematica.gui.button.delete"),
+			EDIT_SCHEMATIC      ("litematica.gui.button.schematic_manager.edit_schematic", "litematica.gui.button.schematic_manager.edit_schematic.hover"),
+			EDIT_TYPE           (""),
+			IMPORT_SCHEMATIC    ("litematica.gui.button.import", "litematica.gui.button.import.hover"),
+			EXPORT_SCHEMATIC    ("litematica.gui.button.schematic_manager.export_as", "litematica.gui.button.schematic_manager.export_as.hover"),
+			EXPORT_TYPE         (""),
+			FILE_OPS            ("litematica.gui.button.schematic_manager.file_ops", "litematica.gui.button.schematic_manager.file_ops.hover"),
+			FILE_OPS_TYPE       (""),
 			;
 
 			private final String label;
@@ -602,9 +590,10 @@ public class GuiSchematicManager extends GuiSchematicBrowserBase implements ISel
         }
 
 	    @Nullable
-	    public String getHoverText()
+	    @Override
+	    public List<String> getHoverText()
 	    {
-		    return this.hoverText != null ? StringUtils.translate(this.hoverText) : null;
+		    return this.hoverText != null ? List.of(StringUtils.translate(this.hoverText)) : null;
 	    }
 
         @Override
@@ -684,9 +673,10 @@ public class GuiSchematicManager extends GuiSchematicBrowserBase implements ISel
 		}
 
 		@Nullable
-		public String getHoverText()
+		@Override
+		public List<String> getHoverText()
 		{
-			return this.hoverText != null ? StringUtils.translate(this.hoverText) : null;
+			return this.hoverText != null ? List.of(StringUtils.translate(this.hoverText)) : null;
 		}
 
 		@Override
@@ -766,9 +756,10 @@ public class GuiSchematicManager extends GuiSchematicBrowserBase implements ISel
 		}
 
 		@Nullable
-		public String getHoverText()
+		@Override
+		public List<String> getHoverText()
 		{
-			return this.hoverText != null ? StringUtils.translate(this.hoverText) : null;
+			return this.hoverText != null ? List.of(StringUtils.translate(this.hoverText)) : null;
 		}
 
 		@Override

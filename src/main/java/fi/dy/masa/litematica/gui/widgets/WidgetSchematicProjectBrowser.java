@@ -71,12 +71,15 @@ public class WidgetSchematicProjectBrowser extends WidgetFileBrowserBase impleme
     @Override
     protected void drawAdditionalContents(GuiContext ctx, int mouseX, int mouseY)
     {
+        this.drawSelectedProjectInfo(ctx, this.selectedProject);
+    }
+
+    protected void drawSelectedProjectInfo(GuiContext ctx, @Nullable SchematicProject project)
+    {
         int x = this.posX + this.totalWidth - this.infoWidth + 4;
         int y = this.posY + 4;
         int infoHeight = 100;
         RenderUtils.drawOutlinedBox(ctx,x - 4, y - 4, this.infoWidth, infoHeight, 0xA0000000, COLOR_HORIZONTAL_BAR);
-
-        SchematicProject project = this.selectedProject;
 
         if (project != null)
         {
@@ -90,7 +93,7 @@ public class WidgetSchematicProjectBrowser extends WidgetFileBrowserBase impleme
             y += 12;
             this.drawString(ctx, w + project.getName() + r, x + 8, y, color);
             y += 12;
-            int versionId = project .getCurrentVersionId();
+            int versionId = project.getCurrentVersionId();
             String strVer = w + (versionId >= 0 ? String.valueOf(versionId + 1) : "N/A") + r;
             str = StringUtils.translate("litematica.gui.label.schematic_projects.version", strVer, w + project.getVersionCount() + r);
             this.drawString(ctx, str, x, y, color);

@@ -13,7 +13,7 @@ import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
  * They keep moving where the effective CustomPayload handling is... keeping them both
  */
 @Mixin(ClientCommonPacketListenerImpl.class)
-public class MixinClientCommonNetworkHandler
+public class MixinClientCommonPacketListenerImpl
 {
     @Inject(method = "handleCustomPayload(Lnet/minecraft/network/protocol/common/ClientboundCustomPayloadPacket;)V", at = @At("HEAD"))
     private void litematica_onCustomPayload(ClientboundCustomPayloadPacket packet, CallbackInfo ci)

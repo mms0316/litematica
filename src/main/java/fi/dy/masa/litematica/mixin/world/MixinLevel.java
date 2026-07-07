@@ -6,7 +6,7 @@ import fi.dy.masa.litematica.util.IWorldUpdateSuppressor;
 import net.minecraft.world.level.Level;
 
 @Mixin(Level.class)
-public class MixinWorld implements IWorldUpdateSuppressor
+public class MixinLevel implements IWorldUpdateSuppressor
 {
     @Unique private boolean litematica_preventBlockUpdates;
 

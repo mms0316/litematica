@@ -362,6 +362,12 @@ public class RayTraceUtils
     }
 
     @Nullable
+    public static RayTraceWrapper getGenericTraceNoFluids(Level worldClient, Entity entity, double range)
+    {
+        return getGenericTrace(worldClient, entity, range, true, false, false);
+    }
+
+    @Nullable
     public static RayTraceWrapper getGenericTrace(Level worldClient, Entity entity,
                                                   double range, boolean respectRenderRange,
                                                   boolean targetFluids, boolean includeVerifier)
@@ -438,6 +444,26 @@ public class RayTraceUtils
     {
         RayTraceWrapper trace = getSchematicWorldTraceWrapperIfClosest(worldClient, entity, range);
         return trace != null && trace.getHitType() == HitType.SCHEMATIC_BLOCK ? trace.getBlockHitResult().getBlockPos() : null;
+    }
+
+    @Nullable
+    public static BlockPos getSchematicWorldTraceIfClosestNoFluids(Level worldClient, Entity entity, double range)
+    {
+        RayTraceWrapper trace = getSchematicWorldTraceWrapperIfClosestNoFluids(worldClient, entity, range);
+        return trace != null && trace.getHitType() == HitType.SCHEMATIC_BLOCK ? trace.getBlockHitResult().getBlockPos() : null;
+    }
+
+    @Nullable
+    public static RayTraceWrapper getSchematicWorldTraceWrapperIfClosestNoFluids(Level worldClient, Entity entity, double range)
+    {
+        RayTraceWrapper trace = getGenericTraceNoFluids(worldClient, entity, range);
+
+        if (trace != null && trace.getHitType() == RayTraceWrapper.HitType.SCHEMATIC_BLOCK)
+        {
+            return trace;
+        }
+
+        return null;
     }
 
     @Nullable

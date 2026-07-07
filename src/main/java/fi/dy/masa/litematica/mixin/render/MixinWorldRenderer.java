@@ -47,8 +47,7 @@ public abstract class MixinWorldRenderer
     @Shadow @Final private Minecraft minecraft;
 	@Shadow @Final private SubmitNodeStorage submitNodeStorage;
     @Shadow private @Nullable Frustum capturedFrustum;
-	@Shadow
-	private @org.jspecify.annotations.Nullable GpuSampler chunkLayerSampler;
+	@Shadow private @Nullable GpuSampler chunkLayerSampler;
 	@Unique private ProfilerFiller profiler;
 
     @Unique
@@ -94,6 +93,7 @@ public abstract class MixinWorldRenderer
     {
         this.litematica$prepareProfiler();
 	    LitematicaRenderer.getInstance().piecewiseUpdate(camera, this.profiler);
+//	    LitematicaRenderer.getInstance().scheduleChunkUploads(camera.position(), this.profiler);
 
 		if (IrisCompat.hasSodium())
 		{
@@ -132,14 +132,15 @@ public abstract class MixinWorldRenderer
         LitematicaRenderer.getInstance().piecewisePrepareBlockLayers(matrix4fc, d, e, f, this.profiler);
     }
 
-	// BYTECODE Lamba Mixin for Section Group rendering
+	// BYTECODE (Virtual Method) Mixin for Section Group rendering
 	@Inject(method = "method_62214(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/LevelRenderState;Lnet/minecraft/util/profiling/ProfilerFiller;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;ZLcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;)V",
-			at = @At(value = "INVOKE",
-					 target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V",
-					 ordinal = 0))
-		private void litematica_renderMainSection_Opaque(GpuBufferSlice gpuBufferSlice, LevelRenderState worldRenderState, ProfilerFiller profiler,
-	                                                     Matrix4f matrix4f, ResourceHandle<RenderTarget> handle, ResourceHandle<RenderTarget> handle2, boolean bl,
-	                                                     ResourceHandle<RenderTarget> handle3, ResourceHandle<RenderTarget> handle4, CallbackInfo ci)
+	        at = @At(value = "INVOKE",
+	                 target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V",
+	                 ordinal = 0,
+	                 shift = At.Shift.AFTER))
+	private void litematica_renderMainSection_Opaque(GpuBufferSlice gpuBufferSlice, LevelRenderState worldRenderState, ProfilerFiller profiler,
+	                                                 Matrix4f matrix4f, ResourceHandle<RenderTarget> handle, ResourceHandle<RenderTarget> handle2, boolean bl,
+	                                                 ResourceHandle<RenderTarget> handle3, ResourceHandle<RenderTarget> handle4, CallbackInfo ci)
 	{
 		LitematicaRenderer.getInstance().piecewiseDrawBlockLayerGroup(ChunkSectionLayerGroup.OPAQUE, this.chunkLayerSampler);
 	}
@@ -147,7 +148,8 @@ public abstract class MixinWorldRenderer
 	@Inject(method = "method_62214(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/LevelRenderState;Lnet/minecraft/util/profiling/ProfilerFiller;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;ZLcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;)V",
 			at = @At(value = "INVOKE",
 					 target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V",
-					 ordinal = 1))
+					 ordinal = 1,
+					 shift = At.Shift.AFTER))
 	private void litematica_renderMainSection_Translucent(GpuBufferSlice gpuBufferSlice, LevelRenderState worldRenderState, ProfilerFiller profiler,
 	                                                      Matrix4f matrix4f, ResourceHandle<RenderTarget> handle, ResourceHandle<RenderTarget> handle2, boolean bl,
 	                                                      ResourceHandle<RenderTarget> handle3, ResourceHandle<RenderTarget> handle4, CallbackInfo ci)
@@ -158,7 +160,8 @@ public abstract class MixinWorldRenderer
 	@Inject(method = "method_62214(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/LevelRenderState;Lnet/minecraft/util/profiling/ProfilerFiller;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;ZLcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;)V",
 			at = @At(value = "INVOKE",
 					 target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V",
-					 ordinal = 2))
+					 ordinal = 2,
+					 shift = At.Shift.AFTER))
 	private void litematica_renderMainSection_Tripwire(GpuBufferSlice gpuBufferSlice, LevelRenderState worldRenderState, ProfilerFiller profiler,
 	                                                   Matrix4f matrix4f, ResourceHandle<RenderTarget> handle, ResourceHandle<RenderTarget> handle2, boolean bl,
 	                                                   ResourceHandle<RenderTarget> handle3, ResourceHandle<RenderTarget> handle4, CallbackInfo ci)

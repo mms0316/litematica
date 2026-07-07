@@ -2,25 +2,27 @@ package fi.dy.masa.litematica.world;
 
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.Level;
+
 import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.render.IWorldSchematicRenderer;
 import fi.dy.masa.litematica.render.LitematicaRenderer;
-import fi.dy.masa.litematica.render.schematic.WorldRendererSchematic;
 
 public class SchematicWorldHandler
 {
     public static final SchematicWorldHandler INSTANCE = new SchematicWorldHandler(LitematicaRenderer.getInstance()::getWorldRenderer);
 
-    protected final Supplier<WorldRendererSchematic> rendererSupplier;
+    protected final Supplier<IWorldSchematicRenderer> rendererSupplier;
     @Nullable protected WorldSchematic world;
     @Nullable protected RegistryAccess.Frozen dynamicRegistryManager = RegistryAccess.EMPTY;
 
     // The supplier can return null, but it can't be null itself!
-    public SchematicWorldHandler(Supplier<WorldRendererSchematic> rendererSupplier)
+    public SchematicWorldHandler(Supplier<IWorldSchematicRenderer> rendererSupplier)
     {
         this.rendererSupplier = rendererSupplier;
     }
@@ -60,7 +62,7 @@ public class SchematicWorldHandler
         return this.dynamicRegistryManager;
     }
 
-    public static WorldSchematic createSchematicWorld(@Nullable WorldRendererSchematic worldRenderer)
+    public static WorldSchematic createSchematicWorld(@Nullable IWorldSchematicRenderer worldRenderer)
     {
         Level world = Minecraft.getInstance().level;
 
@@ -69,18 +71,7 @@ public class SchematicWorldHandler
             return null;
         }
 
-        /*
-        //RegistryEntryLookup.RegistryLookup lookup = world.getRegistryManager().createRegistryLookup();
-        RegistryEntryLookup<DimensionType> entryLookup = SchematicWorldHandler.INSTANCE.getRegistryManager().getOrThrow(RegistryKeys.DIMENSION_TYPE);
-        RegistryEntry<DimensionType> entry = entryLookup.getOrThrow(DimensionTypes.OVERWORLD);
-
-        if (entry == null)
-        {
-            entry = world.getDimensionEntry();
-        }
-         */
         // Use the DimensionType of the current client world
-
         ClientLevel.ClientLevelData levelInfo = new ClientLevel.ClientLevelData(Difficulty.PEACEFUL, false, true);
 
         return new WorldSchematic(levelInfo, world.registryAccess(), world.dimensionTypeRegistration(), worldRenderer);
@@ -94,14 +85,21 @@ public class SchematicWorldHandler
             if (this.world != null)
             {
                 this.world.clearEntities();
+
+                try
+                {
+                    this.world.close();
+                }
+                catch (Exception ignored) {}
             }
+
             this.world = null;
             LitematicaRenderer.getInstance().onSchematicWorldChanged(null);
         }
         else
         {
             Litematica.debugLog("(Re-)creating the schematic world...");
-            @Nullable WorldRendererSchematic worldRenderer = this.world != null ? this.world.worldRenderer : LitematicaRenderer.getInstance().resetWorldRenderer();
+            @Nullable IWorldSchematicRenderer worldRenderer = this.world != null ? this.world.worldRenderer : LitematicaRenderer.getInstance().resetWorldRenderer();
             // Note: The dimension used here must have no skylight, because the custom Chunks don't have those arrays
             this.world = createSchematicWorld(worldRenderer);
             Litematica.debugLog("Schematic world (re-)created: {}", this.world);

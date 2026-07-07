@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import fi.dy.masa.litematica.render.schematic.blocks.FallbackBlocks;
 
 @Mixin(BlockStateDefinitions.class)
-public class MixinBlockStateManagers
+public class MixinBlockStateDefinitions
 {
 	@Mutable @Final @Shadow private static Map<Identifier, StateDefinition<Block, BlockState>> STATIC_DEFINITIONS;
 

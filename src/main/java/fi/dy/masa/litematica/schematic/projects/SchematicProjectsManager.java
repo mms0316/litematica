@@ -17,6 +17,7 @@ import fi.dy.masa.malilib.util.JsonUtils;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.gui.GuiSchematicProjectManager;
 import fi.dy.masa.litematica.gui.GuiSchematicProjectsBrowser;
+import fi.dy.masa.litematica.util.FileType;
 
 public class SchematicProjectsManager
 {
@@ -100,18 +101,21 @@ public class SchematicProjectsManager
     @Nullable
     public SchematicProject loadProjectFromFile(Path projectFile, boolean createPlacement)
     {
-        if (projectFile.getFileName().endsWith(".json") && Files.exists(projectFile) && Files.isRegularFile(projectFile) && Files.isReadable(projectFile))
+        if (FileType.fromFile(projectFile) == FileType.JSON &&
+            Files.exists(projectFile) && Files.isRegularFile(projectFile) && Files.isReadable(projectFile))
         {
             JsonElement el = JsonUtils.parseJsonFileAsPath(projectFile);
 
             if (el != null && el.isJsonObject())
             {
                 SchematicProject project = SchematicProject.fromJson(el.getAsJsonObject(), projectFile, createPlacement);
+
                 if (project != null)
                 {
                     project.checkSelectionModeConfig();
+
+                    return project;
                 }
-                return project;
             }
         }
 
@@ -163,11 +167,11 @@ public class SchematicProjectsManager
         return false;
     }
 
-    public boolean commitNewVersion(String string)
+    public boolean commitNewVersion(String string, String description)
     {
         if (this.currentProject != null)
         {
-            return this.currentProject.commitNewVersion(string);
+            return this.currentProject.commitNewVersion(string, description);
         }
         else
         {

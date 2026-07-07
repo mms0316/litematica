@@ -9,7 +9,7 @@ import fi.dy.masa.litematica.render.LitematicaDebugHud;
 import net.minecraft.client.gui.components.debug.DebugScreenEntryList;
 
 @Mixin(DebugScreenEntryList.class)
-public abstract class MixinDebugHudProfile
+public abstract class MixinDebugScreenEntryList
 {
 	@Inject(method = "rebuildCurrentList", at = @At("TAIL"))
 	private void litematica_updateVisibleEntries(CallbackInfo ci)

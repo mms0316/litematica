@@ -69,7 +69,12 @@ public class EasyPlaceUtils
         isHandling = handling;
     }
 
-    public static void setIsFirstClick()
+	public static double getValidBlockRange(Minecraft mc)
+	{
+		return Configs.Generic.EASY_PLACE_VANILLA_REACH.getBooleanValue() ? mc.player.blockInteractionRange() : mc.player.blockInteractionRange() + 1.0;
+	}
+
+	public static void setIsFirstClick()
     {
         if (shouldDoEasyPlaceActions())
         {
@@ -91,14 +96,14 @@ public class EasyPlaceUtils
             try
             {
                 // TODO FIXME cross-MC-version fragile
-                String name = Block.class.getSimpleName().equals("Block") ? "onUse": "a";
+                String name = Block.class.getSimpleName().equals("Block") ? "useWithoutItem": "a";
                 Method method = block.getClass().getMethod(name, BlockState.class, Level.class, BlockPos.class, Player.class, BlockHitResult.class);
                 Method baseMethod = Block.class.getMethod(name, BlockState.class, Level.class, BlockPos.class, Player.class, BlockHitResult.class);
                 val = method.equals(baseMethod) == false;
             }
             catch (Exception e)
             {
-                Litematica.LOGGER.warn("EasyPlaceUtils: Failed to reflect method Block::onUse", e);
+                Litematica.LOGGER.warn("EasyPlaceUtils: Failed to reflect method Block::useWithoutItem", e);
                 val = false;
             }
 
@@ -435,8 +440,24 @@ public class EasyPlaceUtils
         Minecraft mc = Minecraft.getInstance();
         Entity entity = mc.getCameraEntity();
         ClientLevel world = mc.level;
-        double reach = mc.player.blockInteractionRange();
-        RayTraceUtils.RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(world, entity, reach, true, true, true);
+        double reach = getValidBlockRange(mc);
+        RayTraceUtils.RayTraceWrapper traceWrapper;
+
+	    if (Configs.Generic.EASY_PLACE_FIRST.getBooleanValue())
+	    {
+		    boolean targetFluids = Configs.InfoOverlays.INFO_OVERLAYS_TARGET_FLUIDS.getBooleanValue();
+		    traceWrapper = RayTraceUtils.getGenericTrace(world, entity, reach, true, targetFluids, false);
+	    }
+		else
+	    {
+		    traceWrapper = RayTraceUtils.getFurthestSchematicWorldTraceBeforeVanilla(mc.level, mc.player, reach);
+
+		    if (traceWrapper == null && placementRestrictionInEffect())
+		    {
+			    return InteractionResult.FAIL;
+		    }
+	    }
+
 		BlockHitResult targetPosition = getTargetPosition(traceWrapper);
 
 		// No position override, and didn't ray trace to a schematic block
@@ -454,7 +475,7 @@ public class EasyPlaceUtils
 		Level schematicWorld = SchematicWorldHandler.getSchematicWorld();
 		BlockState stateSchematic = schematicWorld.getBlockState(targetBlockPos);
 		BlockState stateClient = world.getBlockState(targetBlockPos);
-		ItemStack requiredStack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic);
+		ItemStack requiredStack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic, schematicWorld, targetBlockPos);
 
 		if (stateSchematic.is(BlockTags.AIR))
 		{
@@ -823,7 +844,7 @@ public class EasyPlaceUtils
             }
 
             BlockState stateSchematic = worldSchematic.getBlockState(pos);
-            ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic);
+            ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic, worldSchematic, pos);
 
             // The player is holding the wrong item for the targeted position
             return stack.isEmpty() || EntityUtils.getUsedHandForItem(mc.player, stack, true) == null;

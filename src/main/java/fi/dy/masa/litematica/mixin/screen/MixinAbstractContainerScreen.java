@@ -17,9 +17,9 @@ import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.util.AddonUtils;
 
 @Mixin(AbstractContainerScreen.class)
-public abstract class MixinHandledScreen extends Screen
+public abstract class MixinAbstractContainerScreen extends Screen
 {
-    private MixinHandledScreen(Component title)
+    private MixinAbstractContainerScreen(Component title)
     {
         super(title);
     }

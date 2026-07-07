@@ -1,5 +1,6 @@
 package fi.dy.masa.litematica.gui.widgets;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -48,7 +49,7 @@ public class WidgetListSchematicVersions extends WidgetListBase<SchematicVersion
     {
         int x = this.posX + this.totalWidth - this.infoWidth + 4;
         int y = this.posY + 4;
-        int infoHeight = 140;
+        int infoHeight = 200;
         String str;
         String w = GuiBase.TXT_WHITE;
         String r = GuiBase.TXT_RST;
@@ -88,6 +89,22 @@ public class WidgetListSchematicVersions extends WidgetListBase<SchematicVersion
             BlockPos o = this.project.getOrigin();
             str = String.format("x: %s%d%s, y: %s%d%s, z: %s%d%s", w, o.getX(), r, w, o.getY(), r, w, o.getZ(), r);
             this.drawString(ctx, str, x, y, color);
+
+            if (version.getDescription() != null && !version.getDescription().isEmpty())
+            {
+                y += 12;
+                str = StringUtils.translate("litematica.gui.label.schematic_projects.version_description");
+                this.drawString(ctx, str, x, y, color);
+
+                List<String> lines = new ArrayList<>();
+                StringUtils.splitTextToLines(lines, version.getDescription(), SchematicVersion.MAX_DESCRIPTION_LENGTH);
+
+                for (String line : lines)
+                {
+                    y += 12;
+                    this.drawString(ctx, w+"  "+line, x, y, color);
+                }
+            }
         }
     }
 

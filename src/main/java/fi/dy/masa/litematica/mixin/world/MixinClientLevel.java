@@ -23,9 +23,9 @@ import fi.dy.masa.litematica.scheduler.TaskScheduler;
 import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
 
 @Mixin(ClientLevel.class)
-public abstract class MixinClientWorld extends Level
+public abstract class MixinClientLevel extends Level
 {
-    private MixinClientWorld(WritableLevelData properties,
+    private MixinClientLevel(WritableLevelData properties,
                              ResourceKey<Level> registryRef,
                              RegistryAccess manager,
                              Holder<DimensionType> dimension,

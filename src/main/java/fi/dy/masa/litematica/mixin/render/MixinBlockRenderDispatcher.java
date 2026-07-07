@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 @Mixin(BlockRenderDispatcher.class)
-public class MixinBlockRenderManager
+public class MixinBlockRenderDispatcher
 {
 	@Inject(method = "onResourceManagerReload", at = @At("TAIL"))
 	private void litematica_onBlockRenderManagerReload(ResourceManager manager, CallbackInfo ci)

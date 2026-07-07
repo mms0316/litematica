@@ -17,7 +17,6 @@ import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.Container;
 import net.minecraft.core.BlockPos;
@@ -75,7 +74,7 @@ public class TaskCountBlocksPlacementPersistent extends TaskCountBlocksPlacement
         LayerRange range = this.layerRange;
         Direction.Axis axis = range.getAxis();
 
-        var chunkManager = this.schematicWorld.getChunkProvider();
+        var chunkManager = this.schematicWorld.getChunkSource();
         var schematicPlacementManager = DataManager.getSchematicPlacementManager();
 
         for (int chunkIndex = 0; chunkIndex < this.pendingChunks.size(); ++chunkIndex)

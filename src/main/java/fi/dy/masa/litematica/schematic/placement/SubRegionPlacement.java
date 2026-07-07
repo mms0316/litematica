@@ -18,6 +18,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import fi.dy.masa.malilib.util.JsonUtils;
 import fi.dy.masa.malilib.util.position.PositionUtils.CoordinateType;
 import fi.dy.masa.litematica.Litematica;
+import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.util.PositionUtils;
 
 public class SubRegionPlacement
@@ -146,7 +147,7 @@ public class SubRegionPlacement
             return this.isEnabled();
         }
 
-        return this.isEnabled() && this.isRenderingEnabled();
+        return this.isEnabled() && this.isRenderingEnabled() && Configs.Visuals.ENABLE_RENDERING.getBooleanValue();
     }
 
     public String getName()
@@ -246,6 +247,7 @@ public class SubRegionPlacement
     public JsonObject toJson()
     {
         JsonObject obj = new JsonObject();
+        if (this.pos == null) { return obj; }
         JsonArray arr = new JsonArray();
 
         arr.add(this.pos.getX());
@@ -283,7 +285,7 @@ public class SubRegionPlacement
             }
 
             BlockPos pos = new BlockPos(posArr.get(0).getAsInt(), posArr.get(1).getAsInt(), posArr.get(2).getAsInt());
-            SubRegionPlacement placement = new SubRegionPlacement(pos, obj.get("name").getAsString());
+	        SubRegionPlacement placement = new SubRegionPlacement(pos, obj.get("name").getAsString());
             placement.setEnabled(JsonUtils.getBoolean(obj, "enabled"));
             placement.setRenderingEnabled(JsonUtils.getBoolean(obj, "rendering_enabled"));
             placement.ignoreEntities = JsonUtils.getBoolean(obj, "ignore_entities");

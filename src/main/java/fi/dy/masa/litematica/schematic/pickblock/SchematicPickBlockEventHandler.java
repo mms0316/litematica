@@ -27,14 +27,14 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 	private ItemStack pickStack;
 	private ISchematicPickBlockSlotHandler slotHandler;
 	private boolean processingCancelled;
-	private Supplier<String> processingCanceledBy;
+	private Supplier<String> processingCancelledBy;
 
 	private SchematicPickBlockEventHandler()
 	{
 		this.pickStack = ItemStack.EMPTY;
 		this.slotHandler = null;
 		this.processingCancelled = false;
-		this.processingCanceledBy = () -> "not_cancelled";
+		this.processingCancelledBy = () -> "not_cancelled";
 	}
 
 	@Override
@@ -74,29 +74,44 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 		}
 	}
 
+	@Override
 	public boolean hasPickStack()
 	{
 		return !this.pickStack.isEmpty();
 	}
 
+	@Override
 	public boolean hasSlotHandler()
 	{
 		return this.slotHandler != null;
 	}
 
-	public boolean isProcessingCancelled()
-	{
-		return this.processingCancelled;
-	}
-
+	@Override
 	public ItemStack getPickStack()
 	{
 		return this.pickStack;
 	}
 
-	public Supplier<String> getProcessingCanceledBy()
+	@Override
+	public boolean isProcessingCancelled()
 	{
-		return this.processingCanceledBy;
+		return this.processingCancelled;
+	}
+
+	@Override
+	public void resetCancelled()
+	{
+		if (this.isProcessingCancelled())
+		{
+			this.processingCancelled = false;
+			this.processingCancelledBy = () -> "not_cancelled";
+		}
+	}
+
+	@Override
+	public Supplier<String> getProcessingCancelledBy()
+	{
+		return this.processingCancelledBy;
 	}
 
 	@ApiStatus.Internal
@@ -110,12 +125,17 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 			{
 				Litematica.LOGGER.warn("SchematicPickBlockEventHandler: Processing cancelled by: {} during 'executePickBlockHandler'", this.slotHandler.getName().get());
 				this.processingCancelled = true;
-				this.processingCanceledBy = this.slotHandler.getName();
+				this.processingCancelledBy = this.slotHandler.getName();
 				return true;
 			}
 			else if (result == SchematicPickBlockEventResult.ERROR)
 			{
 				Litematica.LOGGER.error("SchematicPickBlockEventHandler: Error processing 'executePickBlockHandler' from: {}", this.slotHandler.getName().get());
+				this.resetCancelled();
+			}
+			else
+			{
+				this.resetCancelled();
 			}
 		}
 
@@ -130,7 +150,7 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 			// This will possibly never be true here, but you never know.
 			if (this.isProcessingCancelled())
 			{
-				handler.onSchematicPickBlockCancelled(this.getProcessingCanceledBy());
+				handler.onSchematicPickBlockCancelled(this.getProcessingCancelledBy());
 			}
 			else
 			{
@@ -140,11 +160,16 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 				{
 					Litematica.LOGGER.warn("SchematicPickBlockEventHandler: Processing cancelled by: {} during 'onSchematicPickBlockStart'", handler.getName().get());
 					this.processingCancelled = true;
-					this.processingCanceledBy = handler.getName();
+					this.processingCancelledBy = handler.getName();
 				}
 				else if (result == SchematicPickBlockEventResult.ERROR)
 				{
 					Litematica.LOGGER.error("SchematicPickBlockEventHandler: Error processing 'onSchematicPickBlockStart' from: {}", handler.getName().get());
+					this.resetCancelled();
+				}
+				else
+				{
+					this.resetCancelled();
 				}
 			}
 		}
@@ -159,7 +184,7 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 		{
 			if (this.isProcessingCancelled())
 			{
-				handler.onSchematicPickBlockCancelled(this.getProcessingCanceledBy());
+				handler.onSchematicPickBlockCancelled(this.getProcessingCancelledBy());
 			}
 			else
 			{
@@ -169,11 +194,16 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 				{
 					Litematica.LOGGER.warn("SchematicPickBlockEventHandler: Processing cancelled by: {} during 'onSchematicPickBlockPreGather'", handler.getName().get());
 					this.processingCancelled = true;
-					this.processingCanceledBy = handler.getName();
+					this.processingCancelledBy = handler.getName();
 				}
 				else if (result == SchematicPickBlockEventResult.ERROR)
 				{
 					Litematica.LOGGER.error("SchematicPickBlockEventHandler: Error processing 'onSchematicPickBlockPreGather' from: {}", handler.getName().get());
+					this.resetCancelled();
+				}
+				else
+				{
+					this.resetCancelled();
 				}
 			}
 		}
@@ -188,7 +218,7 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 		{
 			if (this.isProcessingCancelled())
 			{
-				handler.onSchematicPickBlockCancelled(this.getProcessingCanceledBy());
+				handler.onSchematicPickBlockCancelled(this.getProcessingCancelledBy());
 			}
 			else
 			{
@@ -198,11 +228,16 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 				{
 					Litematica.LOGGER.warn("SchematicPickBlockEventHandler: Processing cancelled by: {} during 'onSchematicPickBlockPrePick'", handler.getName().get());
 					this.processingCancelled = true;
-					this.processingCanceledBy = handler.getName();
+					this.processingCancelledBy = handler.getName();
 				}
 				else if (result == SchematicPickBlockEventResult.ERROR)
 				{
 					Litematica.LOGGER.error("SchematicPickBlockEventHandler: Error processing 'onSchematicPickBlockPrePick' from: {}", handler.getName().get());
+					this.resetCancelled();
+				}
+				else
+				{
+					this.resetCancelled();
 				}
 			}
 		}
@@ -218,12 +253,14 @@ public class SchematicPickBlockEventHandler implements ISchematicPickBlockEventM
 			// This will possibly never be true here, but you never know.
 			if (this.isProcessingCancelled())
 			{
-				handler.onSchematicPickBlockCancelled(this.getProcessingCanceledBy());
+				handler.onSchematicPickBlockCancelled(this.getProcessingCancelledBy());
 			}
 			else
 			{
 				handler.onSchematicPickBlockSuccess();
 			}
+
+			this.resetCancelled();
 		}
 	}
 }

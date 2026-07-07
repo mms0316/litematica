@@ -2,6 +2,9 @@ package fi.dy.masa.litematica.mixin.hud;
 
 import java.util.Collection;
 import java.util.List;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.DebugScreenOverlay;
 import net.minecraft.resources.Identifier;
@@ -10,22 +13,21 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 import fi.dy.masa.litematica.render.LitematicaDebugHud;
 import fi.dy.masa.litematica.util.DebugHudMode;
 
 // Original method (Works)
 @Mixin(DebugScreenOverlay.class)
-public abstract class MixinDebugHud
+public abstract class MixinDebugScreenOverlay
 {
 	@Shadow @Final private Minecraft minecraft;
 
-	@Redirect(method = "render(Lnet/minecraft/client/gui/GuiGraphics;)V",
-			  at = @At(value = "INVOKE",
+	@WrapOperation(method = "render(Lnet/minecraft/client/gui/GuiGraphics;)V",
+	               at = @At(value = "INVOKE",
 					   target = "Ljava/util/Collection;isEmpty()Z",
 					   ordinal = 0))
-	private boolean litematica_fixF3WhenAllDisabled(Collection<Identifier> instance)
+	private boolean litematica_fixF3WhenAllDisabled(Collection<Identifier> instance, Operation<Boolean> original)
 	{
 		if (LitematicaDebugHud.INSTANCE.getMode() == DebugHudMode.DEFAULT)
 		{

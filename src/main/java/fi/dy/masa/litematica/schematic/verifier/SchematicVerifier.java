@@ -2,6 +2,14 @@ package fi.dy.masa.litematica.schematic.verifier;
 
 import java.util.*;
 import javax.annotation.Nullable;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -11,15 +19,7 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.LevelChunk;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.interfaces.ICompletionListener;
@@ -44,6 +44,7 @@ import fi.dy.masa.litematica.world.WorldSchematic;
 //Custom Additions (easier to resolve future merge conflicts)
 import com.google.common.collect.ImmutableMap;
 import fi.dy.masa.litematica.selection.Box;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 {
@@ -584,7 +585,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 if (this.requiredChunks.contains(chunkPos) == false &&
                     //Ignore blocks outside the schematic (fast attempt)
                     //(recheckQueue will do the actual check)
-                    this.worldSchematic.getChunkProvider().hasChunk(chunkPos.x, chunkPos.z))
+                    this.worldSchematic.getChunkSource().hasChunk(chunkPos.x, chunkPos.z))
                 {
                     this.recheckQueue.add(pos.immutable());
                 }
@@ -739,7 +740,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
                 }
 
                 // Require the surrounding chunks in the client world to be loaded as well
-                if (count == 9 && this.worldSchematic.getChunkProvider().hasChunk(pos.x, pos.z))
+                if (count == 9 && this.worldSchematic.getChunkSource().hasChunk(pos.x, pos.z))
                 {
                     ChunkAccess chunkClient = this.worldClient.getChunk(pos.x, pos.z);
                     ChunkAccess chunkSchematic = this.worldSchematic.getChunk(pos.x, pos.z);
@@ -1054,7 +1055,7 @@ public class SchematicVerifier extends TaskBase implements IInfoHudRenderer
 
         boolean checkedSome = false;
 
-        if (this.worldSchematic.getChunkProvider().hasChunk(pos.x, pos.z))
+        if (this.worldSchematic.getChunkSource().hasChunk(pos.x, pos.z))
         {
             LevelChunk chunkClient = this.worldClient.getChunk(pos.x, pos.z);
             LevelChunk chunkSchematic = this.worldSchematic.getChunk(pos.x, pos.z);

@@ -8,25 +8,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
-import fi.dy.masa.litematica.data.EntitiesDataStorage;
-import fi.dy.masa.litematica.scheduler.TaskScheduler;
-import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
-import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
-//Custom Additions (easier to resolve future merge conflicts)
-import fi.dy.masa.litematica.util.AddonUtils;
+import fi.dy.masa.litematica.data.EntityDataManager;
 import fi.dy.masa.litematica.util.SchematicWorldRefresher;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundForgetLevelChunkPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 import net.minecraft.network.protocol.game.ClientboundTagQueryPacket;
+
+//Custom Additions (easier to resolve future merge conflicts)
+import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskCountBlocksPlacementPersistent;
+import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
+import fi.dy.masa.litematica.util.AddonUtils;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.world.level.ChunkPos;
 
-
 @Mixin(ClientPacketListener.class)
-public abstract class MixinClientPlayNetworkHandler
+public abstract class MixinClientPacketListener
 {
     @Inject(method = "handleLevelChunkWithLight", at = @At("RETURN"))
     private void litematica_onUpdateChunk(ClientboundLevelChunkWithLightPacket packet, CallbackInfo ci)
@@ -97,7 +97,7 @@ public abstract class MixinClientPlayNetworkHandler
     {
         if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
         {
-            EntitiesDataStorage.getInstance().handleVanillaQueryNbt(packet.getTransactionId(), packet.getTag());
+            EntityDataManager.getInstance().handleVanillaQueryNbt(packet.getTransactionId(), packet.getTag());
         }
     }
 
@@ -107,7 +107,7 @@ public abstract class MixinClientPlayNetworkHandler
         if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
         {
             // when the player becomes OP, the server sends the command tree to the client
-            EntitiesDataStorage.getInstance().resetOpCheck();
+            EntityDataManager.getInstance().resetOpCheck();
         }
     }
 

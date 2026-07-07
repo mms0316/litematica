@@ -14,6 +14,7 @@ import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.gui.interfaces.ISelectionListener;
 import fi.dy.masa.malilib.gui.interfaces.ITextFieldListener;
 import fi.dy.masa.malilib.gui.widgets.WidgetCheckBox;
+import fi.dy.masa.malilib.gui.wrappers.TextFieldType;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.position.PositionUtils.CoordinateType;
@@ -125,9 +126,9 @@ public class GuiSubRegionConfiguration extends GuiBase
         }
 
         GuiTextFieldInteger textField = new GuiTextFieldInteger(x + offset, y + 2, width, 14, this.font);
-        textField.setTextWrapper(text);
+        textField.setValueWrapper(text);
         TextFieldListener listener = new TextFieldListener(type, this.schematicPlacement, this.placement, this);
-        this.addTextField(textField, listener);
+        this.addTextField(textField, listener, TextFieldType.STRING);
 
         String hover = StringUtils.translate("litematica.hud.schematic_placement.hover_info.lock_coordinate");
         x = x + offset + width + 20;
@@ -347,59 +348,61 @@ public class GuiSubRegionConfiguration extends GuiBase
         }
     }
 
-    private record TextFieldListener(CoordinateType type, SchematicPlacement schematicPlacement,
+    private record TextFieldListener(CoordinateType type,
+                                     SchematicPlacement schematicPlacement,
                                      SubRegionPlacement placement,
-                                     GuiSubRegionConfiguration parent) implements ITextFieldListener<GuiTextFieldInteger>
+                                     GuiSubRegionConfiguration parent)
+            implements ITextFieldListener<GuiTextFieldInteger>
+    {
+        @Override
+        public boolean onTextChange(GuiTextFieldInteger textField)
         {
-            @Override
-            public boolean onTextChange(GuiTextFieldInteger textField)
+            try
             {
-                try
-                {
-                    int value = Integer.parseInt(textField.getTextWrapper());
-                    // The sub-region placements are relative (but the setter below uses the
-                    // absolute position and subtracts the placement origin internally)
-                    BlockPos posOld = this.placement.getPos();
-                    posOld = PositionUtils.getTransformedBlockPos(posOld, this.schematicPlacement.getMirror(), this.schematicPlacement.getRotation());
-                    posOld = posOld.offset(this.schematicPlacement.getOrigin());
-                    BlockPos pos = posOld;
+                int value = Integer.parseInt(textField.getValueWrapper());
+                // The sub-region placements are relative (but the setter below uses the
+                // absolute position and subtracts the placement origin internally)
+                BlockPos posOld = this.placement.getPos();
+                posOld = PositionUtils.getTransformedBlockPos(posOld, this.schematicPlacement.getMirror(), this.schematicPlacement.getRotation());
+                posOld = posOld.offset(this.schematicPlacement.getOrigin());
+                BlockPos pos = posOld;
 
-                    switch (this.type)
-                    {
-                        case X:
-                            pos = new BlockPos(value, posOld.getY(), posOld.getZ());
-                            break;
-                        case Y:
-                            pos = new BlockPos(posOld.getX(), value, posOld.getZ());
-                            break;
-                        case Z:
-                            pos = new BlockPos(posOld.getX(), posOld.getY(), value);
-                            break;
-                    }
-
-                    this.parent.setNextMessageType(MessageType.ERROR);
-                    this.schematicPlacement.moveSubRegionTo(this.placement.getName(), pos, this.parent);
-                    this.parent.updateElements();
-                }
-                catch (NumberFormatException ignored)
+                switch (this.type)
                 {
+                    case X:
+                        pos = new BlockPos(value, posOld.getY(), posOld.getZ());
+                        break;
+                    case Y:
+                        pos = new BlockPos(posOld.getX(), value, posOld.getZ());
+                        break;
+                    case Z:
+                        pos = new BlockPos(posOld.getX(), posOld.getY(), value);
+                        break;
                 }
 
-                return false;
+                this.parent.setNextMessageType(MessageType.ERROR);
+                this.schematicPlacement.moveSubRegionTo(this.placement.getName(), pos, this.parent);
+                this.parent.updateElements();
             }
-        }
+            catch (NumberFormatException ignored)
+            {
+            }
 
-    private record CoordinateLockListener(CoordinateType type,
-                                          SubRegionPlacement placement) implements ISelectionListener<WidgetCheckBox>
+            return false;
+        }
+    }
+
+    private record CoordinateLockListener(CoordinateType type, SubRegionPlacement placement)
+            implements ISelectionListener<WidgetCheckBox>
+    {
+        @Override
+        public void onSelectionChange(WidgetCheckBox entry)
         {
-            @Override
-            public void onSelectionChange(WidgetCheckBox entry)
+            if (entry == null)
             {
-                if (entry == null)
-                {
-                    return;
-                }
-                this.placement.setCoordinateLocked(this.type, entry.isChecked());
+                return;
             }
+            this.placement.setCoordinateLocked(this.type, entry.isChecked());
         }
+    }
 }
